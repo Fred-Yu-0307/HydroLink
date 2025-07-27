@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings - HydroLink</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/settings.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="bi bi-droplet-fill me-2"></i>HydroLink
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html#dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html#history">History</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="settings.html">Settings</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="auth.html">
+                            <i class="bi bi-person-circle"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#notifications">
+                            <i class="bi bi-bell-fill"></i>
+                            <span class="badge bg-danger notification-badge">3</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="display-5 fw-bold">Account Settings</h1>
+                <p class="lead">Manage your profile, preferences, and account information</p>
+            </div>
+            <div class="col-md-4 text-end d-flex align-items-center justify-content-end">
+                <div class="user-avatar">
+                    <img src="https://ui-avatars.com/api/?name=JD&background=linear-gradient(45deg,4a9ff5,9c27b0)&color=fff&rounded=true&size=200" alt="John Doe">
+                    <div class="avatar-edit">
+                        <i class="bi bi-pencil-fill"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Content -->
+        <div class="settings-container">
+            <!-- Settings Navigation -->
+            <div class="settings-nav">
+                <div class="card shadow-sm">
+                    <div class="list-group list-group-flush">
+                        <a href="#profile" class="list-group-item list-group-item-action active" data-bs-toggle="list">
+                            <i class="bi bi-person-fill me-3"></i>Profile
+                        </a>
+                        <a href="#address" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                            <i class="bi bi-geo-alt-fill me-3"></i>Address
+                        </a>
+                        <a href="#notifications" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                            <i class="bi bi-bell-fill me-3"></i>Notifications
+                        </a>
+                        <a href="#security" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                            <i class="bi bi-shield-lock-fill me-3"></i>Security
+                        </a>
+                        <a href="#devices" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                            <i class="bi bi-hdd-fill me-3"></i>Devices
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Content -->
+            <div class="settings-content">
+                <div class="tab-content">
+                    <!-- Profile Tab -->
+                    <div class="tab-pane fade show active" id="profile">
+                        <div class="card shadow-sm">
+                            <div class="card-header">
+                                <h5 class="mb-0">Personal Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="profileForm">
+                                    <div class="row mb-4">
+                                        <div class="col-md-4 mb-3 mb-md-0">
+                                            <div class="form-floating">
+                                                <input type="text" class="form-control" id="firstName" placeholder="First Name" value="Fred Anthony">
+                                                <label for="firstName"><i class="bi bi-person me-2"></i>First Name</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 mb-3 mb-md-0">
+                                            <div class="form-floating">
+                                                <input type="text" class="form-control" id="middleName" placeholder="Middle Name" value="Duran">
+                                                <label for="middleName"><i class="bi bi-person me-2"></i>Middle Name</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-floating">
+                                                <input type="text" class="form-control" id="lastName" placeholder="Last Name" value="Yu">
+                                                <label for="lastName"><i class="bi bi-person me-2"></i>Last Name</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-4">
+                                        <div class="col-md-6 mb-3 mb-md-0">
+                                            <div class="form-floating">
+                                                <input type="email" class="form-control" id="email" placeholder="Email" value="yufredanthony@gmail.com">
+                                                <label for="email"><i class="bi bi-envelope me-2"></i>Email</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <input type="tel" class="form-control" id="phone" placeholder="Phone Number" value="+63 935 374 2658">
+                                                <label for="phone"><i class="bi bi-telephone me-2"></i>Phone Number</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-4">
+                                        <div class="col-md-6 mb-3 mb-md-0">
+                                            <div class="form-floating">
+                                                <select class="form-select" id="gender">
+                                                    <option value="male" selected>Male</option>
+                                                    <option value="female">Female</option>
+                                                    <option value="other">Other</option>
+                                                    <option value="prefer-not">Prefer not to say</option>
+                                                </select>
+                                                <label for="gender"><i class="bi bi-gender-ambiguous me-2"></i>Gender</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <input type="date" class="form-control" id="birthdate" value="1990-01-15">
+                                                <label for="birthdate"><i class="bi bi-calendar-event me-2"></i>Date of Birth</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-floating mb-4">
+                                        <textarea class="form-control" id="bio" style="height: 100px">CS Student</textarea>
+                                        <label for="bio"><i class="bi bi-file-text me-2"></i>Bio</label>
+                                    </div>
+
+                                    <div class="d-flex justify-content-end">
+                                        <button type="button" class="btn btn-light me-2">Cancel</button>
+                                        <button type="submit" class="btn btn-primary save-btn">
+                                            <span class="btn-text">Save Changes</span>
+                                            <span class="btn-icon"><i class="bi bi-check-circle"></i></span>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Address Tab -->
+                    <div class="tab-pane fade" id="address">
+                        <div class="card shadow-sm">
+                            <div class="card-header">
+                                <h5 class="mb-0">Address Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="addressForm">
+                                    <div class="row mb-4">
+                                        <div class="col-md-6 mb-3 mb-md-0">
+                                            <div class="form-floating">
+                                                <select class="form-select" id="region">
+                                                    <option value="" selected disabled>Select Region</option>
+                                                    <option value="ncr">National Capital Region</option>
+                                                    <option value="car">Cordillera Administrative Region</option>
+                                                    <option value="region1">Region I - Ilocos Region</option>
+                                                    <option value="region2">Region II - Cagayan Valley</option>
+                                                    <option value="region3">Region III - Central Luzon</option>
+                                                    <option value="region4a">Region IV-A - CALABARZON</option>
+                                                    <option value="region4b">Region IV-B - MIMAROPA</option>
+                                                    <option value="region5">Region V - Bicol Region</option>
+                                                    <option value="region6">Region VI - Western Visayas</option>
+                                                    <option value="region7">Region VII - Central Visayas</option>
+                                                    <option value="region8">Region VIII - Eastern Visayas</option>
+                                                    <option value="region9">Region IX - Zamboanga Peninsula</option>
+                                                    <option value="region10">Region X - Northern Mindanao</option>
+                                                    <option value="region11">Region XI - Davao Region</option>
+                                                    <option value="region12">Region XII - SOCCSKSARGEN</option>
+                                                    <option value="region13">Region XIII - Caraga</option>
+                                                    <option value="barmm">Bangsamoro Autonomous Region in Muslim Mindanao</option>
+                                                </select>
+                                                <label for="region"><i class="bi bi-map me-2"></i>Region</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <select class="form-select" id="province" disabled>
+                                                    <option value="" selected disabled>Select Province</option>
+                                                </select>
+                                                <label for="province"><i class="bi bi-geo me-2"></i>Province</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-4">
+                                        <div class="col-md-6 mb-3 mb-md-0">
+                                            <div class="form-floating">
+                                                <select class="form-select" id="city" disabled>
+                                                    <option value="" selected disabled>Select City/Municipality</option>
+                                                </select>
+                                                <label for="city"><i class="bi bi-building me-2"></i>City/Municipality</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <select class="form-select" id="barangay" disabled>
+                                                    <option value="" selected disabled>Select Barangay</option>
+                                                </select>
+                                                <label for="barangay"><i class="bi bi-house me-2"></i>Barangay</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-4">
+                                        <div class="col-md-6 mb-3 mb-md-0">
+                                            <div class="form-floating">
+                                                <input type="text" class="form-control" id="streetName" placeholder="Street Name">
+                                                <label for="streetName"><i class="bi bi-signpost me-2"></i>Street Name</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <select class="form-select" id="zipcode" disabled>
+                                                    <option value="" selected disabled>Select Zipcode</option>
+                                                </select>
+                                                <label for="zipcode"><i class="bi bi-mailbox me-2"></i>Zipcode</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-floating mb-4">
+                                        <textarea class="form-control" id="addressNotes" style="height: 100px" placeholder="Additional Address Notes"></textarea>
+                                        <label for="addressNotes"><i class="bi bi-pencil me-2"></i>Additional Address Notes</label>
+                                    </div>
+
+                                    <div class="d-flex justify-content-end">
+                                        <button type="button" class="btn btn-light me-2">Cancel</button>
+                                        <button type="submit" class="btn btn-primary save-btn">
+                                            <span class="btn-text">Save Address</span>
+                                            <span class="btn-icon"><i class="bi bi-check-circle"></i></span>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notifications Tab -->
+                    <div class="tab-pane fade" id="notifications">
+                        <div class="card shadow-sm">
+                            <div class="card-header">
+                                <h5 class="mb-0">Notification Preferences</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="notificationsForm">
+                                    <div class="notification-group mb-4">
+                                        <h6 class="notification-group-title">System Notifications</h6>
+                                        <div class="notification-option">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1">Water Level Alerts</h6>
+                                                    <p class="text-muted mb-0">Get notified when water level is low</p>
+                                                </div>
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="waterLevelAlerts" checked>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="notification-option">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1">Refill Completion</h6>
+                                                    <p class="text-muted mb-0">Get notified when tank refill is complete</p>
+                                                </div>
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="refillCompletion" checked>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- <div class="notification-option">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1">Water Schedule Updates</h6>
+                                                    <p class="text-muted mb-0">Get notified about water availability schedule</p>
+                                                </div>
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="scheduleUpdates" checked>
+                                                </div>
+                                            </div>
+                                        </div> -->
+                                    </div>
+
+                                    <div class="notification-group mb-4">
+                                        <h6 class="notification-group-title">Account Notifications</h6>
+                                        <div class="notification-option">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1">System Maintenance</h6>
+                                                    <p class="text-muted mb-0">Get notified about scheduled maintenance</p>
+                                                </div>
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="systemMaintenance">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="notification-option">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1">Tips & Updates</h6>
+                                                    <p class="text-muted mb-0">Receive water conservation tips and system updates</p>
+                                                </div>
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="tipsUpdates" checked>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="notification-group mb-4">
+                                        <h6 class="notification-group-title">Notification Channels</h6>
+                                        <div class="row">
+                                            <!-- <div class="col-md-6 mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                                                    <label class="form-check-label" for="emailNotifications">
+                                                        <i class="bi bi-envelope me-2"></i>Email Notifications
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="smsNotifications" checked>
+                                                    <label class="form-check-label" for="smsNotifications">
+                                                        <i class="bi bi-chat me-2"></i>SMS Notifications
+                                                    </label>
+                                                </div>
+                                            </div> -->
+                                            <div class="col-md-6 mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="pushNotifications" checked>
+                                                    <label class="form-check-label" for="pushNotifications">
+                                                        <i class="bi bi-bell me-2"></i>Push Notifications
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="inAppNotifications" checked>
+                                                    <label class="form-check-label" for="inAppNotifications">
+                                                        <i class="bi bi-app-indicator me-2"></i>In-App Notifications
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-end">
+                                        <button type="button" class="btn btn-light me-2">Reset to Default</button>
+                                        <button type="submit" class="btn btn-primary save-btn">
+                                            <span class="btn-text">Save Preferences</span>
+                                            <span class="btn-icon"><i class="bi bi-check-circle"></i></span>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security Tab -->
+                    <div class="tab-pane fade" id="security">
+                        <div class="card shadow-sm">
+                            <div class="card-header">
+                                <h5 class="mb-0">Security Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="securityForm">
+                                    <div class="section-title mb-3">Change Password</div>
+                                    <div class="mb-4">
+                                        <div class="form-floating mb-3">
+                                            <input type="password" class="form-control" id="currentPassword" placeholder="Current Password">
+                                            <label for="currentPassword"><i class="bi bi-key me-2"></i>Current Password</label>
+                                        </div>
+                                        <div class="form-floating mb-3">
+                                            <input type="password" class="form-control" id="newPassword" placeholder="New Password">
+                                            <label for="newPassword"><i class="bi bi-key-fill me-2"></i>New Password</label>
+                                        </div>
+                                        <div class="form-floating mb-3">
+                                            <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm New Password">
+                                            <label for="confirmPassword"><i class="bi bi-key-fill me-2"></i>Confirm New Password</label>
+                                        </div>
+                                        <div class="password-strength mb-3">
+                                            <div class="progress" style="height: 6px;">
+                                                <div class="progress-bar bg-danger" role="progressbar" style="width: 0%"></div>
+                                            </div>
+                                            <small class="text-muted">Password strength: <span id="passwordStrength">Weak</span></small>
+                                        </div>
+                                        <button type="button" class="btn btn-primary">Update Password</button>
+                                    </div>
+
+                                    <!-- <hr class="my-4"> -->
+
+                                    <!-- <div class="section-title mb-3">Two-Factor Authentication</div>
+                                    <div class="mb-4">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <div>
+                                                <h6 class="mb-1">Enable Two-Factor Authentication</h6>
+                                                <p class="text-muted mb-0">Add an extra layer of security to your account</p>
+                                            </div>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="twoFactorAuth">
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn btn-outline-primary" disabled>Set Up Two-Factor Authentication</button>
+                                    </div> -->
+
+                                    <!-- <hr class="my-4"> -->
+<!-- 
+                                    <div class="section-title mb-3">Login Sessions</div>
+                                    <div class="mb-4">
+                                        <div class="session-item">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="session-icon me-3">
+                                                        <i class="bi bi-laptop"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="mb-1">MacBook Pro - Chrome</h6>
+                                                        <p class="text-muted mb-0">Manila, Philippines - Current Session</p>
+                                                    </div>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-outline-danger">End Session</button>
+                                            </div>
+                                        </div>
+                                        <div class="session-item">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="session-icon me-3">
+                                                        <i class="bi bi-phone"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="mb-1">iPhone 13 - Safari</h6>
+                                                        <p class="text-muted mb-0">Manila, Philippines - Last active: 2 hours ago</p>
+                                                    </div>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-outline-danger">End Session</button>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn btn-outline-danger mt-3">End All Other Sessions</button>
+                                    </div> -->
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Devices Tab -->
+                    <div class="tab-pane fade" id="devices">
+                        <div class="card shadow-sm">
+                            <div class="card-header">
+                                <h5 class="mb-0">Connected Devices</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="device-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <div class="device-icon me-3">
+                                                <i class="bi bi-droplet-fill"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1">HydroLink - General tank</h6>
+                                                <p class="text-muted mb-0">Connected since: Jan 15, 2025</p>
+                                                <span class="badge bg-success">Online</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary me-2">Configure</button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger">Disconnect</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="device-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <div class="device-icon me-3">
+                                                <i class="bi bi-droplet-fill"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1">HydroLink - Bathroom Tank</h6>
+                                                <p class="text-muted mb-0">Connected since: Jan 15, 2025</p>
+                                                <span class="badge bg-success">Online</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary me-2">Configure</button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger">Disconnect</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="device-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <div class="device-icon me-3">
+                                                <i class="bi bi-droplet-fill"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1">HydroLink - Kitchen Tank</h6>
+                                                <p class="text-muted mb-0">Connected since: Jan 15, 2025</p>
+                                                <span class="badge bg-success">Online</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary me-2">Configure</button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger">Disconnect</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- <div class="device-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <div class="device-icon me-3">
+                                                <i class="bi bi-moisture"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1">Water Flow Sensor</h6>
+                                                <p class="text-muted mb-0">Connected since: Jan 15, 2025</p>
+                                                <span class="badge bg-success">Online</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary me-2">Configure</button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger">Disconnect</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="device-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <div class="device-icon me-3">
+                                                <i class="bi bi-valve"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1">Smart Valve Controller</h6>
+                                                <p class="text-muted mb-0">Connected since: Jan 15, 2025</p>
+                                                <span class="badge bg-warning">Maintenance</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary me-2">Configure</button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger">Disconnect</button>
+                                        </div>
+                                    </div>
+                                </div> -->
+                                <button type="button" class="btn btn-outline-primary mt-3">
+                                    <i class="bi bi-plus-circle me-2"></i>Add New Device
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <!-- <footer class="footer mt-5 py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="bi bi-droplet-fill me-2"></i>HydroLink</h5>
+                    <p class="text-muted">IoT-Based Automatic Water Refilling System for Rationed Water Supply</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="index.html#dashboard">Dashboard</a></li>
+                        <li><a href="index.html#history">History</a></li>
+                        <li><a href="settings.html">Settings</a></li>
+                        <li><a href="#help">Help & Support</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Contact</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-envelope me-2"></i>support@hydrolink.com</li>
+                        <li><i class="bi bi-telephone me-2"></i>(123) 456-7890</li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between align-items-center">
+                <p class="mb-0">&copy; 2025 HydroLink. All rights reserved.</p>
+                <div>
+                    <a href="#" class="me-2"><i class="bi bi-facebook"></i></a>
+                    <a href="#" class="me-2"><i class="bi bi-twitter"></i></a>
+                    <a href="#" class="me-2"><i class="bi bi-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer> -->
+
+    <!-- Bootstrap 5 JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="js/settings.js"></script>
+</body>
+</html>

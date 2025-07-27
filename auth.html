@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HydroLink - Login & Signup</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/auth.css">
+    
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="bi bi-droplet-fill me-2"></i>HydroLink
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">About</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Auth Container -->
+    <div class="auth-container">
+        <div class="container">
+            <div class="row g-0 auth-wrapper">
+                <!-- Left Side - Illustration -->
+                <div class="col-lg-6 auth-illustration-wrapper">
+                    <div class="auth-illustration">
+                        <div class="illustration-content">
+                            <div class="water-drop-animation">
+                                <div class="drop"></div>
+                                <div class="waves"></div>
+                            </div>
+                            <h2 class="illustration-title">Welcome to HydroLink</h2>
+                            <p class="illustration-text">Smart water management at your fingertips</p>
+                        </div>
+                        <div class="wave-container">
+                            <div class="wave wave1"></div>
+                            <div class="wave wave2"></div>
+                            <div class="wave wave3"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Side - Forms -->
+                <div class="col-lg-6 auth-form-wrapper">
+                    <div class="auth-form-container">
+                        <div class="auth-header">
+                            <div class="auth-logo">
+                                <i class="bi bi-droplet-fill"></i>
+                                <span>HydroLink</span>
+                            </div>
+                            <div class="auth-toggle-container">
+                                <button class="auth-toggle-btn active" data-form="login">Login</button>
+                                <button class="auth-toggle-btn" data-form="signup">Sign Up</button>
+                                <div class="auth-toggle-indicator"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Login Form -->
+                        <div class="auth-form active" id="login-form">
+                            <h3 class="auth-title">Login to Your Account</h3>
+                            <p class="auth-subtitle">Welcome back! Please enter your credentials to access your dashboard.</p>
+                            
+                            <form id="loginForm">
+                                <div class="form-floating mb-4">
+                                    <input type="email" class="form-control" id="loginEmail" placeholder="name@example.com" required>
+                                    <label for="loginEmail"><i class="bi bi-envelope"></i> Email address</label>
+                                </div>
+                                
+                                <div class="form-floating mb-4 password-field">
+                                    <input type="password" class="form-control" id="loginPassword" placeholder="Password" required>
+                                    <label for="loginPassword"><i class="bi bi-lock"></i> Password</label>
+                                    <button type="button" class="password-toggle" tabindex="-1">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between mb-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="rememberMe">
+                                        <label class="form-check-label" for="rememberMe">
+                                            Remember me
+                                        </label>
+                                    </div>
+                                    <a href="#" class="forgot-password">Forgot password?</a>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary w-100 mb-4" id="loginSubmitBtn"> Login </button>
+                                
+                                <div class="divider">
+                                    <span>or continue with</span>
+                                </div>
+                                
+                                <div class="social-login">
+                                    <button type="button" class="btn btn-outline-secondary social-btn">
+                                        <i class="bi bi-google"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary social-btn">
+                                        <i class="bi bi-facebook"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary social-btn">
+                                        <i class="bi bi-apple"></i>
+                                    </button>
+                                </div>
+                                
+                                <p class="auth-redirect mt-4 text-center">
+                                    Don't have an account? <a href="#" class="form-switch" data-target="signup">Sign up</a>
+                                </p>
+                            </form>
+                        </div>
+                        
+                        <!-- Signup Form -->
+                        <div class="auth-form" id="signup-form">
+                            <h3 class="auth-title">Create Your Account</h3>
+                            <p class="auth-subtitle">Join HydroLink to manage your water system efficiently.</p>
+                            
+                            <form id="signupForm">
+                                <div class="form-floating mb-4">
+                                    <input type="email" class="form-control" id="signupEmail" placeholder="name@example.com" required>
+                                    <label for="signupEmail"><i class="bi bi-envelope"></i> Email address</label>
+                                </div>
+                                
+                                <div class="form-floating mb-4 password-field">
+                                    <input type="password" class="form-control" id="signupPassword" placeholder="Password" required>
+                                    <label for="signupPassword"><i class="bi bi-lock"></i> Password</label>
+                                    <button type="button" class="password-toggle" tabindex="-1">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="form-floating mb-4 password-field">
+                                    <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm Password" required>
+                                    <label for="confirmPassword"><i class="bi bi-lock-fill"></i> Confirm Password</label>
+                                    <button type="button" class="password-toggle" tabindex="-1">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="form-check mb-4">
+                                    <input class="form-check-input" type="checkbox" id="termsCheck" required>
+                                    <label class="form-check-label" for="termsCheck">
+                                        I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+                                    </label>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary w-100 mb-4" id="signupSubmitBtn">Create Account</button>
+                                
+                                <div class="divider">
+                                    <span>or sign up with</span>
+                                </div>
+                                
+                                <div class="social-login">
+                                    <button type="button" class="btn btn-outline-secondary social-btn">
+                                        <i class="bi bi-google"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary social-btn">
+                                        <i class="bi bi-facebook"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary social-btn">
+                                        <i class="bi bi-apple"></i>
+                                    </button>
+                                </div>
+                                
+                                <p class="auth-redirect mt-4 text-center">
+                                    Already have an account? <a href="#" class="form-switch" data-target="login">Login</a>
+                                </p>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS (now includes Firebase logic) -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+        // No need for getDatabase or set here, as device linking happens in setup.html
+        // import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js"; 
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Your web app's Firebase configuration
+            const firebaseConfig = {
+                apiKey: "AIzaSyCmFInEL6TMoD-9JwdPy-e9niNGGL5SjHA",
+                authDomain: "hydrolink-d3c57.firebaseapp.com",
+                databaseURL: "https://hydrolink-d3c57-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "hydrolink-d3c57",
+                storageBucket: "hydrolink-d3c57.firebasestorage.app",
+                messagingSenderId: "770257381412",
+                appId: "1:770257381412:web:a894f35854cb82274950b1"
+            };
+
+            // Initialize Firebase
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            // const database = getDatabase(app); // No longer needed here
+
+            // UI Elements
+            const toggleButtons = document.querySelectorAll('.auth-toggle-btn');
+            const toggleIndicator = document.querySelector('.auth-toggle-indicator');
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const formSwitchLinks = document.querySelectorAll('.form-switch');
+            const loginEmailInput = document.getElementById('loginEmail');
+            const loginPasswordInput = document.getElementById('loginPassword');
+            const loginSubmitBtn = document.getElementById('loginSubmitBtn');
+            const signupEmailInput = document.getElementById('signupEmail');
+            const signupPasswordInput = document.getElementById('signupPassword');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const termsCheckInput = document.getElementById('termsCheck');
+            const signupSubmitBtn = document.getElementById('signupSubmitBtn');
+
+            // Set initial form heights to ensure smooth transitions
+            function setFormContainerHeight() {
+                const activeForm = document.querySelector('.auth-form.active');
+                const formContainer = document.querySelector('.auth-form-container');
+                if (activeForm && formContainer) {
+                    formContainer.style.minHeight = `${activeForm.offsetHeight}px`;
+                }
+            }
+            
+            // Call on page load
+            setFormContainerHeight();
+            
+            // Toggle form when clicking the toggle buttons
+            toggleButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const formType = this.getAttribute('data-form');
+                    switchForm(formType);
+                });
+            });
+            
+            // Toggle form when clicking the form switch links
+            formSwitchLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const formType = this.getAttribute('data-target');
+                    switchForm(formType);
+                });
+            });
+            
+            // Function to switch between login and signup forms
+            function switchForm(formType) {
+                if (formType === 'login') {
+                    loginForm.classList.add('active');
+                    signupForm.classList.remove('active');
+                    toggleButtons[0].classList.add('active');
+                    toggleButtons[1].classList.remove('active');
+                    toggleIndicator.style.transform = 'translateX(0)';
+                } else {
+                    loginForm.classList.remove('active');
+                    signupForm.classList.add('active');
+                    toggleButtons[0].classList.remove('active');
+                    toggleButtons[1].classList.add('active');
+                    toggleIndicator.style.transform = 'translateX(100%)';
+                }
+                setFormContainerHeight(); // Adjust height after switching
+            }
+
+            // --- Password Visibility Toggle ---
+            const passwordToggles = document.querySelectorAll('.password-toggle');
+            passwordToggles.forEach(toggle => {
+                toggle.addEventListener('click', function() {
+                    const passwordField = this.parentElement.querySelector('input[type="password"], input[type="text"]');
+                    const icon = this.querySelector('i');
+                    
+                    if (passwordField.type === 'password') {
+                        passwordField.type = 'text';
+                        icon.classList.remove('bi-eye');
+                        icon.classList.add('bi-eye-slash');
+                    } else {
+                        passwordField.type = 'password';
+                        icon.classList.remove('bi-eye-slash');
+                        icon.classList.add('bi-eye');
+                    }
+                });
+            });
+
+            // --- Firebase Authentication Logic ---
+
+            // Login Form Submission
+            loginSubmitBtn.addEventListener('click', async (e) => {
+                e.preventDefault(); // Prevent default form submission
+
+                const email = loginEmailInput.value;
+                const password = loginPasswordInput.value;
+
+                if (!email || !password) {
+                    // Replaced alert with custom modal or message box
+                    displayMessage("Please enter both email and password.", "danger");
+                    return;
+                }
+
+                try {
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    // User is signed in. No device linking here.
+                    showSuccessMessage('login');
+                } catch (error) {
+                    console.error("Login Error:", error.code, error.message);
+                    let errorMessage = "Login failed. Please check your credentials.";
+                    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                        errorMessage = "Invalid email or password.";
+                    } else if (error.code === 'auth/invalid-email') {
+                        errorMessage = "Invalid email format.";
+                    }
+                    displayMessage(errorMessage, "danger");
+                }
+            });
+
+            // Signup Form Submission
+            signupSubmitBtn.addEventListener('click', async (e) => {
+                e.preventDefault(); // Prevent default form submission
+
+                const email = signupEmailInput.value;
+                const password = signupPasswordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+                const termsChecked = termsCheckInput.checked;
+
+                if (!email || !password || !confirmPassword) {
+                    displayMessage("Please fill in all required fields.", "danger");
+                    return;
+                }
+                if (password !== confirmPassword) {
+                    displayMessage("Passwords do not match.", "danger");
+                    return;
+                }
+                if (password.length < 6) {
+                    displayMessage("Password should be at least 6 characters.", "danger");
+                    return;
+                }
+                if (!termsChecked) {
+                    displayMessage("You must agree to the Terms of Service and Privacy Policy.", "danger");
+                    return;
+                }
+
+                try {
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    // User is signed up. No device linking here.
+                    showSuccessMessage('signup');
+                } catch (error) {
+                    console.error("Signup Error:", error.code, error.message);
+                    let errorMessage = "Account creation failed.";
+                    if (error.code === 'auth/email-already-in-use') {
+                        errorMessage = "This email address is already in use.";
+                    } else if (error.code === 'auth/invalid-email') {
+                        errorMessage = "Invalid email format.";
+                    } else if (error.code === 'auth/weak-password') {
+                        errorMessage = "Password is too weak. Please choose a stronger one.";
+                    }
+                    displayMessage(errorMessage, "danger");
+                }
+            });
+
+            // Function to display messages (replaces alert)
+            function displayMessage(message, type) {
+                const messageContainer = document.querySelector('.auth-form.active');
+                let alertDiv = messageContainer.querySelector('.temp-alert');
+                if (!alertDiv) {
+                    alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert mt-3 temp-alert';
+                    messageContainer.prepend(alertDiv);
+                }
+                alertDiv.className = `alert alert-${type} mt-3 temp-alert`;
+                alertDiv.textContent = message;
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    if (alertDiv) alertDiv.remove();
+                }, 3000);
+            }
+
+            // Show success message and redirect
+            function showSuccessMessage(type) {
+                const form = type === 'login' ? loginForm : signupForm;
+                form.innerHTML = `
+                    <div class="text-center text-success mb-4">
+                        <i class="bi bi-check-circle-fill" style="font-size: 4rem;"></i>
+                    </div>
+                    <p class="lead text-center auth-title">${type === 'login' ? 'Redirecting you to device setup...' : 'Account created! Redirecting to device setup...'}</p>
+                    <div class="mt-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                `;
+                
+                // Update container height for the success message
+                setFormContainerHeight();
+                
+                // Redirect to setup.html after 2 seconds
+                setTimeout(() => {
+                    window.location.href = 'setup.html'; // Redirect to device setup page
+                }, 2000);
+            }
+            
+            // Add ripple effect to buttons (from original auth.js)
+            const buttons = document.querySelectorAll('.btn');
+            
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    const x = e.clientX - e.target.getBoundingClientRect().left;
+                    const y = e.clientY - e.target.getBoundingClientRect().top;
+                    
+                    const ripple = document.createElement('span');
+                    ripple.className = 'ripple';
+                    ripple.style.left = `${x}px`;
+                    ripple.style.top = `${y}px`;
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+            
+            // Handle window resize to adjust form container height
+            window.addEventListener('resize', setFormContainerHeight);
+        });
+    </script>
+</body>
+</html>

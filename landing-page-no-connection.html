@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hydrolink IoT - Wi-Fi Setup</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --secondary-blue: #1e40af;
+            --light-blue: #dbeafe;
+            --accent-teal: #0891b2;
+            --accent-green: #059669;
+            --warning-orange: #ea580c;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--light-blue) 0%, #f8fafc 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .device-info-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.1);
+            border: 2px solid var(--light-blue);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .device-info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(37, 99, 235, 0.15);
+        }
+
+        .wifi-form-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-top: 4px solid var(--primary-blue);
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-teal) 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .step-indicator {
+            background: var(--light-blue);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-blue);
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .step-indicator.active {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .faq-item {
+            border: 1px solid var(--light-blue);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .faq-header {
+            background: var(--light-blue);
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .faq-header:hover {
+            background: #bfdbfe;
+        }
+
+        .faq-content {
+            padding: 15px 20px;
+            background: white;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-connected {
+            background-color: var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        .status-disconnected {
+            background-color: var(--warning-orange);
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .loading-spinner {
+            display: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+        }
+
+        .alert-custom {
+            border-radius: 10px;
+            border: none;
+        }
+
+        .icon-large {
+            font-size: 3rem;
+            color: var(--primary-blue);
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="display-4 fw-bold mb-3">
+                        <i class="fas fa-wifi me-3"></i>Hydrolink IoT Setup
+                    </h1>
+                    <p class="lead mb-0">Connect your Hydrolink device to your Wi-Fi network in just a few simple steps.</p>
+                </div>
+                <div class="col-lg-4 text-center">
+                    <i class="fas fa-microchip icon-large text-white"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Instructions Section -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card wifi-form-card">
+                    <div class="card-body p-4">
+                        <h3 class="card-title text-center mb-4">
+                            <i class="fas fa-list-ol text-primary me-2"></i>Setup Instructions
+                        </h3>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="step-indicator active">1</div>
+                                    <div>
+                                        <h6 class="mb-1">Connect to Hotspot</h6>
+                                        <small class="text-muted">Connect your device to the ESP32 hotspot below</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="step-indicator">2</div>
+                                    <div>
+                                        <h6 class="mb-1">Enter Wi-Fi Details</h6>
+                                        <small class="text-muted">Fill in your home Wi-Fi credentials</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="step-indicator">3</div>
+                                    <div>
+                                        <h6 class="mb-1">Complete Setup</h6>
+                                        <small class="text-muted">Device will connect and redirect automatically</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Device Connection Info -->
+        <div class="row mb-5">
+            <div class="col-lg-6 mb-4">
+                <div class="card device-info-card h-100">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-wifi icon-large"></i>
+                        <h4 class="card-title text-primary">ESP32 Hotspot</h4>
+                        <div class="alert alert-info alert-custom">
+                            <h5 class="mb-2">
+                                <i class="fas fa-network-wired me-2"></i>Network Name
+                            </h5>
+                            <code class="fs-5">Hydrolink_Setup</code>
+                        </div>
+                        <div class="alert alert-warning alert-custom">
+                            <h5 class="mb-2">
+                                <i class="fas fa-key me-2"></i>Password
+                            </h5>
+                            <code class="fs-5">password123</code>
+                        </div>
+                        <p class="text-muted">
+                            <span class="status-indicator status-connected"></span>
+                            Hotspot Active - Ready for Connection
+                        </p>
+                        <!-- New button to proceed to setup.html -->
+                        <div class="d-grid mt-4">
+                            <a href="setup.html" class="btn btn-primary-custom btn-lg">
+                                <i class="fas fa-cogs me-2"></i>Proceed to Device Setup
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card wifi-form-card">
+                    <div class="card-body p-4">
+                        <h3 class="card-title text-center mb-4">
+                            <i class="fas fa-question-circle text-primary me-2"></i>Frequently Asked Questions
+                        </h3>
+                        
+                        <div class="faq-item">
+                            <div class="faq-header" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-chevron-right me-2"></i>
+                                    I can't see the Hydrolink hotspot in my Wi-Fi list
+                                </h6>
+                            </div>
+                            <div id="faq1" class="collapse">
+                                <div class="faq-content">
+                                    <p>Make sure your Hydrolink device is powered on and in setup mode. The LED should be blinking blue. If you still can't see it, try refreshing your Wi-Fi list or moving closer to the device.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-header" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-chevron-right me-2"></i>
+                                    What happens after I submit my Wi-Fi credentials?
+                                </h6>
+                            </div>
+                            <div id="faq2" class="collapse">
+                                <div class="faq-content">
+                                    <p>Your device will attempt to connect to your Wi-Fi network. Once successful, you'll be automatically redirected to the main dashboard. This process usually takes 30-60 seconds.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-header" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-chevron-right me-2"></i>
+                                    My Wi-Fi password contains special characters. Will it work?
+                                </h6>
+                            </div>
+                            <div id="faq3" class="collapse">
+                                <div class="faq-content">
+                                    <p>Yes, the system supports all standard Wi-Fi password characters including special symbols. Make sure to enter the password exactly as it appears, including capitalization.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-header" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-chevron-right me-2"></i>
+                                    The setup is taking too long. What should I do?
+                                </h6>
+                            </div>
+                            <div id="faq4" class="collapse">
+                                <div class="faq-content">
+                                    <p>If the setup takes more than 2 minutes, check that your Wi-Fi credentials are correct and that your router is working properly. You can restart the setup process by power cycling your Hydrolink device.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-header" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-chevron-right me-2"></i>
+                                    Can I change the Wi-Fi network later?
+                                </h6>
+                            </div>
+                            <div id="faq5" class="collapse">
+                                <div class="faq-content">
+                                    <p>Yes, you can reconfigure the Wi-Fi settings anytime through the device settings in the main dashboard, or by holding the reset button for 10 seconds to enter setup mode again.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="row mb-5">
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">
+                <i class="fas fa-water text-primary me-2"></i>
+                Hydrolink IoT &copy; 2024 - Smart Water Management Solutions
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle password visibility
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const icon = this.querySelector('i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+
+        // FAQ accordion icons
+        document.querySelectorAll('.faq-header').forEach(header => {
+            header.addEventListener('click', function() {
+                const icon = this.querySelector('i');
+                const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                
+                if (isExpanded) {
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-right');
+                } else {
+                    icon.classList.remove('fa-chevron-right');
+                    icon.classList.add('fa-chevron-down');
+                }
+            });
+        });
+
+        // Wi-Fi setup form submission
+        // Removed the form submission logic as it's not directly interacting with ESP32 from here.
+        // The user will manually connect to the hotspot, then proceed to setup.html.
+        /*
+        document.getElementById('wifiSetupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const ssid = document.getElementById('ssid').value;
+            const password = document.getElementById('password').value;
+            const saveCredentials = document.getElementById('saveCredentials').checked;
+            
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const spinner = submitBtn.querySelector('.loading-spinner');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            submitBtn.disabled = true;
+            spinner.style.display = 'inline-block';
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Configuring...';
+            
+            // Show status message
+            statusMessage.innerHTML = `
+                <div class="alert alert-info alert-custom">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Connecting to <strong>${ssid}</strong>... Please wait.
+                </div>
+            `;
+
+            // Simulate the Wi-Fi configuration process
+            // In a real implementation, this would send the credentials to your ESP32
+            setTimeout(() => {
+                // Simulate successful connection
+                statusMessage.innerHTML = `
+                    <div class="alert alert-success alert-custom">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Successfully connected to <strong>${ssid}</strong>! Redirecting to dashboard...
+                    </div>
+                `;
+                
+                // Update step indicators
+                document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
+                    if (index < 3) {
+                        indicator.classList.add('active');
+                    }
+                });
+                
+                // Redirect to index.html after successful setup
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 3000);
+                
+            }, 2000);
+            
+            // Handle potential errors (uncomment for error simulation)
+            // setTimeout(() => {
+            //     statusMessage.innerHTML = `
+            //         <div class="alert alert-danger alert-custom">
+            //             <i class="fas fa-exclamation-triangle me-2"></i>
+            //             Failed to connect to <strong>${ssid}</strong>. Please check your credentials and try again.
+            //         </div>
+            //     `;
+                
+            //     submitBtn.disabled = false;
+            //     spinner.style.display = 'none';
+            //     submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Configure Wi-Fi';
+            // }, 2000);
+        });
+        */
+
+        // Save credentials to localStorage if checkbox is checked
+        document.getElementById('saveCredentials').addEventListener('change', function() {
+            if (this.checked) {
+                const ssid = document.getElementById('ssid').value;
+                if (ssid) {
+                    localStorage.setItem('hydrolink_ssid', ssid);
+                }
+            } else {
+                localStorage.removeItem('hydrolink_ssid');
+            }
+        });
+
+        // Load saved credentials on page load
+        window.addEventListener('load', function() {
+            const savedSSID = localStorage.getItem('hydrolink_ssid');
+            if (savedSSID) {
+                document.getElementById('ssid').value = savedSSID;
+                document.getElementById('saveCredentials').checked = true;
+            }
+        });
+    </script>
+</body>
+</html>
