@@ -7,6 +7,30 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Custom styles for status indicator */
+        .status-indicator {
+            display: flex;
+            align-items: center;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #ccc; /* Default grey for unknown/offline */
+            margin-right: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        .status-dot.online {
+            background-color: #28a745; /* Green for online */
+        }
+
+        .status-dot.offline {
+            background-color: #dc3545; /* Red for offline */
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
@@ -23,7 +47,7 @@
                         <a class="nav-link active" href="#dashboard">Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#history">History</a>
+                        <a class="nav-link" href="history.html">History</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="setup.html">Setup Device</a>
@@ -33,7 +57,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="auth.html">
-                            <i class="bi bi-person-circle"></i>
+                            <i class="bi bi-person-circle"></i> Login
                         </a>
                     </li>
                     <li class="nav-item">
@@ -203,21 +227,6 @@
             </div>
 
             <div class="row">
-                <div class="col-lg-8 mb-4">
-                    <div class="card shadow-sm">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Water Usage Trends</h5>
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-sm btn-outline-primary active" data-period="week">Week</button>
-                                <button type="button" class="btn btn-sm btn-outline-primary" data-period="month">Month</button>
-                                <button type="button" class="btn btn-sm btn-outline-primary" data-period="year">Year</button>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="waterUsageChart" height="250"></canvas>
-                        </div>
-                    </div>
-                </div>
                 <div class="col-lg-4 mb-4">
                     <div class="card shadow-sm rounded-4">
                         <div class="card-header text-white rounded-top-4">
@@ -231,59 +240,6 @@
                     </div>
                 </div>
                 
-            </div>
-        </section>
-
-        <section id="history" class="mb-5">
-            <div class="card shadow-sm">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Refill History</h5>
-                    <div class="d-flex">
-                        <div class="input-group input-group-sm me-2" style="width: 200px;">
-                            <span class="input-group-text"><i class="bi bi-search"></i></span>
-                            <input type="text" class="form-control" placeholder="Search history...">
-                        </div>
-                        <button class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-download"></i> Export
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Date & Time</th>
-                                    <th>Initial Level</th>
-                                    <th>Final Level</th>
-                                    <th>Volume (L)</th>
-                                    <th>Duration</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="refillHistoryTable">
-                                <tr>
-                                    <td colspan="6" class="text-center text-muted">No refill history available yet.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <nav>
-                        <ul class="pagination pagination-sm justify-content-center mb-0">
-                            <li class="page-item disabled">
-                                <a class="page-link" href="#" tabindex="-1">Previous</a>
-                            </li>
-                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item"><a class="page-link" href="#">3</a></li>
-                            <li class="page-item">
-                                <a class="page-link" href="#">Next</a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
             </div>
         </section>
     </div>
@@ -345,166 +301,114 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-    <script>
-        // Firebase configuration
+    <!-- Assuming main.js is in a 'js' subdirectory. If not, change src="main.js" -->
+    <script type="module" src="js/main.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+        // Firebase configuration (same as in setup.html)
         const firebaseConfig = {
             apiKey: "AIzaSyCmFInEL6TMoD-9JwdPy-e9niNGGL5SjHA",
             authDomain: "hydrolink-d3c57.firebaseapp.com",
             databaseURL: "https://hydrolink-d3c57-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "hydrolink-d3c57",
-            storageBucket: "hydrolink-d3c57.appspot.com",
-            messagingSenderId: "1234567890",
-            appId: "1:1234567890:web:abcdef1234567890"
+            storageBucket: "hydrolink-d3c57.firebasestorage.app",
+            messagingSenderId: "770257381412",
+            appId: "1:770257381412:web:a894f35854cb82274950b1"
         };
 
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
 
-        // Get device ID (you might want to make this dynamic)
-        const deviceId = "6C:C8:40:55:E0:70"; // Replace with actual device ID or get from URL
+        let currentUserId = null;
+        let DEVICE_ID = null;
+        let lastUpdateCheckInterval = null; // To store the interval ID
 
-        // DOM elements
-        const waterPercentageDisplay = document.getElementById('waterPercentageDisplay');
-        const waterLevelFill = document.getElementById('waterLevelFill');
-        const refillThresholdDisplay = document.getElementById('refillThresholdDisplay');
-        const lastUpdatedDisplay = document.getElementById('lastUpdatedDisplay');
         const systemStatusText = document.getElementById('systemStatusText');
         const systemStatusDot = document.getElementById('systemStatusDot');
+        const lastUpdatedDisplay = document.getElementById('lastUpdatedDisplay');
 
-        // Update water tank visualization
-        function updateWaterTank(percentage) {
-            waterLevelFill.style.height = percentage + '%';
-            
-            // Change color based on level
-            if (percentage < 20) {
-                waterLevelFill.style.backgroundColor = '#dc3545'; // Red
-            } else if (percentage < 50) {
-                waterLevelFill.style.backgroundColor = '#ffc107'; // Yellow
+        // Function to update system status
+        function updateSystemStatus(isOnline) {
+            if (isOnline) {
+                systemStatusText.textContent = "Online";
+                systemStatusDot.classList.remove('offline');
+                systemStatusDot.classList.add('online');
             } else {
-                waterLevelFill.style.backgroundColor = '#0d6efd'; // Blue
+                systemStatusText.textContent = "Offline";
+                systemStatusDot.classList.remove('online');
+                systemStatusDot.classList.add('offline');
             }
         }
 
-        // Update threshold marker
-        function updateThresholdMarker(threshold) {
-            // Remove existing threshold marker if any
-            const existingMarker = document.querySelector('.threshold-marker');
-            if (existingMarker) {
-                existingMarker.remove();
+        // Function to check device last update
+        function checkDeviceLastUpdate() {
+            if (!DEVICE_ID) {
+                console.warn("DEVICE_ID not available for status check.");
+                updateSystemStatus(false); // Set to offline if no device ID
+                lastUpdatedDisplay.textContent = "N/A";
+                return;
             }
-            
-            // Create new threshold marker
-            const waterTank = document.querySelector('.water-tank');
-            const marker = document.createElement('div');
-            marker.className = 'threshold-marker';
-            marker.style.bottom = threshold + '%';
-            marker.innerHTML = `<span>Refill at ${threshold}%</span>`;
-            waterTank.appendChild(marker);
+
+            const lastUpdatedRef = ref(database, `hydrolink/devices/${DEVICE_ID}/status/lastUpdated`);
+            onValue(lastUpdatedRef, (snapshot) => {
+                const lastUpdatedTimestamp = snapshot.val();
+                const currentTime = Date.now(); // Current time in milliseconds
+
+                if (lastUpdatedTimestamp) {
+                    const timeDifferenceSeconds = (currentTime - lastUpdatedTimestamp) / 1000;
+
+                    const date = new Date(lastUpdatedTimestamp);
+                    lastUpdatedDisplay.textContent = date.toLocaleString(); // Format as local date and time
+
+                    if (timeDifferenceSeconds < 60) { // Less than 1 minute
+                        updateSystemStatus(true); // Online
+                    } else {
+                        updateSystemStatus(false); // Offline
+                    }
+                } else {
+                    // No lastUpdated timestamp found
+                    updateSystemStatus(false); // Offline
+                    lastUpdatedDisplay.textContent = "N/A";
+                }
+            }, { onlyOnce: false }); // Listen for real-time updates
         }
 
-        // Listen for real-time updates
-        function setupFirebaseListeners() {
-            const deviceRef = database.ref('hydrolink/deviceId/' + deviceId);
-            
-            // Water percentage
-            deviceRef.child('waterPercentage').on('value', (snapshot) => {
-                const percentage = snapshot.val();
-                if (percentage !== null) {
-                    updateWaterTank(percentage);
-                    waterPercentageDisplay.textContent = Math.round(percentage) + '%';
-                }
-            });
-            
-            // Refill threshold
-            deviceRef.child('refillThresholdPercentage').on('value', (snapshot) => {
-                const threshold = snapshot.val();
-                if (threshold !== null) {
-                    refillThresholdDisplay.textContent = threshold + '%';
-                    updateThresholdMarker(threshold);
-                }
-            });
-            
-            // Last updated timestamp
-            deviceRef.child('lastUpdated').on('value', (snapshot) => {
-                const timestamp = snapshot.val();
-                if (timestamp) {
-                    const date = new Date(timestamp);
-                    lastUpdatedDisplay.textContent = date.toLocaleString();
-                } else {
-                    lastUpdatedDisplay.textContent = 'N/A'; // Show N/A if timestamp is null/removed
-                }
-            });
-            
-            // System status
-            deviceRef.child('systemStatus').on('value', (snapshot) => {
-                const status = snapshot.val();
-                if (status) {
-                    systemStatusText.textContent = status.charAt(0).toUpperCase() + status.slice(1);
-                    systemStatusDot.className = status === 'online' ? 'status-dot bg-success' : 'status-dot bg-danger';
-                } else {
-                    // Default to offline if status is not found or is null (e.g., after onDisconnectRemove)
-                    systemStatusText.textContent = 'Offline';
-                    systemStatusDot.className = 'status-dot bg-danger';
-                }
-            });
-            
-            // Drum height measurement
-            deviceRef.child('drumHeightCm').on('value', (snapshot) => {
-                const height = snapshot.val();
-                if (height !== null && height <= 0) {
-                    // Show alert if drum height not calibrated
-                    alert('Drum height not calibrated! Please measure the drum height in the Setup page.');
-                }
-            });
-            
-            // Current water level (distance from sensor)
-            deviceRef.child('currentWaterLevelCm').on('value', (snapshot) => {
-                const distance = snapshot.val();
-                if (distance !== null) {
-                    // Optional: You can use this value if needed
-                    console.log("Distance from sensor:", distance, "cm");
-                }
-            });
-        }
+        // Authentication state listener
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUserId = user.uid;
+                console.log("Dashboard: User signed in:", user.email || "Anonymous", "UID:", currentUserId);
 
-        // Initialize the dashboard
-        document.addEventListener('DOMContentLoaded', () => {
-            setupFirebaseListeners();
-            
-            // Set initial load time
-            document.getElementById('initialLoadTime').textContent = new Date().toLocaleString();
-            
-            // Handle range inputs in customize modal
-            document.getElementById('autoRefillThreshold').addEventListener('input', (e) => {
-                document.getElementById('thresholdValue').textContent = e.target.value + '%';
-            });
-            
-            document.getElementById('maxFillLevel').addEventListener('input', (e) => {
-                document.getElementById('maxFillValue').textContent = e.target.value + '%';
-            });
-            
-            document.getElementById('refillPercentage').addEventListener('input', (e) => {
-                document.getElementById('refillPercentageValue').textContent = e.target.value + '%';
-            });
-            
-            // Save settings
-            document.getElementById('saveCustomizeSettings').addEventListener('click', () => {
-                const threshold = document.getElementById('autoRefillThreshold').value;
-                const maxFill = document.getElementById('maxFillLevel').value;
-                
-                database.ref('hydrolink/deviceId/' + deviceId).update({
-                    refillThresholdPercentage: parseInt(threshold),
-                    maxFillLevelPercentage: parseInt(maxFill)
-                }).then(() => {
-                    alert('Settings saved successfully!');
-                    bootstrap.Modal.getInstance(document.getElementById('customizeModal')).hide();
-                }).catch((error) => {
-                    alert('Error saving settings: ' + error.message);
-                });
-            });
+                // Load DEVICE_ID from localStorage
+                const storedDeviceId = localStorage.getItem(`hydrolink_device_id_${currentUserId}`);
+                if (storedDeviceId) {
+                    DEVICE_ID = storedDeviceId;
+                    console.log("Dashboard: Loaded device ID from localStorage:", DEVICE_ID);
+                    checkDeviceLastUpdate(); // Start checking device status
+                    // Set up a periodic check as a fallback (e.g., every 30 seconds)
+                    if (lastUpdateCheckInterval) clearInterval(lastUpdateCheckInterval); // Clear previous interval if exists
+                    lastUpdateCheckInterval = setInterval(checkDeviceLastUpdate, 30000); // Check every 30 seconds
+                } else {
+                    console.warn("Dashboard: No device ID found in localStorage. Device not linked yet.");
+                    updateSystemStatus(false); // Set to offline
+                    lastUpdatedDisplay.textContent = "No device linked";
+                }
+
+            } else {
+                currentUserId = null;
+                DEVICE_ID = null;
+                console.log("Dashboard: User signed out. Redirecting to login.");
+                if (lastUpdateCheckInterval) clearInterval(lastUpdateCheckInterval); // Clear interval on sign out
+                // Only redirect if not already on auth.html to prevent loop
+                if (!window.location.pathname.endsWith('auth.html')) {
+                    window.location.href = 'auth.html';
+                }
+            }
         });
     </script>
 </body>

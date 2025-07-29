@@ -1,744 +1,1222 @@
-#include <WiFi.h>
-#include <WiFiManager.h>
-#include <FirebaseESP32.h>
-#include <time.h>
-#include <Preferences.h>
-
-// --- Configuration Constants ---
-const char* AP_SSID = "HydroLink_Setup";
-const char* AP_PASSWORD = "password123";
-const int CONFIG_PORTAL_TIMEOUT_SECONDS = 180;
-
-// Pin Definitions
-//for OLED screen
-#define I2C_SDA_PIN 21
-#define I2C_SCL_PIN 22
-
-//Ultrasonic Sensor/Water Level sensor
-#define ULTRASONIC_TRIG_PIN 5
-#define ULTRASONIC_ECHO_PIN 18
-
-//Battery
-#define BATTERY_SENSE_PIN 34
-#define RELAY_PIN 23
-
-// Firebase configuration
-#define FIREBASE_HOST_STR "hydrolink-d3c57-default-rtdb.asia-southeast1.firebasedatabase.app"
-#define FIREBASE_API_KEY "AIzaSyCmFInEL6TMoD-9JwdPy-e9niNGGL5SjHA"
-#define FIREBASE_DATABASE_URL "https://hydrolink-d3c57-default-rtdb.asia-southeast1.firebasedatabase.app/"
-
-// NTP configuration
-const char* ntpServer = "pool.ntp.org";
-const long gmtOffset_sec = 28800; // GMT+8 for Philippines
-const int daylightOffset_sec = 0;
-
-// --- Global Variables ---
-WiFiManager wm;
-Preferences preferences;
-
-FirebaseData firebaseData;
-FirebaseConfig firebaseConfig;
-FirebaseAuth firebaseAuth;
-
-// System variables
-float waterDistanceCm = 0.0;
-int waterPercentage = 0;
-bool waterAvailable = true;
-int refillThresholdPercentage = 25; // Default value
-int maxFillLevelPercentage = 75;    // Default value
-int batteryPercentage = 0;
-bool drumHeightInitialized = false;
-float drumHeightCm = 0.0;
-
-// Control flags
-bool isDeviceFullyConfigured = false;
-bool wifiConnected = false;
-String deviceFirebaseId = "";
-String deviceMacAddress = "";
-bool isLinkedToUser = false;
-
-// Timing variables
-unsigned long lastSensorRead = 0;
-unsigned long lastFirebaseUpdate = 0;
-unsigned long lastSettingsCheck = 0;
-const unsigned long SENSOR_INTERVAL = 5000;     // 5 seconds
-const unsigned long FIREBASE_INTERVAL = 10000;  // 10 seconds
-const unsigned long SETTINGS_INTERVAL = 30000;  // 30 seconds
-
-// --- Function Prototypes ---
-void configModeCallback(WiFiManager *myWiFiManager);
-void saveConfigCallback();
-String getMacAddress();
-float readUltrasonicCm();
-void calculateWaterPercentage();
-void updateFirebaseData();
-void readFirebaseSettings();
-void measureDrumHeight();
-bool fetchDrumHeightFromFirebase();
-void initializeDrumHeight();
-int readBatteryPercentage();
-void setSystemStatus(String status);
-void checkManualDrumMeasurement();
-void setupFirebaseAuthentication();
-void mapMacToFirebaseUid();
-bool ensureFirebaseConnection();
-void handleWiFiReconnection();
-void loadSettingsFromPreferences();
-void saveSettingsToPreferences();
-bool checkDeviceLinkStatus();
-String getStoredFirebaseId();
-void storeFirebaseId(String uid);
-
-// --- Helper Functions ---
-
-void loadSettingsFromPreferences() {
-    preferences.begin("hydrolink", true);
-    
-    // Load all persistent settings
-    drumHeightCm = preferences.getFloat("drumHeight", 0.0);
-    refillThresholdPercentage = preferences.getInt("refillThreshold", 25);
-    maxFillLevelPercentage = preferences.getInt("maxFillLevel", 75);
-    waterDistanceCm = preferences.getFloat("lastWaterDistance", 0.0);
-    waterPercentage = preferences.getInt("lastWaterPercent", 0);
-    waterAvailable = preferences.getBool("lastWaterAvailable", true);
-    batteryPercentage = preferences.getInt("lastBattery", 100);
-    
-    // Check if drum height is initialized
-    drumHeightInitialized = (drumHeightCm > 0);
-    isDeviceFullyConfigured = drumHeightInitialized;
-    
-    preferences.end();
-    
-    Serial.println("=== Settings Loaded from Preferences ===");
-    Serial.println("Drum height: " + String(drumHeightCm) + " cm");
-    Serial.println("Refill threshold: " + String(refillThresholdPercentage) + "%");
-    Serial.println("Max fill level: " + String(maxFillLevelPercentage) + "%");
-    Serial.println("Device configured: " + String(isDeviceFullyConfigured ? "Yes" : "No"));
-}
-
-void saveSettingsToPreferences() {
-    preferences.begin("hydrolink", false);
-    
-    preferences.putFloat("drumHeight", drumHeightCm);
-    preferences.putInt("refillThreshold", refillThresholdPercentage);
-    preferences.putInt("maxFillLevel", maxFillLevelPercentage);
-    preferences.putFloat("lastWaterDistance", waterDistanceCm);
-    preferences.putInt("lastWaterPercent", waterPercentage);
-    preferences.putBool("lastWaterAvailable", waterAvailable);
-    preferences.putInt("lastBattery", batteryPercentage);
-    
-    preferences.end();
-}
-
-String getStoredFirebaseId() {
-    preferences.begin("hydrolink", true);
-    String storedId = preferences.getString("firebaseUid", "");
-    preferences.end();
-    return storedId;
-}
-
-void storeFirebaseId(String uid) {
-    preferences.begin("hydrolink", false);
-    preferences.putString("firebaseUid", uid);
-    preferences.end();
-}
-
-bool checkDeviceLinkStatus() {
-    if (deviceFirebaseId.isEmpty() || !Firebase.ready()) {
-        return false;
-    }
-    
-    String linkPath = "hydrolink/devices/" + deviceFirebaseId + "/linkedUsers";
-    if (Firebase.get(firebaseData, linkPath)) {
-        if (firebaseData.jsonString() != "null" && firebaseData.jsonString().length() > 4) {
-            Serial.println("Device is linked to user account");
-            isLinkedToUser = true;
-            return true;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hydrolink - Device Setup</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --secondary-blue: #1e40af;
+            --light-blue: #dbeafe;
+            --accent-teal: #0891b2;
+            --accent-green: #059669;
+            --warning-orange: #ea580c;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
         }
-    }
-    
-    isLinkedToUser = false;
-    return false;
-}
 
-void initializeDrumHeight() {
-    // Settings already loaded from preferences in loadSettingsFromPreferences()
-    if (drumHeightInitialized) {
-        Serial.println("Drum height already initialized: " + String(drumHeightCm) + " cm");
-        return;
-    }
-    
-    Serial.println("Initializing drum height...");
-    
-    // Try Firebase if device is linked
-    if (isLinkedToUser && Firebase.ready() && fetchDrumHeightFromFirebase()) {
-        Serial.println("Drum height set from Firebase.");
-        drumHeightInitialized = true;
-        isDeviceFullyConfigured = true;
-        saveSettingsToPreferences();
-        return;
-    }
+        body {
+            background: linear-gradient(135deg, var(--light-blue) 0%, #f8fafc 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
 
-    Serial.println("Drum height not found. Awaiting setup via web app.");
-}
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+        }
 
-bool fetchDrumHeightFromFirebase() {
-    if (deviceFirebaseId.isEmpty()) {
-        Serial.println("Cannot fetch from Firebase: Device Firebase ID not set.");
-        return false;
-    }
-    
-    String heightPath = "hydrolink/devices/" + deviceFirebaseId + "/settings/drumHeightCm";
-    Serial.print("Reading drum height from: ");
-    Serial.println(heightPath);
-    
-    if (Firebase.getFloat(firebaseData, heightPath)) {
-        if (firebaseData.dataType() == "float" || firebaseData.dataType() == "int") {
-            float newDrumHeight = firebaseData.floatData();
-            if (newDrumHeight > 0) {
-                drumHeightCm = newDrumHeight;
-                drumHeightInitialized = true;
-                isDeviceFullyConfigured = true;
-                saveSettingsToPreferences();
-                
-                Serial.print("Drum height fetched from Firebase: ");
-                Serial.println(newDrumHeight);
-                return true;
-            } else {
-                Serial.println("Invalid drum height from Firebase (<=0)");
+        .setup-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.1);
+            border: 2px solid var(--light-blue);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
+        }
+
+        .setup-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(37, 99, 235, 0.15);
+        }
+
+        .step-header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-teal) 100%);
+            color: white;
+            padding: 1.5rem;
+            margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+        }
+
+        .step-number {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-teal) 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-success-custom {
+            background: linear-gradient(135deg, var(--accent-green) 0%, #10b981 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-success-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(5, 150, 105, 0.3);
+        }
+
+        .instruction-item {
+            background: #f8fafc;
+            border-left: 4px solid var(--primary-blue);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0 10px 10px 0;
+            transition: all 0.3s ease;
+        }
+
+        .instruction-item:hover {
+            background: var(--light-blue);
+            transform: translateX(5px);
+        }
+
+        .scan-section {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 2px dashed var(--accent-teal);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .scan-section.scanning {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-color: var(--warning-orange);
+            animation: pulse 2s infinite;
+        }
+
+        .scan-section.completed {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            border-color: var(--accent-green);
+        }
+
+        .water-level-display {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-top: 1rem;
+        }
+
+        .water-tank-visual {
+            width: 100px;
+            height: 200px;
+            border: 3px solid var(--primary-blue);
+            border-radius: 10px;
+            position: relative;
+            margin: 0 auto 1rem;
+            overflow: hidden;
+            background: #f8fafc;
+        }
+
+        .water-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(180deg, var(--accent-teal) 0%, var(--primary-blue) 100%);
+            transition: height 1s ease;
+            border-radius: 0 0 7px 7px;
+        }
+
+        .threshold-config {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .range-slider {
+            margin: 1rem 0;
+        }
+
+        .range-slider input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: var(--light-blue);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .range-slider input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-blue);
+            cursor: pointer;
+        }
+
+        .range-slider input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-blue);
+            cursor: pointer;
+            border: none;
+        }
+
+        .progress-indicator {
+            background: var(--light-blue);
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, var(--primary-blue) 0%, var(--accent-teal) 100%);
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .status-badge.connected {
+            background: #dcfce7;
+            color: var(--accent-green);
+        }
+
+        .status-badge.disconnected {
+            background: #fee2e2;
+            color: #ef4444; /* Red color for disconnected */
+        }
+
+        .status-badge.scanning {
+            background: #fef3c7;
+            color: var(--warning-orange);
+        }
+
+        .status-badge.ready {
+            background: var(--light-blue);
+            color: var(--primary-blue);
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
             }
-        } else {
-            Serial.print("Invalid Firebase data type: ");
-            Serial.println(firebaseData.dataType());
-        }
-    } else {
-        Serial.print("Failed to fetch drum height: ");
-        Serial.println(firebaseData.errorReason());
-    }
-    return false;
-}
-
-void measureDrumHeight() {
-    Serial.println("Measuring drum height...");
-    
-    const int numMeasurements = 5;
-    float measurements[numMeasurements];
-    int validCount = 0;
-
-    for (int i = 0; i < numMeasurements; i++) {
-        float reading = readUltrasonicCm();
-        if (reading > 0) {
-            measurements[validCount++] = reading;
-            Serial.print("Measurement ");
-            Serial.print(i + 1);
-            Serial.print(": ");
-            Serial.println(reading);
-        }
-        delay(200);
-    }
-
-    if (validCount == 0) {
-        Serial.println("No valid measurements obtained!");
-        return;
-    }
-
-    // Calculate average
-    float sum = 0;
-    for (int i = 0; i < validCount; i++) {
-        sum += measurements[i];
-    }
-    drumHeightCm = sum / validCount;
-
-    if (drumHeightCm <= 0) {
-        Serial.println("Invalid calculated drum height!");
-        return;
-    }
-
-    drumHeightInitialized = true;
-    isDeviceFullyConfigured = true;
-    saveSettingsToPreferences();
-    
-    Serial.print("Drum height measured and saved: ");
-    Serial.println(drumHeightCm);
-
-    // Update Firebase if device is linked
-    if (isLinkedToUser && !deviceFirebaseId.isEmpty()) {
-        String heightPath = "hydrolink/devices/" + deviceFirebaseId + "/settings/drumHeightCm";
-        if (Firebase.setFloat(firebaseData, heightPath, drumHeightCm)) {
-            Serial.println("Drum height updated in Firebase");
-        } else {
-            Serial.print("Failed to update Firebase: ");
-            Serial.println(firebaseData.errorReason());
-        }
-    }
-}
-
-float readUltrasonicCm() {
-    // Clear trigger
-    digitalWrite(ULTRASONIC_TRIG_PIN, LOW);
-    delayMicroseconds(2);
-    
-    // Send pulse
-    digitalWrite(ULTRASONIC_TRIG_PIN, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(ULTRASONIC_TRIG_PIN, LOW);
-
-    // Read echo with timeout
-    unsigned long duration = pulseIn(ULTRASONIC_ECHO_PIN, HIGH, 30000); // 30ms timeout
-
-    if (duration == 0) {
-        Serial.println("Ultrasonic sensor timeout");
-        return -1.0;
-    }
-
-    // Calculate distance (speed of sound = 343 m/s = 0.0343 cm/µs)
-    float distance = (duration * 0.0343) / 2.0;
-    
-    // Validate range (typical HC-SR04 range: 2-400cm)
-    if (distance < 2.0 || distance > 400.0) {
-        Serial.print("Distance out of range: ");
-        Serial.println(distance);
-        return -1.0;
-    }
-
-    return distance;
-}
-
-void calculateWaterPercentage() {
-    if (drumHeightCm <= 0) {
-        waterPercentage = 0;
-        waterAvailable = false;
-        Serial.println("Cannot calculate percentage: drum height not calibrated");
-        return;
-    }
-
-    // Calculate water level (drum height - distance to water surface)
-    float waterLevelCm = drumHeightCm - waterDistanceCm;
-    
-    // Clamp values
-    waterLevelCm = constrain(waterLevelCm, 0, drumHeightCm);
-    
-    // Calculate percentage
-    float effectiveHeight = drumHeightCm;
-    if (maxFillLevelPercentage > 0 && maxFillLevelPercentage < 100) {
-        effectiveHeight = drumHeightCm * (maxFillLevelPercentage / 100.0);
-    }
-    
-    waterPercentage = (waterLevelCm / effectiveHeight) * 100;
-    waterPercentage = constrain(waterPercentage, 0, 100);
-    
-    // Update water availability
-    waterAvailable = (waterPercentage > refillThresholdPercentage);
-    
-    Serial.print("Water: ");
-    Serial.print(waterPercentage);
-    Serial.print("% (");
-    Serial.print(waterLevelCm, 1);
-    Serial.print("cm / ");
-    Serial.print(drumHeightCm, 1);
-    Serial.println("cm)");
-}
-
-void updateFirebaseData() {
-    if (deviceFirebaseId.isEmpty() || !Firebase.ready()) {
-        Serial.println("Cannot update Firebase: not ready or no ID");
-        return;
-    }
-
-    String basePath = "hydrolink/devices/" + deviceFirebaseId + "/status";
-    
-    FirebaseJson json;
-    json.set("currentWaterLevelCm", round(waterDistanceCm * 10) / 10.0); // Round to 1 decimal
-    json.set("waterPercentage", waterPercentage);
-    json.set("waterAvailable", waterAvailable);
-    json.set("batteryPercentage", batteryPercentage);
-    json.set("lastUpdated", Firebase.getCurrentTime());
-    json.set("deviceId", deviceFirebaseId);
-    json.set("macAddress", deviceMacAddress);
-    json.set("drumHeightCm", drumHeightCm);
-    json.set("isConfigured", isDeviceFullyConfigured);
-    json.set("isLinked", isLinkedToUser);
-
-    if (Firebase.updateNode(firebaseData, basePath, json)) {
-        Serial.println("Firebase data updated successfully");
-        // Save current state to preferences periodically
-        saveSettingsToPreferences();
-    } else {
-        Serial.print("Firebase update failed: ");
-        Serial.println(firebaseData.errorReason());
-    }
-}
-
-void readFirebaseSettings() {
-    if (deviceFirebaseId.isEmpty() || !isLinkedToUser) {
-        Serial.println("Cannot read settings: no Firebase ID or device not linked");
-        return;
-    }
-
-    String settingsPath = "hydrolink/devices/" + deviceFirebaseId + "/settings";
-    
-    if (Firebase.get(firebaseData, settingsPath)) {
-        if (firebaseData.dataType() == "json") {
-            FirebaseJson &json = firebaseData.jsonObject();
-            
-            // Read settings with current values as defaults
-            FirebaseJsonData jsonData;
-            
-            if (json.get(jsonData, "refillThresholdPercentage")) {
-                refillThresholdPercentage = jsonData.intValue;
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
-            
-            if (json.get(jsonData, "maxFillLevelPercentage")) {
-                maxFillLevelPercentage = jsonData.intValue;
-            }
-            
-            if (json.get(jsonData, "drumHeightCm")) {
-                float fbDrumHeight = jsonData.floatValue;
-                if (fbDrumHeight > 0) {
-                    drumHeightCm = fbDrumHeight;
-                    drumHeightInitialized = true;
-                    isDeviceFullyConfigured = true;
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .icon-large {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+
+</head>
+<body>
+    <div class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-12 text-center">
+                    <h1 class="display-4 fw-bold mb-3">
+                        <i class="fas fa-cogs me-3"></i>Device Setup
+                    </h1>
+                    <p class="lead mb-0">Complete the physical installation of your Hydrolink system</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="progress-indicator">
+            <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+        </div>
+
+        <div class="row mb-5" id="physicalInstallationSection">
+            <div class="col-12">
+                <div class="card setup-card">
+                    <div class="card-body p-4">
+                        <div class="step-header">
+                            <div class="d-flex align-items-center">
+                                <div class="step-number">1</div>
+                                <div>
+                                    <h3 class="mb-1">Physical Installation</h3>
+                                    <p class="mb-0 opacity-75">Connect your device components</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-tools text-primary me-2"></i>Installation Instructions
+                                </h5>
+
+                                <div class="instruction-item">
+                                    <div class="d-flex align-items-start">
+                                        <div class="me-3">
+                                            <i class="fas fa-faucet text-primary" style="font-size: 1.5rem;"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-2">Connect Device to Faucet</h6>
+                                            <p class="mb-0 text-muted">Attach the Hydrolink device directly to your water faucet using the provided connector. Ensure a tight, leak-proof connection.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="instruction-item">
+                                    <div class="d-flex align-items-start">
+                                        <div class="me-3">
+                                            <i class="fas fa-grip-lines text-primary" style="font-size: 1.5rem;"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-2">Connect Hose to Water Drum</h6>
+                                            <p class="mb-0 text-muted">Run the water hose from the device output to your water storage drum. Make sure the hose reaches the bottom of the drum.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="instruction-item">
+                                    <div class="d-flex align-items-start">
+                                        <div class="me-3">
+                                            <i class="fas fa-satellite-dish text-primary" style="font-size: 1.5rem;"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-2">Place Ultrasonic Sensor</h6>
+                                            <p class="mb-0 text-muted">Position the ultrasonic sensor at the top of your water drum, pointing downward. Secure it firmly to prevent movement.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4">
+                                <div class="text-center">
+                                    <i class="fas fa-drum icon-large text-primary"></i>
+                                    <h5 class="text-primary">Installation Diagram</h5>
+                                    <div class="alert alert-info">
+                                        <small>
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Ensure all connections are secure before proceeding to the next step.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-grid mt-4">
+                            <button class="btn btn-primary-custom btn-lg" id="proceedToMacAddressBtn">
+                                <i class="fas fa-arrow-right me-2"></i>Proceed to Device Linking
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-5 hidden" id="macAddressSection">
+            <div class="col-12">
+                <div class="card setup-card">
+                    <div class="card-body p-4">
+                        <div class="step-header">
+                            <div class="d-flex align-items-center">
+                                <div class="step-number">2</div>
+                                <div>
+                                    <h3 class="mb-1">Identify Your Device</h3>
+                                    <p class="mb-0 opacity-75">Enter your Hydrolink device's unique MAC Address</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-8 offset-lg-2 text-center">
+                                <p class="text-muted mb-4">
+                                    Please connect your Hydrolink device to power. Its unique MAC Address will be displayed on the **Serial Monitor** if connected to your computer, or on the **OLED screen** if it has one. Enter it below to link your account to this device.
+                                </p>
+                                <div class="mb-3">
+                                    <label for="macAddressInput" class="form-label">Device MAC Address</label>
+                                    <input type="text" class="form-control" id="macAddressInput" placeholder="e.g., 6C:C8:40:55:E0:70" pattern="^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$" required>
+                                    <div class="invalid-feedback">
+                                        Please enter a valid MAC address (e.g., XX:XX:XX:XX:XX:XX).
+                                    </div>
+                                </div>
+                                <div id="macAddressStatus" class="mb-3">
+                                    </div>
+                                <button class="btn btn-primary-custom btn-lg" id="confirmMacAddressBtn">
+                                    <i class="fas fa-link me-2"></i>Link Device
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-5 hidden" id="scanDrumSection">
+            <div class="col-lg-6">
+                <div class="card setup-card">
+                    <div class="card-body p-4">
+                        <div class="step-header">
+                            <div class="d-flex align-items-center">
+                                <div class="step-number">3</div>
+                                <div>
+                                    <h3 class="mb-1">Scan Water Drum</h3>
+                                    <p class="mb-0 opacity-75">Measure total drum height</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="scan-section" id="scanSection">
+                            <i class="fas fa-radar-chart icon-large text-primary" id="scanIcon"></i>
+                            <h5 id="scanTitle">Ready to Scan</h5>
+                            <p class="text-muted mb-4" id="scanDescription">
+                                Make sure your water drum is EMPTY, then click the button below to measure the total height of your drum.
+                            </p>
+
+                            <button class="btn btn-primary-custom btn-lg" id="scanButton">
+                                <i class="fas fa-search me-2"></i>Scan Water Drum Now
+                            </button>
+
+                            <div class="hidden" id="scanningIndicator">
+                                <div class="spinner-border text-primary mb-3" role="status">
+                                    <span class="visually-hidden">Scanning...</span>
+                                </div>
+                                <p class="mb-0">Scanning in progress... Awaiting measurement from device.</p>
+                            </div>
+                        </div>
+
+                        <div class="hidden fade-in-up" id="scanResults">
+                            <div class="water-level-display">
+                                <h6 class="text-center mb-3">Drum Height Measurement</h6>
+                                <div class="water-tank-visual">
+                                    <div class="water-fill" id="waterFill"></div>
+                                    <div class="position-absolute w-100 text-center" style="bottom: -25px; font-size: 0.75rem; color: #6b7280;">
+                                        Empty Drum
+                                    </div>
+                                </div>
+                                <div class="text-center">
+                                    <h3 class="text-primary mb-1" id="drumHeightDisplay">0.0 cm</h3>
+                                    <p class="text-muted mb-3">total drum height</p>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-success-custom" id="proceedButton">
+                                            <i class="fas fa-arrow-right me-2"></i>Proceed to Configuration
+                                        </button>
+                                        <button class="btn btn-outline-secondary btn-sm" id="rescanButton">
+                                            <i class="fas fa-redo me-2"></i>Measure Again
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card setup-card">
+                    <div class="card-body p-4">
+                        <h5 class="mb-3">
+                            <i class="fas fa-info-circle text-info me-2"></i>Scanning Information
+                        </h5>
+
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">How it works</h6>
+                            <p class="mb-0">The ultrasonic sensor on your Hydrolink device measures the distance from the top of the drum to the bottom, calculating the total drum height for calibration. This value will be uploaded to the cloud.</p>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <h6 class="alert-heading">Important Notes</h6>
+                            <ul class="mb-0">
+                                <li>Ensure the drum is completely EMPTY for an accurate measurement.</li>
+                                <li>The sensor must be positioned at the very top of the drum.</li>
+                                <li>Keep the area quiet during measurement to avoid interference.</li>
+                                <li>This step calibrates the system for accurate water level readings.</li>
+                            </ul>
+                        </div>
+
+                        <div class="alert alert-success">
+                            <h6 class="alert-heading">Troubleshooting</h6>
+                            <p class="mb-0">If scanning fails or the device appears offline, double-check the sensor connections and ensure your Hydrolink device is powered on and connected to Wi-Fi. You can then try again.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-5 hidden" id="configurationSection">
+            <div class="col-12">
+                <div class="card setup-card">
+                    <div class="card-body p-4">
+                        <div class="step-header">
+                            <div class="d-flex align-items-center">
+                                <div class="step-number">4</div>
+                                <div>
+                                    <h3 class="mb-1">Configure Water Level Thresholds</h3>
+                                    <p class="mb-0 opacity-75">Set automatic refill parameters</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="threshold-config">
+                                    <h5 class="mb-4">
+                                        <i class="fas fa-sliders-h text-primary me-2"></i>Refill Settings
+                                    </h5>
+
+                                    <div class="mb-4">
+                                        <label class="form-label d-flex justify-content-between">
+                                            <span>Start Filling At</span>
+                                            <span class="badge bg-primary" id="startFillValue">25%</span>
+                                        </label>
+                                        <div class="range-slider">
+                                            <input type="range" class="form-range" min="10" max="50" step="5" value="25" id="startFillRange">
+                                        </div>
+                                        <small class="text-muted">System will start refilling when water level drops to this percentage</small>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <label class="form-label d-flex justify-content-between">
+                                            <span>Stop Filling At</span>
+                                            <span class="badge bg-success" id="stopFillValue">80%</span>
+                                        </label>
+                                        <div class="range-slider">
+                                            <input type="range" class="form-range" min="60" max="95" step="5" value="80" id="stopFillRange">
+                                        </div>
+                                        <small class="text-muted">System will stop refilling when water level reaches this percentage</small>
+                                    </div>
+
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-lightbulb me-2"></i>
+                                        <strong>Recommendation:</strong> Keep at least 20% difference between start and stop levels for optimal operation.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-6">
+                                <div class="threshold-config">
+                                    <h5 class="mb-4">
+                                        <i class="fas fa-eye text-primary me-2"></i>Visual Preview
+                                    </h5>
+
+                                    <div class="text-center">
+                                        <div class="water-tank-visual mx-auto" style="height: 250px; width: 120px;">
+                                            <div class="position-absolute w-100 text-center" style="top: 20%; font-size: 0.75rem; color: #059669;" id="stopLine">
+                                                ← Stop: <span id="stopPreview">80%</span>
+                                            </div>
+                                            <div class="position-absolute w-100 text-center" style="top: 75%; font-size: 0.75rem; color: #2563eb;" id="startLine">
+                                                ← Start: <span id="startPreview">25%</span>
+                                            </div>
+                                            <div class="water-fill" id="previewWaterFill" style="height: 40%;"></div>
+                                        </div>
+
+                                        <div class="mt-3">
+                                            <p class="text-muted mb-3">Current Level: <span class="fw-bold" id="currentLevelPreview">40%</span></p>
+                                            <div class="d-grid">
+                                                <button class="btn btn-success-custom btn-lg" id="completeSetupButton">
+                                                    <i class="fas fa-check me-2"></i>Complete Setup
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-5 hidden" id="successSection">
+            <div class="col-12">
+                <div class="card setup-card">
+                    <div class="card-body p-5 text-center">
+                        <i class="fas fa-check-circle icon-large text-success"></i>
+                        <h2 class="text-success mb-3">Setup Complete!</h2>
+                        <p class="lead mb-4">Your Hydrolink system is now configured and ready to use.</p>
+
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <div class="alert alert-success">
+                                    <h5 class="alert-heading">What happens next?</h5>
+                                    <ul class="text-start mb-0">
+                                        <li>Your system will monitor water levels automatically</li>
+                                        <li>Refilling will start when level drops to <span class="fw-bold" id="finalStartLevel">25%</span></li>
+                                        <li>Refilling will stop when level reaches <span class="fw-bold" id="finalStopLevel">80%</span></li>
+                                        <li>You'll receive notifications about system status</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <button class="btn btn-primary-custom btn-lg" onclick="window.location.href='index.html'">
+                                <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                            </button>
+                            <button class="btn btn-outline-secondary btn-lg" onclick="window.location.href='settings.html'">
+                                <i class="fas fa-cog me-2"></i>Advanced Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">
+                <i class="fas fa-water text-primary me-2"></i>
+                Hydrolink IoT &copy; 2024 - Smart Water Management Solutions
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue, get, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+        // Firebase configuration (initialized once)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCmFInEL6TMoD-9JwdPy-e9niNGGL5SjHA",
+            authDomain: "hydrolink-d3c57.firebaseapp.com",
+            databaseURL: "https://hydrolink-d3c57-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hydrolink-d3c57",
+            storageBucket: "hydrolink-d3c57.firebasestorage.app",
+            messagingSenderId: "770257381412",
+            appId: "1:770257381412:web:a894f35854cb82274950b1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
+
+        // Global variables
+        let currentUserId = null;
+        let DEVICE_ID = null; // This will be the Firebase UID of the ESP32
+        let isScanning = false;
+        let measureDrumFlagRef = null;
+        let drumHeightRef = null;
+        let deviceSettingsRef = null; // Reference to device settings
+        let isAuthReady = false; // Flag to indicate if authentication is ready
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const physicalInstallationSection = document.getElementById('physicalInstallationSection');
+            const proceedToMacAddressBtn = document.getElementById('proceedToMacAddressBtn');
+            const macAddressSection = document.getElementById('macAddressSection');
+            const macAddressInput = document.getElementById('macAddressInput');
+            const confirmMacAddressBtn = document.getElementById('confirmMacAddressBtn');
+            const macAddressStatus = document.getElementById('macAddressStatus');
+            const progressFill = document.getElementById('progressFill');
+            const scanDrumSection = document.getElementById('scanDrumSection');
+            const scanSection = document.getElementById('scanSection');
+            const scanButton = document.getElementById('scanButton');
+            const scanningIndicator = document.getElementById('scanningIndicator');
+            const scanIcon = document.getElementById('scanIcon');
+            const scanTitle = document.getElementById('scanTitle');
+            const scanDescription = document.getElementById('scanDescription');
+            const scanResults = document.getElementById('scanResults');
+            const waterFill = document.getElementById('waterFill');
+            const drumHeightDisplay = document.getElementById('drumHeightDisplay');
+            const proceedButton = document.getElementById('proceedButton');
+            const rescanButton = document.getElementById('rescanButton');
+            const configurationSection = document.getElementById('configurationSection');
+            const startFillRange = document.getElementById('startFillRange');
+            const startFillValue = document.getElementById('startFillValue');
+            const stopFillRange = document.getElementById('stopFillRange');
+            const stopFillValue = document.getElementById('stopFillValue');
+            const startPreview = document.getElementById('startPreview');
+            const stopPreview = document.getElementById('stopPreview');
+            const currentLevelPreview = document.getElementById('currentLevelPreview');
+            const completeSetupButton = document.getElementById('completeSetupButton');
+            const successSection = document.getElementById('successSection');
+            const finalStartLevel = document.getElementById('finalStartLevel');
+            const finalStopLevel = document.getElementById('finalStopLevel');
+
+            // Initial authentication
+            async function authenticateUser() {
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                        console.log("Signed in with custom token.");
+                    } else {
+                        await signInAnonymously(auth);
+                        console.log("Signed in anonymously.");
+                    }
+                } catch (error) {
+                    console.error("Firebase authentication error:", error);
+                    displayMessage(`Authentication failed: ${error.message}. Please refresh the page.`, "danger");
                 }
             }
-            
-            Serial.println("Settings updated from Firebase:");
-            Serial.print("  Refill threshold: ");
-            Serial.println(refillThresholdPercentage);
-            Serial.print("  Max fill level: ");
-            Serial.println(maxFillLevelPercentage);
-            Serial.print("  Drum height: ");
-            Serial.println(drumHeightCm);
-            
-            // Save updated settings to preferences
-            saveSettingsToPreferences();
-        }
-    } else {
-        // Only create default settings if this is a newly linked device
-        if (isLinkedToUser) {
-            Serial.println("Creating default settings in Firebase");
-            
-            FirebaseJson defaultSettings;
-            defaultSettings.set("refillThresholdPercentage", refillThresholdPercentage);
-            defaultSettings.set("maxFillLevelPercentage", maxFillLevelPercentage);
-            defaultSettings.set("drumHeightCm", drumHeightCm);
-            defaultSettings.set("measureDrum", false);
-            
-            if (Firebase.set(firebaseData, settingsPath, defaultSettings)) {
-                Serial.println("Default settings created");
-            } else {
-                Serial.print("Failed to create settings: ");
-                Serial.println(firebaseData.errorReason());
-            }
-        }
-    }
-}
 
-void setSystemStatus(String status) {
-    if (deviceFirebaseId.isEmpty()) return;
-    
-    String statusPath = "hydrolink/devices/" + deviceFirebaseId + "/status/systemStatus";
-    if (Firebase.setString(firebaseData, statusPath, status)) {
-        Serial.println("System status: " + status);
-    }
-}
+            // Authentication state listener
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    currentUserId = user.uid;
+                    console.log("User signed in:", user.email || "Anonymous", "UID:", currentUserId);
+                    confirmMacAddressBtn.disabled = false;
+                    macAddressStatus.innerHTML = `<div class="alert alert-info mt-2">Logged in as ${user.email || 'Anonymous User'}. Ready to link device.</div>`;
 
-void checkManualDrumMeasurement() {
-    if (deviceFirebaseId.isEmpty() || !isLinkedToUser) return;
-    
-    String measurePath = "hydrolink/devices/" + deviceFirebaseId + "/settings/measureDrum";
-    if (Firebase.getBool(firebaseData, measurePath)) {
-        if (firebaseData.boolData()) {
-            Serial.println("Manual drum measurement requested");
-            measureDrumHeight();
-            
-            // Reset flag
-            Firebase.setBool(firebaseData, measurePath, false);
-        }
-    }
-}
+                    isAuthReady = true; // Set auth ready flag
 
-int readBatteryPercentage() {
-    // TODO: Implement actual battery reading
-    // For now, return a simulated value
-    static int simulatedBattery = 100;
-    simulatedBattery = random(80, 100);
-    return simulatedBattery;
-}
+                    // Attempt to load previously linked device ID from localStorage
+                    const storedDeviceId = localStorage.getItem(`hydrolink_device_id_${currentUserId}`);
+                    if (storedDeviceId) {
+                        DEVICE_ID = storedDeviceId;
+                        console.log("Loaded device ID from localStorage:", DEVICE_ID);
+                        // Set Firebase refs for this device
+                        initializeFirebaseRefs();
+                        // If device is already linked, check its setup status
+                        checkDeviceSetupStatus();
+                    } else {
+                        // If no stored device ID, show physical installation first
+                        showPhysicalInstallationSection();
+                    }
 
-bool ensureFirebaseConnection() {
-    if (!Firebase.ready()) {
-        Serial.println("Firebase not ready, attempting reconnection...");
-        setupFirebaseAuthentication();
-        return Firebase.ready();
-    }
-    return true;
-}
+                } else {
+                    currentUserId = null;
+                    DEVICE_ID = null; // Clear device ID if user signs out
+                    localStorage.removeItem(`hydrolink_device_id_${currentUserId}`); // Clear stored device ID
+                    console.log("User signed out. Redirecting to login.");
+                    // Only redirect if not already on auth.html to prevent loop
+                    if (!window.location.pathname.endsWith('auth.html')) {
+                        window.location.href = 'auth.html';
+                    }
+                }
+            });
 
-void handleWiFiReconnection() {
-    if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("WiFi disconnected, reconnecting...");
-        wifiConnected = wm.autoConnect(AP_SSID, AP_PASSWORD);
-        
-        if (wifiConnected) {
-            Serial.println("WiFi reconnected!");
-            Serial.print("IP: ");
-            Serial.println(WiFi.localIP());
-            
-            // Re-establish Firebase connection
-            Firebase.reconnectWiFi(true);
-            setupFirebaseAuthentication();
-        }
-    }
-}
+            // Call authenticateUser on DOMContentLoaded
+            authenticateUser();
 
-void setupFirebaseAuthentication() {
-    Serial.println("Setting up Firebase authentication...");
-    
-    firebaseConfig.host = FIREBASE_HOST_STR;
-    firebaseConfig.database_url = FIREBASE_DATABASE_URL;
-    firebaseConfig.api_key = FIREBASE_API_KEY;
-
-    // Try to get stored Firebase ID
-    String storedUid = getStoredFirebaseId();
-    
-    if (storedUid.length() > 0) {
-        Serial.println("Found stored Firebase UID: " + storedUid);
-        deviceFirebaseId = storedUid;
-        
-        // Check if this device is already linked to a user
-        Firebase.begin(&firebaseConfig, &firebaseAuth);
-        Firebase.reconnectWiFi(true);
-        
-        // Wait for Firebase to be ready
-        unsigned long startTime = millis();
-        while (!Firebase.ready() && (millis() - startTime < 15000)) {
-            Serial.print(".");
-            delay(500);
-        }
-        Serial.println();
-        
-        if (Firebase.ready()) {
-            // Check link status
-            checkDeviceLinkStatus();
-            
-            if (isLinkedToUser) {
-                Serial.println("Device is already linked - using stored UID");
-                return;
-            } else {
-                Serial.println("Device not linked yet - continuing with stored UID");
-                return;
-            }
-        }
-    }
-
-    // Only create new anonymous user if no stored UID exists
-    Serial.println("No stored UID found - creating new anonymous user...");
-    
-    Firebase.begin(&firebaseConfig, &firebaseAuth);
-    Firebase.reconnectWiFi(true);
-
-    // Wait for Firebase to be ready
-    unsigned long startTime = millis();
-    while (!Firebase.ready() && (millis() - startTime < 15000)) {
-        Serial.print(".");
-        delay(500);
-    }
-    Serial.println();
-
-    if (Firebase.ready() && firebaseAuth.token.uid.length() > 0) {
-        deviceFirebaseId = firebaseAuth.token.uid.c_str();
-        Serial.println("Firebase authenticated. UID: " + deviceFirebaseId);
-        storeFirebaseId(deviceFirebaseId);
-    } else {
-        Serial.println("Attempting anonymous signup...");
-        if (Firebase.signUp(&firebaseConfig, &firebaseAuth, "", "")) {
-            deviceFirebaseId = firebaseAuth.token.uid.c_str();
-            Serial.println("Anonymous user created. UID: " + deviceFirebaseId);
-            storeFirebaseId(deviceFirebaseId);
-        } else {
-            Serial.print("Firebase auth failed: ");
-            Serial.println(firebaseData.errorReason());
-            deviceFirebaseId = "";
-        }
-    }
-}
-
-void mapMacToFirebaseUid() {
-    if (deviceFirebaseId.isEmpty() || deviceMacAddress.isEmpty()) return;
-    
-    String path = "hydrolink/macToFirebaseUid/" + deviceMacAddress;
-    if (Firebase.setString(firebaseData, path, deviceFirebaseId)) {
-        Serial.println("MAC to UID mapping updated");
-    } else {
-        Serial.print("MAC mapping failed: ");
-        Serial.println(firebaseData.errorReason());
-    }
-}
-
-// --- WiFiManager Callbacks ---
-void configModeCallback(WiFiManager *myWiFiManager) {
-    Serial.println("Entered WiFi config mode");
-    Serial.print("AP IP: ");
-    Serial.println(WiFi.softAPIP());
-}
-
-void saveConfigCallback() {
-    Serial.println("WiFi configuration saved!");
-}
-
-String getMacAddress() {
-    uint8_t mac[6];
-    WiFi.macAddress(mac);
-    char macStr[18];
-    sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", 
-            mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-    return String(macStr);
-}
-
-// --- Setup Function ---
-void setup() {
-    Serial.begin(115200);
-    delay(1000);
-    Serial.println("\n=== HydroLink ESP32 Starting ===");
-
-    // Initialize pins
-    pinMode(ULTRASONIC_TRIG_PIN, OUTPUT);
-    pinMode(ULTRASONIC_ECHO_PIN, INPUT);
-    pinMode(RELAY_PIN, OUTPUT);
-    digitalWrite(RELAY_PIN, LOW);
-
-    // Load all settings from preferences FIRST
-    loadSettingsFromPreferences();
-
-    // Setup WiFi
-    WiFi.mode(WIFI_STA);
-    wm.setAPCallback(configModeCallback);
-    wm.setSaveConfigCallback(saveConfigCallback);
-    wm.setConfigPortalTimeout(CONFIG_PORTAL_TIMEOUT_SECONDS);
-
-    Serial.println("Connecting to WiFi...");
-    wifiConnected = wm.autoConnect(AP_SSID, AP_PASSWORD);
-
-    
-
-    if (wifiConnected) {
-        Serial.println("WiFi connected!");
-        Serial.print("IP: ");
-        Serial.println(WiFi.localIP());
-
-        // Get MAC address
-        deviceMacAddress = getMacAddress();
-        Serial.println("Device MAC: " + deviceMacAddress);
-
-        // Setup Firebase authentication (will use stored UID if available)
-        setupFirebaseAuthentication();
-        
-        if (!deviceFirebaseId.isEmpty()) {
-            // Configure NTP
-            configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-            
-            // Wait for time sync
-            struct tm timeinfo;
-            if (getLocalTime(&timeinfo)) {
-                Serial.println("NTP time synchronized");
+            // Function to initialize Firebase references once DEVICE_ID is known
+            function initializeFirebaseRefs() {
+                if (DEVICE_ID) {
+                    measureDrumFlagRef = ref(database, `hydrolink/devices/${DEVICE_ID}/settings/measureDrum`);
+                    drumHeightRef = ref(database, `hydrolink/devices/${DEVICE_ID}/settings/drumHeightCm`);
+                    deviceSettingsRef = ref(database, `hydrolink/devices/${DEVICE_ID}/settings`);
+                    console.log("Firebase refs initialized for DEVICE_ID:", DEVICE_ID);
+                } else {
+                    console.error("DEVICE_ID is null. Cannot initialize Firebase refs.");
+                }
             }
 
-            // Set up Firebase buffer sizes
-            firebaseData.setBSSLBufferSize(4096, 1024);
-            firebaseData.setResponseSize(2048);
+            // Function to check the overall setup status of the linked device
+            async function checkDeviceSetupStatus() {
+                if (!DEVICE_ID) {
+                    showPhysicalInstallationSection(); // No device linked, start from scratch
+                    return;
+                }
 
-            // Initialize system
-            setSystemStatus("online");
-            mapMacToFirebaseUid();
-            
-            // Check device link status
-            checkDeviceLinkStatus();
-            
-            // Initialize drum height (will use stored value if available)
-            initializeDrumHeight();
-            
-            // Read Firebase settings only if device is linked
-            if (isLinkedToUser) {
-                readFirebaseSettings();
+                // First, check if the device is linked to the current user in Firebase
+                const userDeviceLinkRef = ref(database, `hydrolink/users/${currentUserId}/devices/${DEVICE_ID}`);
+                const linkSnapshot = await get(userDeviceLinkRef);
+
+                if (!linkSnapshot.exists() || !linkSnapshot.val()) {
+                    // Device is not linked to this user, or link is false.
+                    // This could happen if localStorage is out of sync or link was removed.
+                    console.warn("Device ID found in localStorage but not linked to current user in Firebase. Resetting.");
+                    localStorage.removeItem(`hydrolink_device_id_${currentUserId}`);
+                    showPhysicalInstallationSection();
+                    return;
+                }
+
+                // If linked, check drum height and other settings
+                onValue(deviceSettingsRef, (snapshot) => {
+                    const settings = snapshot.val();
+                    if (settings && settings.drumHeightCm && settings.drumHeightCm > 0) {
+                        console.log("Device already has drum height calibrated:", settings.drumHeightCm);
+                        drumHeightDisplay.textContent = `${settings.drumHeightCm.toFixed(1)} cm`; // Update display
+                        scanSection.classList.add('completed');
+                        scanResults.classList.remove('hidden');
+                        updateProgress(100); // Assume fully configured if drum height is set
+                        // Proceed directly to configuration section
+                        scanDrumSection.classList.add('hidden');
+                        configurationSection.classList.remove('hidden');
+                        configurationSection.scrollIntoView({ behavior: 'smooth' });
+                        // Load existing thresholds into sliders
+                        if (settings.refillThresholdPercentage) {
+                            startFillRange.value = settings.refillThresholdPercentage;
+                            updateStartFillValue();
+                        }
+                        if (settings.maxFillLevelPercentage) {
+                            stopFillRange.value = settings.refillThresholdPercentage; // Should be maxFillLevelPercentage
+                            updateStopFillValue();
+                        }
+                    } else {
+                        console.log("Device linked but drum height not calibrated. Proceeding to scan drum.");
+                        macAddressSection.classList.add('hidden');
+                        scanDrumSection.classList.remove('hidden');
+                        scanDrumSection.scrollIntoView({ behavior: 'smooth' });
+                        updateProgress(66); // Linked, ready for scan
+                        listenForDrumHeightMeasurement(); // Start listening for measurement
+                    }
+                }, { onlyOnce: true }); // Listen once for initial check
             }
 
-            Serial.println("Setup complete!");
-            Serial.println("Device ID: " + deviceFirebaseId);
-            Serial.println("Device Linked: " + String(isLinkedToUser ? "Yes" : "No"));
-            Serial.println("Device Configured: " + String(isDeviceFullyConfigured ? "Yes" : "No"));
-        } else {
-            Serial.println("Firebase authentication failed!");
-        }
-    } else {
-        Serial.println("WiFi connection failed!");
-    }
 
-    // Wait for device linking only if not already linked
-    if (!deviceFirebaseId.isEmpty() && Firebase.ready() && !isLinkedToUser) {
-        Serial.println("Waiting for device linking...");
-        unsigned long linkStartTime = millis();
-        
-        while (millis() - linkStartTime < 300000) { // Wait up to 5 minutes
-            if (checkDeviceLinkStatus()) {
-                Serial.println("Device linked to user account!");
-                readFirebaseSettings(); // Load settings from Firebase after linking
-                break;
+            // Function to show the physical installation section and update progress
+            function showPhysicalInstallationSection() {
+                physicalInstallationSection.classList.remove('hidden');
+                macAddressSection.classList.add('hidden');
+                scanDrumSection.classList.add('hidden');
+                configurationSection.classList.add('hidden');
+                successSection.classList.add('hidden');
+                updateProgress(0); // Set progress to 0 for the first step
             }
-            Serial.print(".");
-            delay(5000);
-        }
-        
-        if (!isLinkedToUser) {
-            Serial.println("Device linking timeout - continuing without user link");
-        }
-    }
 
-    Serial.println("System ready!");
-}
+            // Event listener for "Proceed to Device Linking" button
+            proceedToMacAddressBtn.addEventListener('click', () => {
+                physicalInstallationSection.classList.add('hidden');
+                macAddressSection.classList.remove('hidden');
+                macAddressSection.scrollIntoView({ behavior: 'smooth' });
+                updateProgress(33); // Update progress for Step 2
+            });
 
-// --- Main Loop ---
-void loop() {
-    unsigned long currentTime = millis();
-    
-    // Handle WiFi reconnection
-    handleWiFiReconnection();
-    
-    // Only proceed if we have WiFi and Firebase is ready
-    if (!wifiConnected || !ensureFirebaseConnection() || deviceFirebaseId.isEmpty()) {
-        delay(5000);
-        return;
-    }
+            // MAC address validation and linking
+            confirmMacAddressBtn.addEventListener('click', async () => {
+                const macAddress = macAddressInput.value.trim().toUpperCase();
+                const macRegex = /^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$/;
 
-    // Read sensors at intervals
-    if (currentTime - lastSensorRead >= SENSOR_INTERVAL) {
-        float newReading = readUltrasonicCm();
-        if (newReading > 0) {
-            waterDistanceCm = newReading;
-            calculateWaterPercentage();
-        }
-        
-        batteryPercentage = readBatteryPercentage();
-        lastSensorRead = currentTime;
-    }
+                // Clear previous status
+                macAddressStatus.innerHTML = '';
+                macAddressInput.classList.remove('is-invalid');
+                confirmMacAddressBtn.disabled = true;
+                confirmMacAddressBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Checking...';
 
-    // Update Firebase at intervals (only if linked or for basic status)
-    if (currentTime - lastFirebaseUpdate >= FIREBASE_INTERVAL) {
-        updateFirebaseData();
-        lastFirebaseUpdate = currentTime;
-    }
+                // Ensure currentUserId is available
+                const currentUser = auth.currentUser;
+                if (!currentUser) {
+                    displayMessage("You must be logged in to link a device.", "danger");
+                    confirmMacAddressBtn.disabled = false;
+                    confirmMacAddressBtn.innerHTML = '<i class="fas fa-link me-2"></i>Link Device';
+                    return;
+                }
 
-    // Check settings at intervals (only if linked)
-    if (currentTime - lastSettingsCheck >= SETTINGS_INTERVAL) {
-        // Periodically check link status
-        checkDeviceLinkStatus();
-        
-        if (isLinkedToUser) {
-            readFirebaseSettings();
-            checkManualDrumMeasurement();
-        }
-        lastSettingsCheck = currentTime;
-    }
+                try {
+                    // Validate MAC format
+                    if (!macRegex.test(macAddress)) {
+                        macAddressInput.classList.add('is-invalid');
+                        displayMessage('Please enter a valid MAC address (e.g., XX:XX:XX:XX:XX:XX).', "danger");
+                        return;
+                    }
 
-    // Small delay to prevent watchdog issues
-    delay(100);
-}
+                    // Step 1: Check if MAC address exists in Firebase and get its deviceId (Firebase UID)
+                    displayMessage('Searching for device...', "info");
+
+                    const macToUidRef = ref(database, `hydrolink/macToFirebaseUid/${macAddress}`);
+                    const macSnapshot = await get(macToUidRef);
+
+                    if (!macSnapshot.exists()) {
+                        macAddressInput.classList.add('is-invalid');
+                        displayMessage(`
+                            <strong>Device not found!</strong><br>
+                            The device with MAC address <code>${macAddress}</code> is not registered or not online.<br>
+                            <small class="text-muted">Make sure your HydroLink device is powered on and connected to WiFi.</small>
+                        `, "warning");
+                        return;
+                    }
+
+                    const deviceId = macSnapshot.val(); // This is the Firebase UID of the ESP32
+                    displayMessage('Device found! Checking linking status...', "info");
+
+                    // Step 2: Check if the device is already linked to any user
+                    const deviceLinkedUsersRef = ref(database, `hydrolink/devices/${deviceId}/linkedUsers`);
+                    const linkedUsersSnapshot = await get(deviceLinkedUsersRef);
+                    const linkedUsers = linkedUsersSnapshot.val(); // This will be an object of linked UIDs or null
+
+                    if (linkedUsers) {
+                        const linkedUserIds = Object.keys(linkedUsers);
+
+                        // Check if the current user is already linked to this device
+                        if (linkedUserIds.includes(currentUser.uid)) {
+                            displayMessage(`
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>Device Already Linked!</strong><br>
+                                This device is already connected to your account. Redirecting to dashboard...
+                            `, "success");
+                            // Store in localStorage for persistence
+                            localStorage.setItem(`hydrolink_device_id_${currentUser.uid}`, deviceId);
+                            DEVICE_ID = deviceId; // Set global DEVICE_ID
+                            initializeFirebaseRefs(); // Initialize refs for the linked device
+                            setTimeout(() => {
+                                window.location.href = 'index.html'; // Redirect to dashboard or appropriate page
+                            }, 2000);
+                            return;
+                        } else if (linkedUserIds.length > 0) {
+                            // Device is linked to other users, but not the current one
+                            macAddressInput.classList.add('is-invalid');
+                            displayMessage(`
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Device Already Linked!</strong><br>
+                                This device is already connected to another user account and cannot be linked again.<br>
+                                <small class="text-muted mt-2 d-block">
+                                    Each HydroLink device can only be linked to one user account for security reasons.
+                                    If this is your device, please contact support to transfer ownership.
+                                </small>
+                            `, "danger");
+                            return;
+                        }
+                    }
+
+                    // If we reach here, the device is not linked to any user, or only to the current user (already handled).
+                    // Proceed with linking the device to the current user.
+                    displayMessage('Device available! Linking to your account...', "info");
+
+                    // Step 3: Link device to current user and vice-versa
+                    // Link user to device
+                    await set(ref(database, `hydrolink/users/${currentUser.uid}/devices/${deviceId}`), {
+                        macAddress: macAddress,
+                        linkedAt: serverTimestamp(), // Use serverTimestamp for accurate time
+                        deviceName: `HydroLink Device (${macAddress.slice(-5).replace(/:/g, '')})` // Example name from last 4 chars of MAC
+                    });
+
+                    // Add current user to the device's linkedUsers list
+                    await set(ref(database, `hydrolink/devices/${deviceId}/linkedUsers/${currentUser.uid}`), {
+                        linkedAt: serverTimestamp(),
+                        userEmail: currentUser.email || 'N/A',
+                        userName: currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'Anonymous') || 'N/A' // Fixed: Safely access email
+                    });
+
+                    // Store in localStorage for persistence
+                    localStorage.setItem(`hydrolink_device_id_${currentUser.uid}`, deviceId);
+                    DEVICE_ID = deviceId; // Set global DEVICE_ID
+                    initializeFirebaseRefs(); // Initialize refs with the found DEVICE_ID
+
+                    displayMessage(`
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Device Successfully Linked!</strong><br>
+                        Your HydroLink device has been connected to your account. Proceeding to setup...
+                    `, "success");
+
+                    // Update progress
+                    updateProgress(66); // Linked, now going to scan drum
+
+                    // Proceed to next step after delay
+                    setTimeout(() => {
+                        macAddressSection.classList.add('hidden');
+                        scanDrumSection.classList.remove('hidden');
+                        scanDrumSection.scrollIntoView({ behavior: 'smooth' });
+                        loadExistingDeviceSettings(); // Load settings for the newly linked device
+                        listenForDrumHeightMeasurement(); // Start listening for measurement
+                    }, 1500);
+
+                } catch (error) {
+                    console.error("Error linking device:", error);
+                    displayMessage(`
+                        <i class="fas fa-times-circle me-2"></i>
+                        <strong>Error Linking Device:</strong><br>
+                        ${error.message}<br>
+                        Please try again.
+                    `, "danger");
+                } finally {
+                    // Reset button state
+                    confirmMacAddressBtn.disabled = false;
+                    confirmMacAddressBtn.innerHTML = '<i class="fas fa-link me-2"></i>Link Device';
+                }
+            });
+
+            // Loads existing device settings (drumHeight, thresholds) from Firebase
+            async function loadExistingDeviceSettings() {
+                if (!currentUserId || !DEVICE_ID || !deviceSettingsRef) return;
+
+                onValue(deviceSettingsRef, (snapshot) => {
+                    const settings = snapshot.val();
+                    if (settings) {
+                        console.log("Loading existing device settings:", settings);
+                        if (settings.drumHeightCm && settings.drumHeightCm > 0) {
+                            drumHeightDisplay.textContent = `${settings.drumHeightCm.toFixed(1)} cm`;
+                            // If drum height is already set, update scan section visual
+                            scanSection.classList.add('completed');
+                            scanResults.classList.remove('hidden');
+                            scanIcon.className = 'fas fa-check-circle icon-large text-success';
+                            scanTitle.textContent = 'Drum Height Measured';
+                            scanDescription.textContent = 'Empty drum height measurement successful!';
+                        }
+                        // Update range sliders based on existing settings
+                        if (settings.refillThresholdPercentage) {
+                            startFillRange.value = settings.refillThresholdPercentage;
+                            updateStartFillValue();
+                        }
+                        if (settings.maxFillLevelPercentage) {
+                            stopFillRange.value = settings.maxFillLevelPercentage;
+                            updateStopFillValue();
+                        }
+                    } else {
+                        console.log("No existing settings found for this device. Will use defaults.");
+                    }
+                }, { onlyOnce: true }); // Use { onlyOnce: true } to prevent continuous listening if not needed after initial load
+            }
+
+            // Listen for drum height measurement from Firebase
+            function listenForDrumHeightMeasurement() {
+                if (!drumHeightRef) {
+                    console.error("drumHeightRef is not initialized. Cannot listen for drum height.");
+                    return;
+                }
+
+                onValue(drumHeightRef, (snapshot) => {
+                    const heightCm = snapshot.val();
+                    // Check if a valid positive number is received and if we are actively scanning
+                    if (heightCm !== null && typeof heightCm === 'number' && heightCm > 0 && isScanning) {
+                        console.log("Received drum height measurement:", heightCm);
+                        completeDrumHeightScan(heightCm);
+                    } else if (heightCm === 0 && isScanning) {
+                         // If 0 is received while scanning, it might indicate an error or reset on device
+                         console.warn("Received 0 for drum height while scanning. Retrying or indicating error.");
+                         // You might want to display a specific error message here
+                         // For now, we'll just let the scan timeout or user rescan
+                    }
+                });
+            }
+
+            // Event listener for "Scan Water Drum Now" button
+            scanButton.addEventListener('click', triggerDrumMeasurement);
+
+            async function triggerDrumMeasurement() {
+                if (!currentUserId || !DEVICE_ID || !measureDrumFlagRef) {
+                    displayMessage("Authentication or Device ID missing. Please log in and ensure device is linked.", "danger");
+                    return;
+                }
+
+                if (isScanning) return; // Prevent multiple scans
+
+                isScanning = true;
+                scanButton.style.display = 'none';
+                scanningIndicator.classList.remove('hidden');
+                scanSection.classList.add('scanning');
+                scanIcon.className = 'fas fa-spinner fa-spin icon-large text-warning';
+                scanTitle.textContent = 'Measuring Drum Height';
+                scanDescription.textContent = 'Please wait while your Hydrolink device measures the total height of your empty water drum...';
+
+                try {
+                    // Set the flag in Firebase to true to trigger measurement on ESP32
+                    await set(measureDrumFlagRef, true);
+                    console.log("Requested drum measurement from ESP32 via Firebase.");
+                } catch (error) {
+                    console.error("Error requesting drum measurement from Firebase:", error);
+                    displayMessage("Failed to request drum measurement from device. Please check Firebase connection and try again.", "danger");
+                    resetScanSection();
+                }
+            }
+
+            function completeDrumHeightScan(heightCm) {
+                isScanning = false; // Reset scanning flag
+                scanSection.classList.remove('scanning');
+                scanSection.classList.add('completed');
+                scanningIndicator.classList.add('hidden');
+                scanIcon.className = 'fas fa-check-circle icon-large text-success';
+                scanTitle.textContent = 'Drum Height Measured';
+                scanDescription.textContent = 'Empty drum height measurement successful!';
+
+                scanResults.classList.remove('hidden');
+                updateDrumHeightDisplay(heightCm);
+                proceedButton.focus(); // Focus the proceed button for better UX
+            }
+
+            function updateDrumHeightDisplay(heightCm) {
+                drumHeightDisplay.textContent = `${heightCm.toFixed(1)} cm`;
+                waterFill.style.height = '0%'; // Ensure water fill is 0% for empty drum measurement visual
+                currentLevelPreview.textContent = '0% (Empty)'; // Update current level preview
+            }
+
+            // Event listener for "Proceed to Configuration" button
+            proceedButton.addEventListener('click', proceedToConfiguration);
+
+            function proceedToConfiguration() {
+                scanDrumSection.classList.add('hidden');
+                configurationSection.classList.remove('hidden');
+                configurationSection.scrollIntoView({ behavior: 'smooth' });
+                updateProgress(100); // Set progress to 100% for the final step
+                // Initialize range slider values for visual preview
+                updateStartFillValue();
+                updateStopFillValue();
+            }
+
+            // Event listener for "Measure Again" button
+            rescanButton.addEventListener('click', resetScanSection);
+
+            function resetScanSection() {
+                isScanning = false;
+                scanSection.classList.remove('completed');
+                scanSection.classList.remove('scanning');
+                scanResults.classList.add('hidden');
+                scanButton.style.display = 'inline-block'; // Show the scan button again
+                scanningIndicator.classList.add('hidden'); // Hide scanning indicator
+                scanIcon.className = 'fas fa-radar-chart icon-large text-primary';
+                scanTitle.textContent = 'Ready to Scan';
+                scanDescription.textContent = 'Make sure your water drum is EMPTY, then click the button below to measure the total height of your drum.';
+                updateProgress(66); // Go back to scan drum step progress
+                drumHeightDisplay.textContent = '0.0 cm'; // Reset displayed height
+            }
+
+            // Event listeners for range sliders
+            startFillRange.addEventListener('input', updateStartFillValue);
+            stopFillRange.addEventListener('input', updateStopFillValue);
+
+            function updateStartFillValue() {
+                const value = parseInt(startFillRange.value);
+                startFillValue.textContent = value + '%';
+                startPreview.textContent = value + '%';
+                const startLine = document.getElementById('startLine');
+                // Calculate top position for start line (100% - value%)
+                startLine.style.top = (100 - value) + '%';
+                if (parseInt(stopFillRange.value) <= value) {
+                    stopFillRange.value = Math.min(value + 20, parseInt(stopFillRange.max));
+                    updateStopFillValue();
+                }
+                // Adjust water fill height for preview
+                updatePreviewWaterFill();
+            }
+
+            function updateStopFillValue() {
+                const value = parseInt(stopFillRange.value);
+                stopFillValue.textContent = value + '%';
+                stopPreview.textContent = value + '%';
+                const stopLine = document.getElementById('stopLine');
+                // Calculate top position for stop line (100% - value%)
+                stopLine.style.top = (100 - value) + '%';
+                if (parseInt(startFillRange.value) >= value) {
+                    startFillRange.value = Math.max(value - 20, parseInt(startFillRange.min));
+                    updateStartFillValue();
+                }
+                // Adjust water fill height for preview
+                updatePreviewWaterFill();
+            }
+
+            function updatePreviewWaterFill() {
+                const startValue = parseInt(startFillRange.value);
+                const stopValue = parseInt(stopFillRange.value);
+
+                // For visual representation, let's assume current level is midway or a fixed value for demo
+                const visualCurrentLevel = (startValue + stopValue) / 2;
+                currentLevelPreview.textContent = `${visualCurrentLevel.toFixed(0)}%`;
+                previewWaterFill.style.height = `${visualCurrentLevel}%`;
+            }
+
+            // Event listener for "Complete Setup" button
+            completeSetupButton.addEventListener('click', completeSetup);
+
+            async function completeSetup() {
+                if (!currentUserId || !DEVICE_ID || !deviceSettingsRef) {
+                    displayMessage("Authentication or Device ID missing. Please log in and ensure device is linked.", "danger");
+                    return;
+                }
+
+                const drumHeight = parseFloat(drumHeightDisplay.textContent); // Get the value from the display
+                const startLevel = parseInt(startFillRange.value);
+                const stopLevel = parseInt(stopFillRange.value);
+
+                try {
+                    // Save all settings in one operation
+                    const settings = {
+                        drumHeightCm: drumHeight,
+                        refillThresholdPercentage: startLevel,
+                        maxFillLevelPercentage: stopLevel
+                    };
+
+                    await set(deviceSettingsRef, settings);
+                    
+                    console.log("Settings saved successfully:", settings);
+                    
+                    // Update final values in success section
+                    finalStartLevel.textContent = `${startLevel}%`;
+                    finalStopLevel.textContent = `${stopLevel}%`;
+
+                    // Proceed to success section
+                    document.getElementById('configurationSection').classList.add('hidden');
+                    document.getElementById('successSection').classList.remove('hidden');
+                    document.getElementById('successSection').scrollIntoView({ behavior: 'smooth' });
+                    
+                } catch (error) {
+                    console.error("Error saving settings:", error);
+                    displayMessage(`Failed to save settings: ${error.message}. Please try again.`, "danger");
+                }
+            }
+
+            function updateProgress(percentage) {
+                progressFill.style.width = percentage + '%';
+            }
+
+            // Function to display messages (replaces alert)
+            function displayMessage(message, type) {
+                let messageContainer = document.getElementById('macAddressStatus'); // Use existing status div
+                if (!messageContainer) { // Fallback if div not found
+                    messageContainer = document.createElement('div');
+                    document.body.appendChild(messageContainer);
+                }
+                messageContainer.innerHTML = `<div class="alert alert-${type} mt-2">${message}</div>`;
+                setTimeout(() => {
+                    messageContainer.innerHTML = ''; // Clear message after some time
+                }, 4000);
+            }
+
+            // Initial call to show the first section if no user is logged in or device linked
+            // This is now handled by onAuthStateChanged.
+            // If the user is logged in but no device ID is stored, it will show physical installation.
+            // If the user is not logged in, onAuthStateChanged will redirect to auth.html.
+        });
+    </script>
+</body>
+</html>

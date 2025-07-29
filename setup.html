@@ -634,8 +634,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+        import { getDatabase, ref, set, onValue, get, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js"; // Removed signInAnonymously
 
         // Firebase configuration (initialized once)
         const firebaseConfig = {
@@ -659,6 +659,7 @@
         let measureDrumFlagRef = null;
         let drumHeightRef = null;
         let deviceSettingsRef = null; // Reference to device settings
+        let isAuthReady = false; // Flag to indicate if authentication is ready
 
         document.addEventListener('DOMContentLoaded', function() {
             // DOM elements
@@ -694,13 +695,26 @@
             const finalStartLevel = document.getElementById('finalStartLevel');
             const finalStopLevel = document.getElementById('finalStopLevel');
 
-            // Authentication state listener
-            onAuthStateChanged(auth, (user) => {
+            // Authentication state listener - this is now the primary entry point for auth logic
+            onAuthStateChanged(auth, async (user) => { // Made async to use await
                 if (user) {
                     currentUserId = user.uid;
-                    console.log("User signed in:", user.email, "UID:", currentUserId);
+                    console.log("User signed in:", user.email || "Anonymous", "UID:", currentUserId);
                     confirmMacAddressBtn.disabled = false;
-                    macAddressStatus.innerHTML = `<div class="alert alert-info mt-2">Logged in as ${user.email}. Ready to link device.</div>`;
+                    macAddressStatus.innerHTML = `<div class="alert alert-info mt-2">Logged in as ${user.email || 'Anonymous User'}. Ready to link device.</div>`;
+
+                    isAuthReady = true; // Set auth ready flag
+
+                    // Attempt to sign in with custom token if available and not already signed in with it
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token && user.uid !== auth.currentUser.uid) {
+                         try {
+                             await signInWithCustomToken(auth, __initial_auth_token);
+                             console.log("Signed in with custom token (after initial session check).");
+                         } catch (error) {
+                             console.error("Firebase authentication error with custom token:", error);
+                             displayMessage(`Authentication failed: ${error.message}. Please refresh the page.`, "danger");
+                         }
+                    }
 
                     // Attempt to load previously linked device ID from localStorage
                     const storedDeviceId = localStorage.getItem(`hydrolink_device_id_${currentUserId}`);
@@ -721,7 +735,10 @@
                     DEVICE_ID = null; // Clear device ID if user signs out
                     localStorage.removeItem(`hydrolink_device_id_${currentUserId}`); // Clear stored device ID
                     console.log("User signed out. Redirecting to login.");
-                    window.location.href = 'auth.html';
+                    // Only redirect if not already on auth.html to prevent loop
+                    if (!window.location.pathname.endsWith('auth.html')) {
+                        window.location.href = 'auth.html';
+                    }
                 }
             });
 
@@ -817,63 +834,138 @@
                 // Clear previous status
                 macAddressStatus.innerHTML = '';
                 macAddressInput.classList.remove('is-invalid');
+                confirmMacAddressBtn.disabled = true;
+                confirmMacAddressBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Checking...';
 
-                // Validate MAC format
-                if (!macRegex.test(macAddress)) {
-                    macAddressInput.classList.add('is-invalid');
-                    macAddressStatus.innerHTML = '<div class="alert alert-danger mt-2">Please enter a valid MAC address (e.g., XX:XX:XX:XX:XX:XX).</div>';
+                // Ensure currentUserId is available
+                const currentUser = auth.currentUser;
+                if (!currentUser) {
+                    displayMessage("You must be logged in to link a device.", "danger");
+                    confirmMacAddressBtn.disabled = false;
+                    confirmMacAddressBtn.innerHTML = '<i class="fas fa-link me-2"></i>Link Device';
                     return;
                 }
 
-                // Show loading state
-                macAddressStatus.innerHTML = '<div class="alert alert-info mt-2"><div class="spinner-border spinner-border-sm me-2" role="status"></div>Checking device status...</div>';
-                confirmMacAddressBtn.disabled = true;
-
                 try {
-                    // 1. Look up Firebase UID using MAC address
-                    const macToUidRef = ref(database, `hydrolink/macToFirebaseUid/${macAddress}`);
-                    const uidSnapshot = await get(macToUidRef);
-                    const firebaseUid = uidSnapshot.val();
-
-                    if (firebaseUid) {
-                        DEVICE_ID = firebaseUid;
-                        console.log("Found device with UID:", DEVICE_ID);
-                        initializeFirebaseRefs(); // Initialize refs with the found DEVICE_ID
-
-                        // 2. Link this device to the current user
-                        const userDeviceLinkRef = ref(database, `hydrolink/users/${currentUserId}/devices/${DEVICE_ID}`);
-                        await set(userDeviceLinkRef, true); // Link user to device
-
-                        // 3. Add current user to the device's linkedUsers list
-                        const deviceLinkedUsersRef = ref(database, `hydrolink/devices/${DEVICE_ID}/linkedUsers/${currentUserId}`);
-                        await set(deviceLinkedUsersRef, true); // Link device to user
-
-                        // Store in localStorage for persistence
-                        localStorage.setItem(`hydrolink_device_id_${currentUserId}`, DEVICE_ID);
-
-                        // Success message
-                        macAddressStatus.innerHTML = `<div class="alert alert-success mt-2"><i class="fas fa-check-circle me-2"></i>Device linked successfully! Proceeding to next step...</div>`;
-
-                        // Update progress
-                        updateProgress(66); // Linked, now going to scan drum
-
-                        // Proceed to next step after delay
-                        setTimeout(() => {
-                            macAddressSection.classList.add('hidden');
-                            scanDrumSection.classList.remove('hidden');
-                            scanDrumSection.scrollIntoView({ behavior: 'smooth' });
-                            loadExistingDeviceSettings(); // Load settings for the newly linked device
-                            listenForDrumHeightMeasurement(); // Start listening for measurement
-                        }, 1500);
-
-                    } else {
-                        macAddressStatus.innerHTML = `<div class="alert alert-warning mt-2"><i class="fas fa-exclamation-triangle me-2"></i>Device not found. Ensure your ESP32 is online and has registered its MAC address.</div>`;
+                    // Validate MAC format
+                    if (!macRegex.test(macAddress)) {
+                        macAddressInput.classList.add('is-invalid');
+                        displayMessage('Please enter a valid MAC address (e.g., XX:XX:XX:XX:XX:XX).', "danger");
+                        return;
                     }
+
+                    // Step 1: Check if MAC address exists in Firebase and get its deviceId (Firebase UID)
+                    displayMessage('Searching for device...', "info");
+
+                    const macToUidRef = ref(database, `hydrolink/macToFirebaseUid/${macAddress}`);
+                    const macSnapshot = await get(macToUidRef);
+
+                    if (!macSnapshot.exists()) {
+                        macAddressInput.classList.add('is-invalid');
+                        displayMessage(`
+                            <strong>Device not found!</strong><br>
+                            The device with MAC address <code>${macAddress}</code> is not registered or not online.<br>
+                            <small class="text-muted">Make sure your HydroLink device is powered on and connected to WiFi.</small>
+                        `, "warning");
+                        return;
+                    }
+
+                    const deviceId = macSnapshot.val(); // This is the Firebase UID of the ESP32
+                    displayMessage('Device found! Checking linking status...', "info");
+
+                    // Step 2: Check if the device is already linked to any user
+                    const deviceLinkedUsersRef = ref(database, `hydrolink/devices/${deviceId}/linkedUsers`);
+                    const linkedUsersSnapshot = await get(deviceLinkedUsersRef);
+                    const linkedUsers = linkedUsersSnapshot.val(); // This will be an object of linked UIDs or null
+
+                    if (linkedUsers) {
+                        const linkedUserIds = Object.keys(linkedUsers);
+
+                        // Check if the current user is already linked to this device
+                        if (linkedUserIds.includes(currentUser.uid)) {
+                            displayMessage(`
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>Device Already Linked!</strong><br>
+                                This device is already connected to your account. Redirecting to dashboard...
+                            `, "success");
+                            // Store in localStorage for persistence
+                            localStorage.setItem(`hydrolink_device_id_${currentUser.uid}`, deviceId);
+                            DEVICE_ID = deviceId; // Set global DEVICE_ID
+                            initializeFirebaseRefs(); // Initialize refs for the linked device
+                            setTimeout(() => {
+                                window.location.href = 'index.html'; // Redirect to dashboard or appropriate page
+                            }, 2000);
+                            return;
+                        } else if (linkedUserIds.length > 0) {
+                            // Device is linked to other users, but not the current one
+                            macAddressInput.classList.add('is-invalid');
+                            displayMessage(`
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Device Already Linked!</strong><br>
+                                This device is already connected to another user account and cannot be linked again.<br>
+                                <small class="text-muted mt-2 d-block">
+                                    Each HydroLink device can only be linked to one user account for security reasons.
+                                    If this is your device, please contact support to transfer ownership.
+                                </small>
+                            `, "danger");
+                            return;
+                        }
+                    }
+
+                    // If we reach here, the device is not linked to any user, or only to the current user (already handled).
+                    // Proceed with linking the device to the current user.
+                    displayMessage('Device available! Linking to your account...', "info");
+
+                    // Step 3: Link device to current user and vice-versa
+                    // Link user to device
+                    await set(ref(database, `hydrolink/users/${currentUser.uid}/devices/${deviceId}`), {
+                        macAddress: macAddress,
+                        linkedAt: serverTimestamp(), // Use serverTimestamp for accurate time
+                        deviceName: `HydroLink Device (${macAddress.slice(-5).replace(/:/g, '')})` // Example name from last 4 chars of MAC
+                    });
+
+                    // Add current user to the device's linkedUsers list
+                    await set(ref(database, `hydrolink/devices/${deviceId}/linkedUsers/${currentUser.uid}`), {
+                        linkedAt: serverTimestamp(),
+                        userEmail: currentUser.email || 'N/A',
+                        userName: currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'Anonymous') || 'N/A'
+                    });
+
+                    // Store in localStorage for persistence
+                    localStorage.setItem(`hydrolink_device_id_${currentUser.uid}`, deviceId);
+                    DEVICE_ID = deviceId; // Set global DEVICE_ID
+                    initializeFirebaseRefs(); // Initialize refs with the found DEVICE_ID
+
+                    displayMessage(`
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Device Successfully Linked!</strong><br>
+                        Your HydroLink device has been connected to your account. Proceeding to setup...
+                    `, "success");
+
+                    // Update progress
+                    updateProgress(66); // Linked, now going to scan drum
+
+                    // Proceed to next step after delay
+                    setTimeout(() => {
+                        macAddressSection.classList.add('hidden');
+                        scanDrumSection.classList.remove('hidden');
+                        scanDrumSection.scrollIntoView({ behavior: 'smooth' });
+                        loadExistingDeviceSettings(); // Load settings for the newly linked device
+                        listenForDrumHeightMeasurement(); // Start listening for measurement
+                    }, 1500);
+
                 } catch (error) {
                     console.error("Error linking device:", error);
-                    macAddressStatus.innerHTML = `<div class="alert alert-danger mt-2"><i class="fas fa-times-circle me-2"></i>Error linking device: ${error.message}</div>`;
+                    displayMessage(`
+                        <i class="fas fa-times-circle me-2"></i>
+                        <strong>Error Linking Device:</strong><br>
+                        ${error.message}<br>
+                        Please try again.
+                    `, "danger");
                 } finally {
+                    // Reset button state
                     confirmMacAddressBtn.disabled = false;
+                    confirmMacAddressBtn.innerHTML = '<i class="fas fa-link me-2"></i>Link Device';
                 }
             });
 
