@@ -275,6 +275,7 @@
 
 </head>
 <body>
+
     <div class="hero-section">
         <div class="container">
             <div class="row align-items-center">
@@ -393,9 +394,9 @@
                                 </p>
                                 <div class="mb-3">
                                     <label for="macAddressInput" class="form-label">Device MAC Address</label>
-                                    <input type="text" class="form-control" id="macAddressInput" placeholder="e.g., 6C:C8:40:55:E0:70" pattern="^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$" required>
+                                    <input type="text" class="form-control" id="macAddressInput" placeholder="e.g., 6C:C8:40:55:E0:70" pattern="^([0-9A-Fa-f]{2}[-: ]){5}([0-9A-Fa-f]{2})$" required>
                                     <div class="invalid-feedback">
-                                        Please enter a valid MAC address (e.g., XX:XX:XX:XX:XX:XX).
+                                        Please enter a valid MAC address (e.g., XX:XX:XX:XX:XX:XX or XX-XX-XX-XX-XX-XX).
                                     </div>
                                 </div>
                                 <div id="macAddressStatus" class="mb-3">
@@ -635,7 +636,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, get, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
-        import { getAuth, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js"; // Removed signInAnonymously
+        import { getAuth, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js"; 
 
         // Firebase configuration (initialized once)
         const firebaseConfig = {
@@ -688,22 +689,42 @@
             const stopFillRange = document.getElementById('stopFillRange');
             const stopFillValue = document.getElementById('stopFillValue');
             const startPreview = document.getElementById('startPreview');
-            const stopPreview = document.getElementById('stopPreview');
+            const stopPreview = document.getElementById('stopPreview'); 
             const currentLevelPreview = document.getElementById('currentLevelPreview');
             const completeSetupButton = document.getElementById('completeSetupButton');
             const successSection = document.getElementById('successSection');
             const finalStartLevel = document.getElementById('finalStartLevel');
             const finalStopLevel = document.getElementById('finalStopLevel');
 
+            // Function to show only one section and hide others
+            function showSection(sectionIdToShow) {
+                const sections = [
+                    physicalInstallationSection,
+                    macAddressSection,
+                    scanDrumSection,
+                    configurationSection,
+                    successSection
+                ];
+
+                sections.forEach(section => {
+                    if (section.id === sectionIdToShow) {
+                        section.classList.remove('hidden');
+                        section.scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                        section.classList.add('hidden');
+                    }
+                });
+            }
+
             // Authentication state listener - this is now the primary entry point for auth logic
-            onAuthStateChanged(auth, async (user) => { // Made async to use await
+            onAuthStateChanged(auth, async (user) => { 
                 if (user) {
                     currentUserId = user.uid;
                     console.log("User signed in:", user.email || "Anonymous", "UID:", currentUserId);
                     confirmMacAddressBtn.disabled = false;
                     macAddressStatus.innerHTML = `<div class="alert alert-info mt-2">Logged in as ${user.email || 'Anonymous User'}. Ready to link device.</div>`;
 
-                    isAuthReady = true; // Set auth ready flag
+                    isAuthReady = true; 
 
                     // Attempt to sign in with custom token if available and not already signed in with it
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token && user.uid !== auth.currentUser.uid) {
@@ -727,7 +748,8 @@
                         checkDeviceSetupStatus();
                     } else {
                         // If no stored device ID, show physical installation first
-                        showPhysicalInstallationSection();
+                        showSection('physicalInstallationSection');
+                        updateProgress(0);
                     }
 
                 } else {
@@ -757,7 +779,8 @@
             // Function to check the overall setup status of the linked device
             async function checkDeviceSetupStatus() {
                 if (!DEVICE_ID) {
-                    showPhysicalInstallationSection(); // No device linked, start from scratch
+                    showSection('physicalInstallationSection'); 
+                    updateProgress(0);
                     return;
                 }
 
@@ -766,78 +789,52 @@
                 const linkSnapshot = await get(userDeviceLinkRef);
 
                 if (!linkSnapshot.exists() || !linkSnapshot.val()) {
-                    // Device is not linked to this user, or link is false.
-                    // This could happen if localStorage is out of sync or link was removed.
                     console.warn("Device ID found in localStorage but not linked to current user in Firebase. Resetting.");
                     localStorage.removeItem(`hydrolink_device_id_${currentUserId}`);
-                    showPhysicalInstallationSection();
+                    DEVICE_ID = null; // Clear global DEVICE_ID
+                    showSection('physicalInstallationSection');
+                    updateProgress(0);
                     return;
                 }
 
                 // If linked, check drum height and other settings
-                onValue(deviceSettingsRef, (snapshot) => {
-                    const settings = snapshot.val();
-                    if (settings && settings.drumHeightCm && settings.drumHeightCm > 0) {
-                        console.log("Device already has drum height calibrated:", settings.drumHeightCm);
-                        drumHeightDisplay.textContent = `${settings.drumHeightCm.toFixed(1)} cm`; // Update display
-                        scanSection.classList.add('completed');
-                        scanResults.classList.remove('hidden');
-                        updateProgress(100); // Assume fully configured if drum height is set
-                        // Proceed directly to configuration section
-                        scanDrumSection.classList.add('hidden');
-                        configurationSection.classList.remove('hidden');
-                        configurationSection.scrollIntoView({ behavior: 'smooth' });
-                        // Load existing thresholds into sliders
-                        if (settings.refillThresholdPercentage) {
-                            startFillRange.value = settings.refillThresholdPercentage;
-                            updateStartFillValue();
-                        }
-                        if (settings.maxFillLevelPercentage) {
-                            stopFillRange.value = settings.maxFillLevelPercentage;
-                            updateStopFillValue();
-                        }
-                    } else {
-                        console.log("Device linked but drum height not calibrated. Proceeding to scan drum.");
-                        macAddressSection.classList.add('hidden');
-                        scanDrumSection.classList.remove('hidden');
-                        scanDrumSection.scrollIntoView({ behavior: 'smooth' });
-                        updateProgress(66); // Linked, ready for scan
-                        listenForDrumHeightMeasurement(); // Start listening for measurement
-                    }
-                }, { onlyOnce: true }); // Listen once for initial check
+                const settingsSnapshot = await get(deviceSettingsRef); // Use get for one-time read
+                const settings = settingsSnapshot.val();
+
+                if (settings && settings.drumHeightCm && settings.drumHeightCm > 0) {
+                    console.log("Device already has drum height calibrated:", settings.drumHeightCm);
+                    drumHeightDisplay.textContent = `${settings.drumHeightCm.toFixed(1)} cm`; 
+                    scanSection.classList.add('completed');
+                    scanResults.classList.remove('hidden');
+                    updateProgress(100); 
+                    showSection('configurationSection');
+                    loadExistingDeviceSettings(); // Load thresholds if drum height is already set
+                } else {
+                    console.log("Device linked but drum height not calibrated. Proceeding to scan drum.");
+                    showSection('scanDrumSection');
+                    updateProgress(66); 
+                    listenForDrumHeightMeasurement(); 
+                }
             }
 
-
-            // Function to show the physical installation section and update progress
-            function showPhysicalInstallationSection() {
-                physicalInstallationSection.classList.remove('hidden');
-                macAddressSection.classList.add('hidden');
-                scanDrumSection.classList.add('hidden');
-                configurationSection.classList.add('hidden');
-                successSection.classList.add('hidden');
-                updateProgress(0); // Set progress to 0 for the first step
-            }
 
             // Event listener for "Proceed to Device Linking" button
             proceedToMacAddressBtn.addEventListener('click', () => {
-                physicalInstallationSection.classList.add('hidden');
-                macAddressSection.classList.remove('hidden');
-                macAddressSection.scrollIntoView({ behavior: 'smooth' });
-                updateProgress(33); // Update progress for Step 2
+                showSection('macAddressSection');
+                updateProgress(33); 
             });
 
             // MAC address validation and linking
             confirmMacAddressBtn.addEventListener('click', async () => {
                 const macAddress = macAddressInput.value.trim().toUpperCase();
-                const macRegex = /^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$/;
+                // Updated pattern to correctly handle hyphen or colon as separator
+                const macRegex = /^([0-9A-F]{2}[-: ]){5}([0-9A-F]{2})$/; 
 
-                // Clear previous status
                 macAddressStatus.innerHTML = '';
                 macAddressInput.classList.remove('is-invalid');
                 confirmMacAddressBtn.disabled = true;
                 confirmMacAddressBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Checking...';
 
-                // Ensure currentUserId is available
                 const currentUser = auth.currentUser;
                 if (!currentUser) {
                     displayMessage("You must be logged in to link a device.", "danger");
@@ -847,14 +844,12 @@
                 }
 
                 try {
-                    // Validate MAC format
                     if (!macRegex.test(macAddress)) {
                         macAddressInput.classList.add('is-invalid');
-                        displayMessage('Please enter a valid MAC address (e.g., XX:XX:XX:XX:XX:XX).', "danger");
+                        displayMessage('Please enter a valid MAC address (e.g., XX:XX:XX:XX:XX:XX or XX-XX-XX-XX-XX-XX).', "danger");
                         return;
                     }
 
-                    // Step 1: Check if MAC address exists in Firebase and get its deviceId (Firebase UID)
                     displayMessage('Searching for device...', "info");
 
                     const macToUidRef = ref(database, `hydrolink/macToFirebaseUid/${macAddress}`);
@@ -870,34 +865,30 @@
                         return;
                     }
 
-                    const deviceId = macSnapshot.val(); // This is the Firebase UID of the ESP32
+                    const deviceId = macSnapshot.val(); 
                     displayMessage('Device found! Checking linking status...', "info");
 
-                    // Step 2: Check if the device is already linked to any user
                     const deviceLinkedUsersRef = ref(database, `hydrolink/devices/${deviceId}/linkedUsers`);
                     const linkedUsersSnapshot = await get(deviceLinkedUsersRef);
-                    const linkedUsers = linkedUsersSnapshot.val(); // This will be an object of linked UIDs or null
+                    const linkedUsers = linkedUsersSnapshot.val(); 
 
-                    if (linkedUsers) {
+                    if (linkedUsers && Object.keys(linkedUsers).length > 0) {
                         const linkedUserIds = Object.keys(linkedUsers);
 
-                        // Check if the current user is already linked to this device
                         if (linkedUserIds.includes(currentUser.uid)) {
                             displayMessage(`
                                 <i class="fas fa-check-circle me-2"></i>
                                 <strong>Device Already Linked!</strong><br>
                                 This device is already connected to your account. Redirecting to dashboard...
                             `, "success");
-                            // Store in localStorage for persistence
                             localStorage.setItem(`hydrolink_device_id_${currentUser.uid}`, deviceId);
-                            DEVICE_ID = deviceId; // Set global DEVICE_ID
-                            initializeFirebaseRefs(); // Initialize refs for the linked device
+                            DEVICE_ID = deviceId; 
+                            initializeFirebaseRefs(); 
                             setTimeout(() => {
-                                window.location.href = 'index.html'; // Redirect to dashboard or appropriate page
+                                window.location.href = 'index.html'; 
                             }, 2000);
                             return;
-                        } else if (linkedUserIds.length > 0) {
-                            // Device is linked to other users, but not the current one
+                        } else {
                             macAddressInput.classList.add('is-invalid');
                             displayMessage(`
                                 <i class="fas fa-exclamation-triangle me-2"></i>
@@ -912,29 +903,25 @@
                         }
                     }
 
-                    // If we reach here, the device is not linked to any user, or only to the current user (already handled).
-                    // Proceed with linking the device to the current user.
                     displayMessage('Device available! Linking to your account...', "info");
 
-                    // Step 3: Link device to current user and vice-versa
-                    // Link user to device
-                    await set(ref(database, `hydrolink/users/${currentUser.uid}/devices/${deviceId}`), {
-                        macAddress: macAddress,
-                        linkedAt: serverTimestamp(), // Use serverTimestamp for accurate time
-                        deviceName: `HydroLink Device (${macAddress.slice(-5).replace(/:/g, '')})` // Example name from last 4 chars of MAC
-                    });
-
-                    // Add current user to the device's linkedUsers list
-                    await set(ref(database, `hydrolink/devices/${deviceId}/linkedUsers/${currentUser.uid}`), {
-                        linkedAt: serverTimestamp(),
-                        userEmail: currentUser.email || 'N/A',
-                        userName: currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'Anonymous') || 'N/A'
-                    });
-
-                    // Store in localStorage for persistence
+                    // Set both user-device link and device-user link
+                    await Promise.all([
+                        set(ref(database, `hydrolink/users/${currentUser.uid}/devices/${deviceId}`), {
+                            macAddress: macAddress,
+                            linkedAt: serverTimestamp(), 
+                            deviceName: `HydroLink Device (${macAddress.slice(-5).replace(/:/g, '')})` 
+                        }),
+                        set(ref(database, `hydrolink/devices/${deviceId}/linkedUsers/${currentUser.uid}`), {
+                            linkedAt: serverTimestamp(),
+                            userEmail: currentUser.email || 'N/A',
+                            userName: currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'Anonymous') || 'N/A'
+                        })
+                    ]);
+                    
                     localStorage.setItem(`hydrolink_device_id_${currentUser.uid}`, deviceId);
-                    DEVICE_ID = deviceId; // Set global DEVICE_ID
-                    initializeFirebaseRefs(); // Initialize refs with the found DEVICE_ID
+                    DEVICE_ID = deviceId; 
+                    initializeFirebaseRefs(); 
 
                     displayMessage(`
                         <i class="fas fa-check-circle me-2"></i>
@@ -942,16 +929,12 @@
                         Your HydroLink device has been connected to your account. Proceeding to setup...
                     `, "success");
 
-                    // Update progress
-                    updateProgress(66); // Linked, now going to scan drum
+                    updateProgress(66); 
 
-                    // Proceed to next step after delay
                     setTimeout(() => {
-                        macAddressSection.classList.add('hidden');
-                        scanDrumSection.classList.remove('hidden');
-                        scanDrumSection.scrollIntoView({ behavior: 'smooth' });
-                        loadExistingDeviceSettings(); // Load settings for the newly linked device
-                        listenForDrumHeightMeasurement(); // Start listening for measurement
+                        showSection('scanDrumSection');
+                        loadExistingDeviceSettings(); 
+                        listenForDrumHeightMeasurement(); 
                     }, 1500);
 
                 } catch (error) {
@@ -963,7 +946,6 @@
                         Please try again.
                     `, "danger");
                 } finally {
-                    // Reset button state
                     confirmMacAddressBtn.disabled = false;
                     confirmMacAddressBtn.innerHTML = '<i class="fas fa-link me-2"></i>Link Device';
                 }
@@ -973,32 +955,30 @@
             async function loadExistingDeviceSettings() {
                 if (!currentUserId || !DEVICE_ID || !deviceSettingsRef) return;
 
-                onValue(deviceSettingsRef, (snapshot) => {
-                    const settings = snapshot.val();
-                    if (settings) {
-                        console.log("Loading existing device settings:", settings);
-                        if (settings.drumHeightCm && settings.drumHeightCm > 0) {
-                            drumHeightDisplay.textContent = `${settings.drumHeightCm.toFixed(1)} cm`;
-                            // If drum height is already set, update scan section visual
-                            scanSection.classList.add('completed');
-                            scanResults.classList.remove('hidden');
-                            scanIcon.className = 'fas fa-check-circle icon-large text-success';
-                            scanTitle.textContent = 'Drum Height Measured';
-                            scanDescription.textContent = 'Empty drum height measurement successful!';
-                        }
-                        // Update range sliders based on existing settings
-                        if (settings.refillThresholdPercentage) {
-                            startFillRange.value = settings.refillThresholdPercentage;
-                            updateStartFillValue();
-                        }
-                        if (settings.maxFillLevelPercentage) {
-                            stopFillRange.value = settings.maxFillLevelPercentage;
-                            updateStopFillValue();
-                        }
-                    } else {
-                        console.log("No existing settings found for this device. Will use defaults.");
+                // Use get() for a one-time read when loading existing settings
+                const snapshot = await get(deviceSettingsRef); 
+                const settings = snapshot.val();
+                if (settings) {
+                    console.log("Loading existing device settings:", settings);
+                    if (settings.drumHeightCm && settings.drumHeightCm > 0) {
+                        drumHeightDisplay.textContent = `${settings.drumHeightCm.toFixed(1)} cm`;
+                        scanSection.classList.add('completed');
+                        scanResults.classList.remove('hidden');
+                        scanIcon.className = 'fas fa-check-circle icon-large text-success';
+                        scanTitle.textContent = 'Drum Height Measured';
+                        scanDescription.textContent = 'Empty drum height measurement successful!';
                     }
-                }, { onlyOnce: true }); // Use { onlyOnce: true } to prevent continuous listening if not needed after initial load
+                    if (settings.refillThresholdPercentage) {
+                        startFillRange.value = settings.refillThresholdPercentage;
+                        updateStartFillValue();
+                    }
+                    if (settings.maxFillLevelPercentage) {
+                        stopFillRange.value = settings.maxFillLevelPercentage;
+                        updateStopFillValue();
+                    }
+                } else {
+                    console.log("No existing settings found for this device. Will use defaults.");
+                }
             }
 
             // Listen for drum height measurement from Firebase
@@ -1008,16 +988,17 @@
                     return;
                 }
 
+                // Attach listener only if not already listening
+                // This 'onValue' listener should ideally be set up once when entering the scan drum section
+                // and potentially detached when leaving it if performance is critical,
+                // but for a setup flow, keeping it active is fine.
                 onValue(drumHeightRef, (snapshot) => {
                     const heightCm = snapshot.val();
-                    // Check if a valid positive number is received and if we are actively scanning
                     if (heightCm !== null && typeof heightCm === 'number' && heightCm > 0 && isScanning) {
                         console.log("Received drum height measurement:", heightCm);
                         completeDrumHeightScan(heightCm);
                     } else if (heightCm === 0 && isScanning) {
-                         // If 0 is received while scanning, it might indicate an error or reset on device
-                         console.warn("Received 0 for drum height while scanning. Retrying or indicating error.");
-                         // You might want to display a specific error message here
+                         // If 0 is received while scanning, it might indicate an.
                          // For now, we'll just let the scan timeout or user rescan
                     }
                 });
@@ -1032,7 +1013,7 @@
                     return;
                 }
 
-                if (isScanning) return; // Prevent multiple scans
+                if (isScanning) return; 
 
                 isScanning = true;
                 scanButton.style.display = 'none';
@@ -1043,7 +1024,6 @@
                 scanDescription.textContent = 'Please wait while your Hydrolink device measures the total height of your empty water drum...';
 
                 try {
-                    // Set the flag in Firebase to true to trigger measurement on ESP32
                     await set(measureDrumFlagRef, true);
                     console.log("Requested drum measurement from ESP32 via Firebase.");
                 } catch (error) {
@@ -1054,7 +1034,7 @@
             }
 
             function completeDrumHeightScan(heightCm) {
-                isScanning = false; // Reset scanning flag
+                isScanning = false; 
                 scanSection.classList.remove('scanning');
                 scanSection.classList.add('completed');
                 scanningIndicator.classList.add('hidden');
@@ -1064,27 +1044,22 @@
 
                 scanResults.classList.remove('hidden');
                 updateDrumHeightDisplay(heightCm);
-                proceedButton.focus(); // Focus the proceed button for better UX
+                proceedButton.focus(); 
             }
 
             function updateDrumHeightDisplay(heightCm) {
                 drumHeightDisplay.textContent = `${heightCm.toFixed(1)} cm`;
-                waterFill.style.height = '0%'; // Ensure water fill is 0% for empty drum measurement visual
-                currentLevelPreview.textContent = '0% (Empty)'; // Update current level preview
+                waterFill.style.height = '0%'; 
+                currentLevelPreview.textContent = '0% (Empty)'; 
             }
 
             // Event listener for "Proceed to Configuration" button
-            proceedButton.addEventListener('click', proceedToConfiguration);
-
-            function proceedToConfiguration() {
-                scanDrumSection.classList.add('hidden');
-                configurationSection.classList.remove('hidden');
-                configurationSection.scrollIntoView({ behavior: 'smooth' });
-                updateProgress(100); // Set progress to 100% for the final step
-                // Initialize range slider values for visual preview
+            proceedButton.addEventListener('click', () => {
+                showSection('configurationSection');
+                updateProgress(100); 
                 updateStartFillValue();
                 updateStopFillValue();
-            }
+            });
 
             // Event listener for "Measure Again" button
             rescanButton.addEventListener('click', resetScanSection);
@@ -1094,13 +1069,14 @@
                 scanSection.classList.remove('completed');
                 scanSection.classList.remove('scanning');
                 scanResults.classList.add('hidden');
-                scanButton.style.display = 'inline-block'; // Show the scan button again
-                scanningIndicator.classList.add('hidden'); // Hide scanning indicator
+                scanButton.style.display = 'inline-block'; 
+                scanningIndicator.classList.add('hidden'); 
                 scanIcon.className = 'fas fa-radar-chart icon-large text-primary';
                 scanTitle.textContent = 'Ready to Scan';
                 scanDescription.textContent = 'Make sure your water drum is EMPTY, then click the button below to measure the total height of your drum.';
-                updateProgress(66); // Go back to scan drum step progress
-                drumHeightDisplay.textContent = '0.0 cm'; // Reset displayed height
+                updateProgress(66); 
+                drumHeightDisplay.textContent = '0.0 cm'; 
+                showSection('scanDrumSection'); 
             }
 
             // Event listeners for range sliders
@@ -1112,13 +1088,11 @@
                 startFillValue.textContent = value + '%';
                 startPreview.textContent = value + '%';
                 const startLine = document.getElementById('startLine');
-                // Calculate top position for start line (100% - value%)
                 startLine.style.top = (100 - value) + '%';
                 if (parseInt(stopFillRange.value) <= value) {
                     stopFillRange.value = Math.min(value + 20, parseInt(stopFillRange.max));
                     updateStopFillValue();
                 }
-                // Adjust water fill height for preview
                 updatePreviewWaterFill();
             }
 
@@ -1127,13 +1101,11 @@
                 stopFillValue.textContent = value + '%';
                 stopPreview.textContent = value + '%';
                 const stopLine = document.getElementById('stopLine');
-                // Calculate top position for stop line (100% - value%)
                 stopLine.style.top = (100 - value) + '%';
                 if (parseInt(startFillRange.value) >= value) {
                     startFillRange.value = Math.max(value - 20, parseInt(startFillRange.min));
                     updateStartFillValue();
                 }
-                // Adjust water fill height for preview
                 updatePreviewWaterFill();
             }
 
@@ -1141,7 +1113,6 @@
                 const startValue = parseInt(startFillRange.value);
                 const stopValue = parseInt(stopFillRange.value);
 
-                // For visual representation, let's assume current level is midway or a fixed value for demo
                 const visualCurrentLevel = (startValue + stopValue) / 2;
                 currentLevelPreview.textContent = `${visualCurrentLevel.toFixed(0)}%`;
                 previewWaterFill.style.height = `${visualCurrentLevel}%`;
@@ -1156,12 +1127,11 @@
                     return;
                 }
 
-                const drumHeight = parseFloat(drumHeightDisplay.textContent); // Get the value from the display
+                const drumHeight = parseFloat(drumHeightDisplay.textContent); 
                 const startLevel = parseInt(startFillRange.value);
                 const stopLevel = parseInt(stopFillRange.value);
 
                 try {
-                    // Save all settings in one operation
                     const settings = {
                         drumHeightCm: drumHeight,
                         refillThresholdPercentage: startLevel,
@@ -1172,14 +1142,10 @@
                     
                     console.log("Settings saved successfully:", settings);
                     
-                    // Update final values in success section
                     finalStartLevel.textContent = `${startLevel}%`;
                     finalStopLevel.textContent = `${stopLevel}%`;
 
-                    // Proceed to success section
-                    document.getElementById('configurationSection').classList.add('hidden');
-                    document.getElementById('successSection').classList.remove('hidden');
-                    document.getElementById('successSection').scrollIntoView({ behavior: 'smooth' });
+                    showSection('successSection');
                     
                 } catch (error) {
                     console.error("Error saving settings:", error);
@@ -1191,23 +1157,17 @@
                 progressFill.style.width = percentage + '%';
             }
 
-            // Function to display messages (replaces alert)
             function displayMessage(message, type) {
-                let messageContainer = document.getElementById('macAddressStatus'); // Use existing status div
-                if (!messageContainer) { // Fallback if div not found
+                let messageContainer = document.getElementById('macAddressStatus'); 
+                if (!messageContainer) { 
                     messageContainer = document.createElement('div');
                     document.body.appendChild(messageContainer);
                 }
                 messageContainer.innerHTML = `<div class="alert alert-${type} mt-2">${message}</div>`;
                 setTimeout(() => {
-                    messageContainer.innerHTML = ''; // Clear message after some time
+                    messageContainer.innerHTML = ''; 
                 }, 4000);
             }
-
-            // Initial call to show the first section if no user is logged in or device linked
-            // This is now handled by onAuthStateChanged.
-            // If the user is logged in but no device ID is stored, it will show physical installation.
-            // If the user is not logged in, onAuthStateChanged will redirect to auth.html.
         });
     </script>
 </body>

@@ -8,6 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <!-- Font Awesome for scan icon -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/settings.css">
     <style>
@@ -199,13 +201,83 @@
             from { opacity: 1; transform: translateY(0); }
             to { opacity: 0; transform: translateY(-20px); }
         }
+
+        /* Styles for the modal's scan section, adapted from setup.html */
+        .scan-section {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 2px dashed var(--accent-teal);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .scan-section.scanning {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-color: var(--warning-orange);
+            animation: pulse 2s infinite;
+        }
+
+        .scan-section.completed {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            border-color: var(--accent-green);
+        }
+
+        .water-level-display {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-top: 1rem;
+        }
+
+        .water-tank-visual {
+            width: 100px;
+            height: 200px;
+            border: 3px solid #2563eb; /* Using primary blue */
+            border-radius: 10px;
+            position: relative;
+            margin: 0 auto 1rem;
+            overflow: hidden;
+            background: #f8fafc;
+        }
+
+        .water-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(180deg, #0891b2 0%, #2563eb 100%); /* Using accent-teal and primary-blue */
+            transition: height 1s ease;
+            border-radius: 0 0 7px 7px;
+        }
+
+        .icon-large {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
     </style>
 </head>
 <body>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="index.html">
+            <a class="navbar-brand" href="#">
                 <i class="bi bi-droplet-fill me-2"></i>HydroLink
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -214,17 +286,20 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="index.html#dashboard">Dashboard</a>
+                        <a class="nav-link" href="index.html">Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="index.html#history">History</a>
+                        <a class="nav-link" href="history.html">History</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="setup.html">Setup Device</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link active" href="settings.html">Settings</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="auth.html">
-                            <i class="bi bi-person-circle"></i>
+                            <i class="bi bi-person-circle"></i> Login
                         </a>
                     </li>
                     <li class="nav-item">
@@ -612,6 +687,70 @@
         </div>
     </div>
 
+    <!-- Configure Device Modal -->
+    <div class="modal fade" id="configureDeviceModal" tabindex="-1" aria-labelledby="configureDeviceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="configureDeviceModalLabel">Configure Device: <span id="modalDeviceName"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-info mb-4" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        To re-measure your drum height, ensure the water drum is **completely EMPTY** and the device's ultrasonic sensor is properly positioned at the top.
+                    </div>
+
+                    <div class="scan-section mb-4" id="modalScanSection">
+                        <i class="fas fa-radar-chart icon-large text-primary" id="modalScanIcon"></i>
+                        <h5 id="modalScanTitle">Ready to Scan</h5>
+                        <p class="text-muted mb-4" id="modalScanDescription">
+                            Click the button below to measure the total height of your empty drum.
+                        </p>
+
+                        <button class="btn btn-primary" id="modalScanButton">
+                            <i class="fas fa-search me-2"></i>Scan Water Drum Now
+                        </button>
+
+                        <div class="hidden" id="modalScanningIndicator">
+                            <div class="spinner-border text-primary mb-3" role="status">
+                                <span class="visually-hidden">Scanning...</span>
+                            </div>
+                            <p class="mb-0">Scanning in progress... Awaiting measurement from device.</p>
+                        </div>
+                    </div>
+
+                    <div class="hidden fade-in-up" id="modalScanResults">
+                        <div class="water-level-display">
+                            <h6 class="text-center mb-3">Measured Drum Height</h6>
+                            <div class="water-tank-visual">
+                                <div class="water-fill" id="modalWaterFill" style="height: 0%;"></div>
+                                <div class="position-absolute w-100 text-center" style="bottom: -25px; font-size: 0.75rem; color: #6b7280;">
+                                    Empty Drum
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <h3 class="text-primary mb-1" id="modalDrumHeightDisplay">0.0 cm</h3>
+                                <p class="text-muted mb-3">total drum height</p>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-success" id="modalSaveDrumHeightButton">
+                                        <i class="fas fa-check me-2"></i>Save Drum Height
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="modalRescanButton">
+                                        <i class="fas fa-redo me-2"></i>Measure Again
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Message Box Container -->
     <div id="messageBoxContainer"></div>
 
@@ -619,6 +758,9 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
     <script type="module">
+        // Define embedUrlPrefix if it's not already defined by the environment
+        const embedUrlPrefix = typeof window.__embed_url_prefix__ !== 'undefined' ? window.__embed_url_prefix__ : '';
+
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
         import { getDatabase, ref, get, set, remove, onValue } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
@@ -640,6 +782,9 @@
 
         let currentUser = null; // Store the current authenticated user object
         let currentUserId = null;
+        let currentDeviceBeingConfigured = null; // Stores the deviceId of the device opened in the modal
+        let isScanning = false; // Flag for modal scanning
+        let unsubscribeModalDrumHeight = null; // To store the unsubscribe function for modal drum height listener
 
         // DOM Elements
         const emailInput = document.getElementById('email');
@@ -650,6 +795,21 @@
         const updatePasswordBtn = document.getElementById('updatePasswordBtn');
         const deviceListContainer = document.getElementById('deviceListContainer');
         const noDevicesMessage = document.getElementById('noDevicesMessage');
+
+        // Modal DOM Elements
+        const configureDeviceModal = new bootstrap.Modal(document.getElementById('configureDeviceModal'));
+        const modalDeviceName = document.getElementById('modalDeviceName');
+        const modalScanSection = document.getElementById('modalScanSection');
+        const modalScanIcon = document.getElementById('modalScanIcon');
+        const modalScanTitle = document.getElementById('modalScanTitle');
+        const modalScanDescription = document.getElementById('modalScanDescription');
+        const modalScanButton = document.getElementById('modalScanButton');
+        const modalScanningIndicator = document.getElementById('modalScanningIndicator');
+        const modalScanResults = document.getElementById('modalScanResults');
+        const modalWaterFill = document.getElementById('modalWaterFill');
+        const modalDrumHeightDisplay = document.getElementById('modalDrumHeightDisplay');
+        const modalSaveDrumHeightButton = document.getElementById('modalSaveDrumHeightButton');
+        const modalRescanButton = document.getElementById('modalRescanButton');
 
         // Message Box Function (replaces alert/confirm)
         function displayMessage(message, type = 'info', duration = 4000) {
@@ -715,10 +875,11 @@
                 currentUserId = null;
                 console.log("Settings: User signed out. Redirecting to login.");
                 if (!window.location.pathname.endsWith('auth.html')) {
-                    window.location.href = 'auth.html';
+                    window.location.href = embedUrlPrefix + '/auth.html';
                 }
             }
         });
+        
 
         // --- Profile Tab Functionality ---
         document.getElementById('profileForm').addEventListener('submit', async (e) => {
@@ -866,7 +1027,7 @@
                                 </div>
                             </div>
                             <div>
-                                <button type="button" class="btn btn-sm btn-outline-primary me-2 configure-btn" data-device-id="${deviceId}">Configure</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary me-2 configure-btn" data-bs-toggle="modal" data-bs-target="#configureDeviceModal" data-device-id="${deviceId}" data-device-name="${deviceData.deviceName || `HydroLink Device (${deviceId.substring(0, 6)}...)`}">Configure</button>
                                 <button type="button" class="btn btn-sm btn-outline-danger disconnect-btn" data-device-id="${deviceId}">Disconnect</button>
                             </div>
                         `;
@@ -881,14 +1042,36 @@
                         });
                     });
 
-                    // Add event listeners to newly created configure buttons
-                    document.querySelectorAll('.configure-btn').forEach(button => {
-                        button.addEventListener('click', (e) => {
-                            const deviceIdToConfigure = e.target.dataset.deviceId;
-                            // For now, redirect to setup.html, potentially with deviceId as a parameter
-                            // In a full app, this might open a modal or navigate to a dedicated device config page
-                            window.location.href = `setup.html?deviceId=${deviceIdToConfigure}`;
-                        });
+                    // Event listener for when the modal is shown
+                    document.getElementById('configureDeviceModal').addEventListener('show.bs.modal', async (event) => {
+                        const button = event.relatedTarget; // Button that triggered the modal
+                        currentDeviceBeingConfigured = button.getAttribute('data-device-id');
+                        const deviceName = button.getAttribute('data-device-name');
+                        modalDeviceName.textContent = deviceName;
+
+                        // Reset modal UI to initial scan state
+                        resetModalScanSection();
+
+                        // Load existing drum height for the device
+                        if (currentDeviceBeingConfigured) {
+                            const deviceSettingsRef = ref(database, `hydrolink/devices/${currentDeviceBeingConfigured}/settings/drumHeightCm`);
+                            const snapshot = await get(deviceSettingsRef);
+                            const currentHeight = snapshot.val();
+                            if (currentHeight !== null && currentHeight > 0) { // Check for null and positive value
+                                modalDrumHeightDisplay.textContent = `${currentHeight.toFixed(1)} cm`;
+                                modalScanSection.classList.add('completed');
+                                modalScanResults.classList.remove('hidden');
+                                modalScanIcon.className = 'fas fa-check-circle icon-large text-success';
+                                modalScanTitle.textContent = 'Current Drum Height';
+                                modalScanDescription.textContent = 'This device is already calibrated. You can re-measure if needed.';
+                                modalScanButton.style.display = 'none'; // Hide scan button if already measured
+                                modalSaveDrumHeightButton.textContent = 'Update Drum Height'; // Change button text
+                            } else {
+                                modalDrumHeightDisplay.textContent = '0.0 cm';
+                                modalSaveDrumHeightButton.textContent = 'Save Drum Height';
+                                modalScanButton.style.display = 'inline-block'; // Ensure scan button is visible
+                            }
+                        }
                     });
 
                 } else {
@@ -928,8 +1111,172 @@
             }
         }
 
-        // Initial load of linked devices (will be called by onAuthStateChanged)
-        // loadLinkedDevices(); // Removed from here, called by onAuthStateChanged
+        // --- Modal Scan Logic (adapted from setup.html) ---
+
+        modalScanButton.addEventListener('click', triggerModalDrumMeasurement);
+        modalRescanButton.addEventListener('click', resetModalScanSection);
+        modalSaveDrumHeightButton.addEventListener('click', saveModalDrumHeight);
+
+        // Add this listener to reset modal state when it's hidden
+        document.getElementById('configureDeviceModal').addEventListener('hidden.bs.modal', function () {
+            resetModalScanSection();
+            // Also unsubscribe the listener if it's still active when modal closes
+            if (unsubscribeModalDrumHeight) {
+                unsubscribeModalDrumHeight();
+                unsubscribeModalDrumHeight = null; // Clear the reference
+            }
+        });
+
+        async function triggerModalDrumMeasurement() {
+            if (!currentUserId || !currentDeviceBeingConfigured) {
+                displayMessage("Authentication or Device ID missing. Please log in and ensure device is linked.", "danger");
+                return;
+            }
+
+            if (isScanning) return; // Prevent multiple scans
+
+            isScanning = true;
+            modalScanButton.style.display = 'none';
+            modalScanningIndicator.classList.remove('hidden');
+            modalScanSection.classList.add('scanning');
+            modalScanIcon.className = 'fas fa-spinner fa-spin icon-large text-warning';
+            modalScanTitle.textContent = 'Measuring Drum Height';
+            modalScanDescription.textContent = 'Please wait while your Hydrolink device measures the total height of your empty water drum...';
+            modalScanResults.classList.add('hidden'); // Hide results during scan
+
+            try {
+                // Set the flag in Firebase to true to trigger measurement on ESP32
+                const measureDrumFlagRef = ref(database, `hydrolink/devices/${currentDeviceBeingConfigured}/settings/measureDrum`);
+                await set(measureDrumFlagRef, true);
+                console.log("Requested drum measurement from ESP32 via Firebase for device:", currentDeviceBeingConfigured);
+
+                // --- ADD THE 8-SECOND DELAY HERE ---
+                console.log("Waiting 8 seconds for the ESP32 to complete measurement...");
+                await new Promise(resolve => setTimeout(resolve, 8000)); // 8-second delay
+
+                let receivedHeight = 0; // To store the height from Firebase
+                let measurementFirebasePromise = new Promise((resolve, reject) => { // Added reject for timeout
+                    const drumHeightRef = ref(database, `hydrolink/devices/${currentDeviceBeingConfigured}/settings/drumHeightCm`);
+                    let timeoutId; // To store the timeout ID
+
+                    // Function to clean up the listener and timeout
+                    const cleanup = () => {
+                        if (unsubscribeModalDrumHeight) {
+                            unsubscribeModalDrumHeight();
+                            unsubscribeModalDrumHeight = null;
+                        }
+                        clearTimeout(timeoutId);
+                    };
+
+                    // Set a timeout to reject the promise if no valid measurement is received within a reasonable time
+                    // (e.g., 20 seconds, adjust if needed. This is separate from the initial 8s delay)
+                    timeoutId = setTimeout(() => {
+                        cleanup();
+                        reject(new Error("Measurement timeout: No valid drum height received from device."));
+                    }, 2000); // Give it up to 20 seconds to receive the value after the initial 8s delay
+
+                    // Unsubscribe any previous listener to avoid multiple active listeners
+                    if (unsubscribeModalDrumHeight) {
+                        unsubscribeModalDrumHeight();
+                    }
+
+                    unsubscribeModalDrumHeight = onValue(drumHeightRef, (snapshot) => {
+                        const heightCm = snapshot.val();
+                        if (heightCm !== null && typeof heightCm === 'number' && heightCm > 0) {
+                            receivedHeight = heightCm;
+                            cleanup(); // Clean up listener and timeout
+                            resolve(heightCm); // Resolve the promise with the valid height
+                        } else {
+                            console.log("Received invalid or null height from Firebase, waiting for valid measurement...");
+                        }
+                    }, (error) => {
+                        // Handle potential errors from Firebase listener itself
+                        cleanup();
+                        reject(error);
+                    });
+                });
+
+                // Await the measurement promise directly after the 8-second delay
+                const height = await measurementFirebasePromise;
+
+                if (isScanning) { // Ensure we are still in scanning mode
+                    completeModalDrumHeightScan(height);
+                }
+
+            } catch (error) {
+                console.error("Error during drum measurement process:", error);
+                // Check if it's a timeout error specifically
+                if (error.message.includes("Measurement timeout")) {
+                    displayMessage(`Measurement failed: ${error.message}. Please ensure the device is connected and functioning correctly.`, "danger");
+                } else {
+                    displayMessage(`Measurement failed: ${error.message || "An unexpected error occurred."}`, "danger");
+                }
+                resetModalScanSection();
+            } finally {
+                // Ensure isScanning is set to false regardless of success or failure
+                isScanning = false;
+            }
+        }
+
+        function completeModalDrumHeightScan(heightCm) {
+            isScanning = false; // Reset scanning flag
+            modalScanSection.classList.remove('scanning');
+            modalScanSection.classList.add('completed');
+            modalScanningIndicator.classList.add('hidden');
+            modalScanIcon.className = 'fas fa-check-circle icon-large text-success';
+            modalScanTitle.textContent = 'Drum Height Measured';
+            modalScanDescription.textContent = 'Empty drum height measurement successful!';
+
+            modalScanResults.classList.remove('hidden');
+            modalDrumHeightDisplay.textContent = `${heightCm.toFixed(1)} cm`;
+            modalWaterFill.style.height = '0%'; // Ensure water fill is 0% for empty drum measurement visual
+            modalSaveDrumHeightButton.textContent = 'Save Drum Height'; // Reset button text
+            modalSaveDrumHeightButton.focus(); // Focus the save button for better UX
+        }
+
+        function resetModalScanSection() {
+            isScanning = false;
+            modalScanSection.classList.remove('completed');
+            modalScanSection.classList.remove('scanning');
+            modalScanResults.classList.add('hidden');
+            modalScanButton.style.display = 'inline-block'; // Show the scan button again
+            modalScanningIndicator.classList.add('hidden'); // Hide scanning indicator
+            modalScanIcon.className = 'fas fa-radar-chart icon-large text-primary';
+            modalScanTitle.textContent = 'Ready to Scan';
+            modalScanDescription.textContent = 'Click the button below to measure the total height of your empty drum.';
+            modalDrumHeightDisplay.textContent = '0.0 cm'; // Reset displayed height
+            modalSaveDrumHeightButton.textContent = 'Save Drum Height'; // Reset button text
+        }
+
+        async function saveModalDrumHeight() {
+            if (!currentUserId || !currentDeviceBeingConfigured) {
+                displayMessage("Authentication or Device ID missing. Cannot save drum height.", "danger");
+                return;
+            }
+
+            const drumHeight = parseFloat(modalDrumHeightDisplay.textContent);
+            if (drumHeight <= 0) {
+                displayMessage("Please measure a valid drum height before saving.", "warning");
+                return;
+            }
+
+            modalSaveDrumHeightButton.disabled = true;
+            modalSaveDrumHeightButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Saving...';
+
+            try {
+                const deviceSettingsRef = ref(database, `hydrolink/devices/${currentDeviceBeingConfigured}/settings`);
+                // Use update to only change drumHeightCm, preserving other settings
+                await set(deviceSettingsRef, { drumHeightCm: drumHeight }, { merge: true });
+                displayMessage("Drum height updated successfully!", "success");
+                configureDeviceModal.hide(); // Close modal on success
+            } catch (error) {
+                console.error("Error saving drum height:", error);
+                displayMessage(`Failed to save drum height: ${error.message}`, "danger");
+            } finally {
+                modalSaveDrumHeightButton.disabled = false;
+                modalSaveDrumHeightButton.innerHTML = '<i class="fas fa-check me-2"></i>Save Drum Height';
+            }
+        }
     </script>
 </body>
 </html>
