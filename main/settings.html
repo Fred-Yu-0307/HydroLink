@@ -527,7 +527,7 @@
 
                                     <div class="d-flex justify-content-end">
                                         <button type="button" class="btn btn-light me-2">Cancel</button>
-                                        <button type="submit" class="btn btn-primary save-btn">
+                                        <button type="submit" class="btn btn-primary">
                                             <span class="btn-text">Save Address</span>
                                             <span class="btn-icon"><i class="bi bi-check-circle"></i></span>
                                         </button>
@@ -757,7 +757,7 @@
     <!-- Bootstrap 5 JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
-    <script type="module">
+<script type="module">
         // Define embedUrlPrefix if it's not already defined by the environment
         const embedUrlPrefix = typeof window.__embed_url_prefix__ !== 'undefined' ? window.__embed_url_prefix__ : '';
 
@@ -1023,8 +1023,7 @@
                                     <h6 class="mb-1">${deviceData.deviceName || `HydroLink Device (${deviceId.substring(0, 6)}...)`}</h6>
                                     <p class="text-muted mb-0">MAC: ${deviceData.macAddress || 'N/A'}</p>
                                     <p class="text-muted mb-0">Connected since: ${deviceData.linkedAt ? new Date(deviceData.linkedAt).toLocaleDateString() : 'N/A'}</p>
-                                    <span class="badge bg-success">Online</span> <!-- Placeholder, actual status would come from device/status -->
-                                </div>
+                                    <span class="badge bg-success">Online</span> </div>
                             </div>
                             <div>
                                 <button type="button" class="btn btn-sm btn-outline-primary me-2 configure-btn" data-bs-toggle="modal" data-bs-target="#configureDeviceModal" data-device-id="${deviceId}" data-device-name="${deviceData.deviceName || `HydroLink Device (${deviceId.substring(0, 6)}...)`}">Configure</button>
@@ -1044,7 +1043,7 @@
 
                     // Event listener for when the modal is shown
                     document.getElementById('configureDeviceModal').addEventListener('show.bs.modal', async (event) => {
-                        const button = event.relatedTarget; // Button that triggered the modal
+                        const button = event.relatedTarget; // Button that trigger Informaed the modal
                         currentDeviceBeingConfigured = button.getAttribute('data-device-id');
                         const deviceName = button.getAttribute('data-device-name');
                         modalDeviceName.textContent = deviceName;
@@ -1173,7 +1172,7 @@
                     timeoutId = setTimeout(() => {
                         cleanup();
                         reject(new Error("Measurement timeout: No valid drum height received from device."));
-                    }, 2000); // Give it up to 20 seconds to receive the value after the initial 8s delay
+                    }, 20000); // Give it up to 20 seconds to receive the value after the initial 8s delay
 
                     // Unsubscribe any previous listener to avoid multiple active listeners
                     if (unsubscribeModalDrumHeight) {
@@ -1277,6 +1276,290 @@
                 modalSaveDrumHeightButton.innerHTML = '<i class="fas fa-check me-2"></i>Save Drum Height';
             }
         }
+
+
+        // Complete Philippine address data with proper structure
+        const addressData = {
+            ncr: {
+                name: "National Capital Region",
+                provinces: {
+                    "Metro Manila": {
+                        cities: {
+                            "Manila": {
+                                barangays: ["Barangay 1", "Barangay 2", "Barangay 3", "Malate", "Ermita", "Intramuros"],
+                                zipcode: "1000"
+                            },
+                            "Quezon City": {
+                                barangays: ["Bagong Pag-asa", "Diliman", "Loyola Heights", "Tandang Sora", "Project 8", "Commonwealth"],
+                                zipcode: "1100"
+                            },
+                            "Caloocan": {
+                                barangays: ["Barangay 1", "Barangay 2", "Barangay 3", "Grace Park", "Monumento"],
+                                zipcode: "1400"
+                            },
+                            "Makati": {
+                                barangays: ["Poblacion", "Bel-Air", "San Lorenzo", "Salcedo Village", "Legazpi Village"],
+                                zipcode: "1200"
+                            }
+                        }
+                    }
+                }
+            },
+            region9: {
+                name: "Region IX - Zamboanga Peninsula",
+                provinces: {
+                    "Zamboanga del Norte": {
+                        cities: {
+                            "Dipolog": {
+                                barangays: ["Central", "Estaka", "Galas", "Miputak", "Olingan", "Turno"],
+                                zipcode: "7100"
+                            },
+                            "Dapitan": {
+                                barangays: ["Bagting", "Ba-ao", "Canlucani", "Dawo", "Ilaya", "Maria Uray"],
+                                zipcode: "7101"
+                            },
+                            "Rizal": {
+                                barangays: ["Poblacion", "Salug", "Sianib", "Tigbao", "Dumalinao"],
+                                zipcode: "7105"
+                            }
+                        }
+                    },
+                    "Zamboanga del Sur": {
+                        cities: {
+                            "Zamboanga City": {
+                                barangays: ["Arena Blanco", "Ayala", "Baliwasan", "Boalan", "Buenavista", "Cabatangan", "Cacao", "Calarian", "Camino Nuevo", "Campo Islam", "Capisan", "Caragasan", "Catalunan Grande", "Catalunan Pequeño", "Culianan", "Divisoria", "Don Alfaro", "Guiwan", "La Paz", "Latuan", "Lubigan", "Lunzuran", "Maasin", "Malagutay", "Mampang", "Mariki", "Mercedes", "Pasonanca", "Putik", "Quiniput", "Rio Hondo", "Salaan", "San Jose Cawa-cawa", "San Jose Gusu", "San Roque", "Santa Barbara", "Santa Catalina", "Santa Maria", "Santo Niño", "Sibulao", "Sinunuc", "Tagasilay", "Taguiti", "Talabaan", "Talon-talon", "Tetuan", "Tictapul", "Tigbalabag", "Tugbungan", "Tumaga", "Victoria", "Zone I (Poblacion)", "Zone II (Poblacion)", "Zone III (Poblacion)", "Zone IV (Poblacion)"],
+                                zipcode: "7000"
+                            },
+                            "Pagadian": {
+                                barangays: ["Bogo", "Bomba", "Bungiao", "Danlugan", "Dumagoc", "Gatas", "Gubac", "Kagawasan", "Kawit", "Lala", "Lenienza", "Lizon Valley", "Lower Sibatang", "Lumad", "Macasing", "Muricay", "Napolan", "Pedulonan", "San Francisco", "San Pedro", "San Vicente", "Santa Lucia", "Santa Maria", "Santiago", "Tiguma", "Tawagan Sur", "Upper Sibatang", "White Beach"],
+                                zipcode: "7016"
+                            },
+                            "Molave": {
+                                barangays: ["Poblacion", "Bagong Tudela", "Lapu-lapu", "Liberty", "Lumbog", "Tomalig"],
+                                zipcode: "7023"
+                            }
+                        }
+                    },
+                    "Zamboanga Sibugay": {
+                        cities: {
+                            "Ipil": {
+                                barangays: ["Poblacion", "Apokon", "Tenan", "Sandayong", "Crossing Rubber"],
+                                zipcode: "7001"
+                            },
+                            "Titay": {
+                                barangays: ["Poblacion", "Kauswagan", "Little Baguio", "Pangi"],
+                                zipcode: "7004"
+                            }
+                        }
+                    }
+                }
+            },
+            region10: {
+                name: "Region X - Northern Mindanao",
+                provinces: {
+                    "Bukidnon": {
+                        cities: {
+                            "Malaybalay": {
+                                barangays: ["Poblacion", "Aglayan", "Bangcud", "Casisang", "Dalwangan", "Laguitas", "Managok", "Simaya", "Violeta"],
+                                zipcode: "8700"
+                            },
+                            "Valencia": {
+                                barangays: ["Poblacion", "Bagontaas", "Banlag", "Catumbalon", "Lumbayao", "Mailag", "San Carlos"],
+                                zipcode: "8709"
+                            }
+                        }
+                    },
+                    "Misamis Oriental": {
+                        cities: {
+                            "Cagayan de Oro": {
+                                barangays: ["Barangay 1", "Barangay 2", "Barangay 3", "Barangay 4", "Barangay 5", "Agusan", "Balulang", "Bayabas", "Bayanga", "Besigan", "Bonbon", "Bugo", "Bulua", "Camaman-an", "Carmen", "Consolacion", "F.S. Catanico", "Gusa", "Iponan", "Kauswagan", "Lapasan", "Lumbia", "Macabalan", "Macasandig", "Nazareth", "Pagatpat", "Patag", "Puerto", "Tablon", "Tagpangi", "Taguanao", "Tignapoloan", "Tuburan"],
+                                zipcode: "9000"
+                            },
+                            "El Salvador": {
+                                barangays: ["Poblacion", "Hinigdaan", "Misamis", "Caimbang", "Maitum"],
+                                zipcode: "9003"
+                            }
+                        }
+                    },
+                    "Camiguin": {
+                        cities: {
+                            "Mambajao": {
+                                barangays: ["Poblacion", "Agoho", "Anito", "Balbagon", "Benhaan", "Bugong", "Cabua-an", "Catagman", "Gitagum"],
+                                zipcode: "9100"
+                            }
+                        }
+                    }
+                }
+            },
+            region7: {
+                name: "Region VII - Central Visayas",
+                provinces: {
+                    "Cebu": {
+                        cities: {
+                            "Cebu City": {
+                                barangays: ["Apas", "Banilad", "Basak San Nicolas", "Bulacao", "Busay", "Capitol Site", "Carreta", "Cogon Pardo", "Day-as", "Guadalupe", "Inayawan", "IT Park", "Kamagayan", "Kamputhaw", "Kasambagan", "Kinasang-an", "Labangon", "Lahug", "Lorega San Miguel", "Mabolo", "Malubog", "Pahina Central", "Pahina San Nicolas", "Poblacion Pardo", "Poblacion Villa San Nicolas", "Punta Princesa", "Quiot", "Sambag I", "Sambag II", "San Nicolas Proper", "Santa Cruz", "Santo Niño", "Sirao", "Suba", "T. Padilla", "Talamban", "Tejero", "Tinago", "Tisa", "Zapatera"],
+                                zipcode: "6000"
+                            },
+                            "Lapu-Lapu": {
+                                barangays: ["Poblacion", "Agus", "Bankal", "Basak", "Buaya", "Calawisan", "Canjulao", "Caw-oy", "Gun-ob", "Ibo", "Looc", "Mactan", "Marigondon", "Pajac", "Pajo", "Pusok", "Subabasbas", "Talima", "Tingo", "Tugbongan"],
+                                zipcode: "6015"
+                            }
+                        }
+                    },
+                    "Bohol": {
+                        cities: {
+                            "Tagbilaran": {
+                                barangays: ["Poblacion 1", "Poblacion 2", "Poblacion 3", "Bool", "Cabawan", "Cogon", "Dampas", "Manga", "Mansasa", "San Isidro", "Talbao", "Taloto", "Ubujan"],
+                                zipcode: "6300"
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        // Get form elements
+        const regionSelect = document.getElementById('region');
+        const provinceSelect = document.getElementById('province');
+        const citySelect = document.getElementById('city');
+        const barangaySelect = document.getElementById('barangay');
+        const zipcodeSelect = document.getElementById('zipcode');
+
+        // Helper function to populate a select element
+        function populateSelect(selectElement, options = []) {
+            // Clear existing options except the first placeholder
+            selectElement.innerHTML = `<option value="" selected disabled>Select ${selectElement.id.charAt(0).toUpperCase() + selectElement.id.slice(1).replace('zipcode', 'Zipcode')}</option>`;
+            
+            if (options && options.length > 0) {
+                selectElement.disabled = false;
+                options.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option;
+                    optionElement.textContent = option;
+                    selectElement.appendChild(optionElement);
+                });
+            } else {
+                selectElement.disabled = true;
+            }
+        }
+
+        // Clear and disable dependent selects
+        function clearDependentSelects(...selects) {
+            selects.forEach(select => {
+                select.innerHTML = `<option value="" selected disabled>Select ${select.id.charAt(0).toUpperCase() + select.id.slice(1).replace('zipcode', 'Zipcode')}</option>`;
+                select.disabled = true;
+            });
+        }
+
+        // Region change handler
+        regionSelect.addEventListener('change', function() {
+            const selectedRegion = this.value;
+            console.log('Region selected:', selectedRegion);
+            
+            // Clear dependent selects
+            clearDependentSelects(provinceSelect, citySelect, barangaySelect, zipcodeSelect);
+            
+            if (selectedRegion && addressData[selectedRegion]) {
+                const provinces = Object.keys(addressData[selectedRegion].provinces);
+                populateSelect(provinceSelect, provinces);
+                console.log('Provinces loaded:', provinces);
+            }
+        });
+
+        // Province change handler
+        provinceSelect.addEventListener('change', function() {
+            const selectedRegion = regionSelect.value;
+            const selectedProvince = this.value;
+            console.log('Province selected:', selectedProvince);
+            
+            // Clear dependent selects
+            clearDependentSelects(citySelect, barangaySelect, zipcodeSelect);
+            
+            if (selectedRegion && selectedProvince && addressData[selectedRegion].provinces[selectedProvince]) {
+                const cities = Object.keys(addressData[selectedRegion].provinces[selectedProvince].cities);
+                populateSelect(citySelect, cities);
+                console.log('Cities loaded:', cities);
+            }
+        });
+
+        // City change handler
+        citySelect.addEventListener('change', function() {
+            const selectedRegion = regionSelect.value;
+            const selectedProvince = provinceSelect.value;
+            const selectedCity = this.value;
+            console.log('City selected:', selectedCity);
+            
+            // Clear dependent selects
+            clearDependentSelects(barangaySelect, zipcodeSelect);
+            
+            if (selectedRegion && selectedProvince && selectedCity && 
+                addressData[selectedRegion].provinces[selectedProvince].cities[selectedCity]) {
+                
+                const cityData = addressData[selectedRegion].provinces[selectedProvince].cities[selectedCity];
+                
+                // Populate barangays
+                const barangays = cityData.barangays || [];
+                populateSelect(barangaySelect, barangays);
+                console.log('Barangays loaded:', barangays.length, 'items');
+                
+                // Populate zipcode
+                if (cityData.zipcode) {
+                    populateSelect(zipcodeSelect, [cityData.zipcode]);
+                    console.log('Zipcode loaded:', cityData.zipcode);
+                }
+            }
+        });
+
+        // Address form submission handler
+        document.getElementById('addressForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                region: regionSelect.value,
+                province: provinceSelect.value,
+                city: citySelect.value,
+                barangay: barangaySelect.value,
+                streetName: document.getElementById('streetName').value,
+                zipcode: zipcodeSelect.value,
+                addressNotes: document.getElementById('addressNotes').value
+            };
+            
+            console.log('Address form submitted with data:', formData);
+            
+            if (!currentUserId) {
+                displayMessage("You must be logged in to save your address.", "danger");
+                return;
+            }
+
+            // Save address to Firebase
+            const addressDataToSave = {
+                region: formData.region,
+                province: formData.province,
+                city: formData.city,
+                barangay: formData.barangay,
+                streetName: formData.streetName,
+                zipcode: formData.zipcode,
+                addressNotes: formData.addressNotes,
+                lastUpdated: Date.now()
+            };
+
+            const saveAddressBtn = e.target.querySelector('button[type="submit"]');
+            saveAddressBtn.disabled = true;
+            saveAddressBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Saving...';
+
+            set(ref(database, `hydrolink/users/${currentUserId}/address`), addressDataToSave)
+                .then(() => {
+                    displayMessage("Address saved successfully!", "success");
+                })
+                .catch((error) => {
+                    console.error("Error saving address:", error);
+                    displayMessage(`Failed to save address: ${error.message}`, "danger");
+                })
+                .finally(() => {
+                    saveAddressBtn.disabled = false;
+                    saveAddressBtn.innerHTML = '<span class="btn-text">Save Address</span><span class="btn-icon"><i class="bi bi-check-circle"></i></span>';
+                });
+        });
     </script>
 </body>
 </html>
