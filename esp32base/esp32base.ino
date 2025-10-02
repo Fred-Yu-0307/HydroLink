@@ -5,6 +5,8 @@
 #include <Preferences.h>
 #include <Wire.h>
 #include <U8g2lib.h>
+#include "addons/TokenHelper.h"   // For token status info
+#include "addons/RTDBHelper.h"    // For debug helper
 
 // Provide the token status callbacks when using Anonymous sign-in
 // This is required for anonymous sign-in
@@ -23,8 +25,9 @@ const int CONFIG_PORTAL_TIMEOUT_SECONDS = 180;
 #define BATTERY_SENSE_PIN 1
 
 // Firebase configuration
-#define FIREBASE_HOST "https://hydrolink-d3c57-default-rtdb.asia-southeast1.firebasedatabase.app/"
 #define FIREBASE_API_KEY "AIzaSyCmFInEL6TMoD-9JwdPy-e9niNGGL5SjHA"
+#define FIREBASE_DATABASE_URL "https://hydrolink-d3c57-default-rtdb.asia-southeast1.firebasedatabase.app/"
+
 
 // NTP configuration
 const char* ntpServer = "pool.ntp.org";
@@ -121,6 +124,7 @@ void resetFirebaseAuth();
 // --- OLED Display Function Prototypes ---
 void displayHydroLinkAnimation();
 void displayHomeScreen();
+void displaySetupScreen();
 void drawBatteryIcon(int percentage);
 void drawWiFiIcon();
 
@@ -140,122 +144,6 @@ void resetDevice() {
     preferences.clear();
     preferences.end();
     ESP.restart(); // restart to go back into setup mode
-}
-
-// --- Setup Function ---
-// --- Setup Function ---
-void setup() {
-  Serial.begin(115200);
-  delay(1000);
-  Serial.println("\n=== HydroLink ESP32 Starting ===");
-
-  // --- OLED Initialization ---
-  Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
-  u8g2.begin();
-  Serial.println("U8g2 OLED initialized.");
-
-  // --- Display Startup Animation ---
-  displayHydroLinkAnimation();
-  delay(1500);
-
-  pinMode(ULTRASONIC_TRIG_PIN, OUTPUT);
-  pinMode(ULTRASONIC_ECHO_PIN, INPUT);
-
-  bool factoryResetRequested = false;
-  if (factoryResetRequested) {
-    handleFactoryReset();
-  } else {
-    loadSettingsFromPreferences();
-  }
-
-  WiFi.mode(WIFI_STA);
-  wm.setAPCallback(configModeCallback);
-  wm.setSaveConfigCallback(saveConfigCallback);
-  wm.setConfigPortalTimeout(CONFIG_PORTAL_TIMEOUT_SECONDS);
-  
-  Serial.println("Connecting to WiFi...");
-  wifiConnected = wm.autoConnect(AP_SSID, AP_PASSWORD);
-  if (wifiConnected) {
-    Serial.println("WiFi connected!");
-    Serial.print("IP: ");
-    Serial.println(WiFi.localIP());
-
-    deviceMacAddress = getMacAddress();
-    Serial.println("Device MAC: " + deviceMacAddress);
-
-    setupFirebase();
-
-    // The tokenStatusCallback will save the UID, so we wait for it
-    unsigned long firebase_start_time = millis();
-    while(!Firebase.ready() && millis() - firebase_start_time < 15000) {
-        Serial.print(".");
-        delay(500);
-    }
-    
-    deviceFirebaseId = getStoredFirebaseId();
-
-    if (Firebase.ready()) {
-      Serial.println("\nFirebase ready. UID: " + deviceFirebaseId);
-
-      // --- ✅ Check if device exists in Firebase ---
-      String devicePath = "/hydrolink/devices/" + deviceFirebaseId;
-      if (!Firebase.RTDB.pathExisted(&fbdo, devicePath)) {
-        Serial.println("Device not found in Firebase. Resetting...");
-        preferences.begin("hydrolink", false);
-        preferences.clear();
-        preferences.end();
-        ESP.restart(); // Restart to force re-setup
-      }
-
-      configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-      
-      fbdo.setBSSLBufferSize(4096, 1024);
-      fbdo.setResponseSize(2048);
-      setSystemStatus("online");
-      mapMacToFirebaseUid();
-      
-      checkDeviceLinkStatus();
-      initializeDrumHeight();
-      if (isLinkedToUser) {
-        readFirebaseSettings();
-      }
-
-      Serial.println("Setup complete!");
-      Serial.println("Device ID: " + deviceFirebaseId);
-      Serial.println("Device Linked: " + String(isLinkedToUser ? "Yes" : "No"));
-      Serial.println("Device Configured: " + String(isDeviceFullyConfigured ? "Yes" : "No"));
-      
-      // If not linked, wait for a while to see if it gets linked
-      if (!isLinkedToUser) {
-        Serial.println("Waiting for device linking...");
-        unsigned long linkStartTime = millis();
-        while (millis() - linkStartTime < 300000) { // Wait for 5 minutes
-          if (checkDeviceLinkStatus()) {
-            Serial.println("Device linked to user account!");
-            readFirebaseSettings();
-            break;
-          }
-          Serial.print(".");
-          delay(5000);
-        }
-      }
-    } else {
-      Serial.println("Firebase failed to initialize.");
-    }
-  }
-
-  Serial.println("System ready!");
-}
-
-
-void tokenStatusCallback(TokenInfo info) {
-  if (info.status == token_status_ready) {
-    // The UID is now part of the auth.token object
-    Serial.printf("[Firebase] Token ready. UID: %s\n", auth.token.uid.c_str());
-    storeFirebaseId(auth.token.uid.c_str());
-  } else if (info.status == token_status_error) {
-    Serial.printf("[Firebase] Token error: %s\n", info.error.message.c_str());
-  }
 }
 
 void loadSettingsFromPreferences() {
@@ -282,7 +170,6 @@ void loadSettingsFromPreferences() {
   waterAvailable = preferences.getBool("lastWaterAvailable", true);
   batteryPercentage = preferences.getInt("lastBattery", 100);
   isLinkedToUser = preferences.getBool("isLinked", false);
-  
   drumHeightInitialized = (drumHeightCm > 0);
   isDeviceFullyConfigured = drumHeightInitialized;
   
@@ -324,14 +211,11 @@ void storeFirebaseId(String uid) {
 }
 
 bool checkDeviceLinkStatus() {
-  if (!Firebase.ready()) {
+  if (!Firebase.ready() || deviceFirebaseId.length() == 0) {
     return false;
   }
-  String currentFirebaseId = auth.token.uid.c_str(); // <-- FIX
-  if (currentFirebaseId.length() == 0) return false;
   
-  String linkPath = "hydrolink/devices/" + currentFirebaseId + "/linkedUsers";
-  
+  String linkPath = "hydrolink/devices/" + deviceFirebaseId + "/linkedUsers";
   bool linked = false;
   if (Firebase.RTDB.getJSON(&fbdo, linkPath.c_str())) {
     String jsonStr = fbdo.jsonString();
@@ -394,13 +278,11 @@ void initializeDrumHeight() {
 }
 
 bool fetchDrumHeightFromFirebase() {
-  if (!Firebase.ready()) {
+  if (!Firebase.ready() || deviceFirebaseId.length() == 0) {
     return false;
   }
-  String currentFirebaseId = auth.token.uid.c_str(); // <-- FIX
-  if (currentFirebaseId.length() == 0) return false;
   
-  String heightPath = "hydrolink/devices/" + currentFirebaseId + "/settings/drumHeightCm";
+  String heightPath = "hydrolink/devices/" + deviceFirebaseId + "/settings/drumHeightCm";
   Serial.println("Reading drum height from: " + heightPath);
   
   if (Firebase.RTDB.getFloat(&fbdo, heightPath)) {
@@ -455,10 +337,8 @@ void measureDrumHeight() {
   saveSettingsToPreferences();
   
   Serial.println("Drum height measured and saved: " + String(drumHeightCm));
-  
-  if (isLinkedToUser && Firebase.ready()) {
-    String currentFirebaseId = auth.token.uid.c_str(); // <-- FIX
-    String heightPath = "hydrolink/devices/" + currentFirebaseId + "/settings/drumHeightCm";
+  if (isLinkedToUser && Firebase.ready() && deviceFirebaseId.length() > 0) {
+    String heightPath = "hydrolink/devices/" + deviceFirebaseId + "/settings/drumHeightCm";
     if (Firebase.RTDB.setFloat(&fbdo, heightPath, drumHeightCm)) {
       Serial.println("Drum height updated in Firebase");
     } else {
@@ -473,7 +353,6 @@ float readUltrasonicCm() {
   digitalWrite(ULTRASONIC_TRIG_PIN, HIGH);
   delayMicroseconds(25);
   digitalWrite(ULTRASONIC_TRIG_PIN, LOW);
-
   unsigned long duration = pulseInLong(ULTRASONIC_ECHO_PIN, HIGH, 60000);
   if (duration == 0) {
     Serial.println("Ultrasonic sensor timeout");
@@ -492,7 +371,6 @@ void calculateWaterPercentage() {
 
   float waterLevelCm = drumHeightCm - waterDistanceCm;
   waterLevelCm = constrain(waterLevelCm, 0, drumHeightCm);
-  
   float effectiveHeight = drumHeightCm;
   if (maxFillLevelPercentage > 0 && maxFillLevelPercentage < 100) {
     effectiveHeight = drumHeightCm * (maxFillLevelPercentage / 100.0);
@@ -506,13 +384,11 @@ void calculateWaterPercentage() {
 }
 
 void updateFirebaseData() {
- if (!Firebase.ready()) {
+ if (!Firebase.ready() || deviceFirebaseId.length() == 0) {
     return;
   }
-  String currentFirebaseId = getStoredFirebaseId(); // Change this line
-  if (currentFirebaseId.length() == 0) return;
 
-  String basePath = "hydrolink/devices/" + currentFirebaseId + "/status";
+  String basePath = "hydrolink/devices/" + deviceFirebaseId + "/status";
   
   FirebaseJson json;
   json.set("currentWaterLevelCm", String(waterDistanceCm, 1));
@@ -520,7 +396,7 @@ void updateFirebaseData() {
   json.set("waterAvailable", waterAvailable);
   json.set("batteryPercentage", batteryPercentage);
   json.set("lastUpdated/.sv", "timestamp");
-  json.set("deviceId", currentFirebaseId);
+  json.set("deviceId", deviceFirebaseId);
   json.set("macAddress", deviceMacAddress);
   json.set("drumHeightCm", drumHeightCm);
   json.set("isConfigured", isDeviceFullyConfigured);
@@ -535,13 +411,11 @@ void updateFirebaseData() {
 }
 
 void readFirebaseSettings() {
-  if (!isLinkedToUser || !Firebase.ready()) {
+  if (!isLinkedToUser || !Firebase.ready() || deviceFirebaseId.length() == 0) {
     return;
   }
-  String currentFirebaseId = auth.token.uid.c_str(); // <-- FIX
-  if (currentFirebaseId.length() == 0) return;
 
-  String settingsPath = "hydrolink/devices/" + currentFirebaseId + "/settings";
+  String settingsPath = "hydrolink/devices/" + deviceFirebaseId + "/settings";
   if (Firebase.RTDB.get(&fbdo, settingsPath)) {
     if (fbdo.dataTypeEnum() == fb_esp_rtdb_data_type_json) {
       FirebaseJson *json = fbdo.to<FirebaseJson *>();
@@ -586,22 +460,18 @@ void readFirebaseSettings() {
 }
 
 void setSystemStatus(String status) {
-  if (!Firebase.ready()) return;
-  String currentFirebaseId = auth.token.uid.c_str(); // <-- FIX
-  if (currentFirebaseId.length() == 0) return;
+  if (!Firebase.ready() || deviceFirebaseId.length() == 0) return;
 
-  String statusPath = "hydrolink/devices/" + currentFirebaseId + "/status/systemStatus";
+  String statusPath = "hydrolink/devices/" + deviceFirebaseId + "/status/systemStatus";
   if (Firebase.RTDB.setString(&fbdo, statusPath, status)) {
     Serial.println("System status set to: " + status);
   }
 }
 
 void checkManualDrumMeasurement() {
-  if (!isLinkedToUser || !Firebase.ready()) return;
-  String currentFirebaseId = auth.token.uid.c_str(); // <-- FIX
-  if (currentFirebaseId.length() == 0) return;
+  if (!isLinkedToUser || !Firebase.ready() || deviceFirebaseId.length() == 0) return;
   
-  String measurePath = "hydrolink/devices/" + currentFirebaseId + "/settings/measureDrum";
+  String measurePath = "hydrolink/devices/" + deviceFirebaseId + "/settings/measureDrum";
   if (Firebase.RTDB.getBool(&fbdo, measurePath) && fbdo.boolData()) {
       Serial.println("Manual drum measurement requested");
       measureDrumHeight();
@@ -610,7 +480,9 @@ void checkManualDrumMeasurement() {
 }
 
 int readBatteryPercentage() {
-  // Replace this with a real reading from your battery monitoring circuit.
+  // This is a placeholder. For your battery-only device, you'll need to
+  // implement a proper voltage reading circuit (e.g., a voltage divider)
+  // and map the ADC value from BATTERY_SENSE_PIN to a percentage.
   return random(90, 101);
 }
 
@@ -642,14 +514,38 @@ void setupFirebase() {
   Serial.println("Setting up Firebase...");
 
   config.api_key = FIREBASE_API_KEY;
-  config.database_url = FIREBASE_HOST;
+  config.database_url = FIREBASE_DATABASE_URL;
+
+  // Anonymous sign-in
+  if (Firebase.signUp(&config, &auth, "", "")) {
+    Serial.println("Firebase signUp successful");
+  } else {
+    Serial.printf("Firebase signUp failed: %s\n", config.signer.signupError.message.c_str());
+  }
+
+  // Assign callbacks for token status
   config.token_status_callback = tokenStatusCallback;
 
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
-  
-  Serial.println("Firebase authentication process started...");
+
+  // 🔑 Get the UID for this device
+  if (auth.token.uid.length() > 0) {
+    deviceFirebaseId = auth.token.uid.c_str();
+    Serial.println("Device UID: " + deviceFirebaseId);
+
+    // Save UID to Preferences so it loads next boot
+    preferences.begin("hydrolink", false);
+    preferences.putString("firebase_uid", deviceFirebaseId);
+    preferences.end();
+  } else {
+    Serial.println("No UID from Firebase yet.");
+  }
+
+  Serial.println("Firebase initialized!");
 }
+
+
 
 void resetFirebaseAuth() {
   // For this library version, creating a new auth instance is the way to reset.
@@ -679,12 +575,11 @@ void debugPreferences() {
 }
 
 void mapMacToFirebaseUid() {
-  if (!Firebase.ready()) return;
-  String currentFirebaseId = auth.token.uid.c_str(); // <-- FIX
-  if (currentFirebaseId.isEmpty() || deviceMacAddress.isEmpty()) return;
-  
+  if (!Firebase.ready() || deviceFirebaseId.isEmpty() || deviceMacAddress.isEmpty()) return;
+
   String path = "hydrolink/macToFirebaseUid/" + deviceMacAddress;
-  if (Firebase.RTDB.setString(&fbdo, path, currentFirebaseId)) {
+  // Use setString instead of updateNode for a simple key-value pair
+  if (Firebase.RTDB.setString(&fbdo, path, deviceFirebaseId)) {
     Serial.println("MAC to UID mapping updated");
   } else {
     Serial.println("MAC mapping failed: " + fbdo.errorReason());
@@ -703,12 +598,133 @@ void saveConfigCallback() {
 
 String getMacAddress() {
   char macStr[18];
-  sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", 
+  // Create a version without colons for the Firebase path
+  sprintf(macStr, "%02X%02X%02X%02X%02X%02X", 
       WiFi.macAddress()[0], WiFi.macAddress()[1], WiFi.macAddress()[2], 
       WiFi.macAddress()[3], WiFi.macAddress()[4], WiFi.macAddress()[5]);
   return String(macStr);
 }
 
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+  Serial.println("\n=== HydroLink ESP32 Starting ===");
+
+  // --- OLED Initialization ---
+  Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
+  u8g2.begin();
+  Serial.println("U8g2 OLED initialized.");
+
+  // --- Display Startup Animation ---
+  displayHydroLinkAnimation();
+  delay(1500);
+
+  pinMode(ULTRASONIC_TRIG_PIN, OUTPUT);
+  pinMode(ULTRASONIC_ECHO_PIN, INPUT);
+
+  bool factoryResetRequested = false;
+  if (factoryResetRequested) {
+    handleFactoryReset();
+  } else {
+    loadSettingsFromPreferences();
+  }
+
+  WiFi.mode(WIFI_STA);
+  wm.setAPCallback(configModeCallback);
+  wm.setSaveConfigCallback(saveConfigCallback);
+  wm.setConfigPortalTimeout(CONFIG_PORTAL_TIMEOUT_SECONDS);
+  Serial.println("Connecting to WiFi...");
+  wifiConnected = wm.autoConnect(AP_SSID, AP_PASSWORD);
+
+if (wifiConnected) {
+    Serial.println("WiFi connected!");
+    Serial.print("IP: ");
+    Serial.println(WiFi.localIP());
+    deviceMacAddress = getMacAddress();
+    Serial.println("Device MAC: " + deviceMacAddress);
+
+    // 🔥 Initialize Firebase right after WiFi is connected
+    setupFirebase();
+
+    // Wait for Firebase to get ready and assign a UID
+    unsigned long firebase_start_time = millis();
+    while(!Firebase.ready() && millis() - firebase_start_time < 15000) {
+        Serial.print(".");
+        delay(500);
+    }
+
+    // Attempt to load the UID from preferences if the callback hasn't fired yet
+    if (deviceFirebaseId.length() == 0) {
+        deviceFirebaseId = getStoredFirebaseId();
+    }
+
+    if (Firebase.ready() && deviceFirebaseId.length() > 0) {
+        Serial.println("\nFirebase ready. UID: " + deviceFirebaseId);
+
+        String devicePath = "/hydrolink/devices/" + deviceFirebaseId;
+        if (!Firebase.RTDB.pathExisted(&fbdo, devicePath)) {
+            Serial.println("Device not found in Firebase. It might be a new device. This is normal.");
+        }
+
+        configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+        fbdo.setBSSLBufferSize(4096, 1024);
+        fbdo.setResponseSize(2048);
+        setSystemStatus("online");
+
+        deviceMacAddress = WiFi.macAddress();   // formatted MAC
+        Serial.println("Device MAC: " + deviceMacAddress);
+
+        // After Firebase.begin(&config, &auth);
+        // and after you confirm auth.token.uid is valid:
+        if (auth.token.uid.length() > 0) {
+            deviceFirebaseId = auth.token.uid.c_str();
+            Serial.println("Device UID: " + deviceFirebaseId);
+
+            // Now it's safe to map
+            mapMacToFirebaseUid();
+        } else {
+            Serial.println("No UID from Firebase yet.");
+        }
+
+        
+        checkDeviceLinkStatus();
+        
+        if (!isLinkedToUser) {
+            Serial.println("Waiting for device to be linked by user...");
+            unsigned long linkStartTime = millis();
+            while (millis() - linkStartTime < 300000) { 
+                displaySetupScreen();
+                if (checkDeviceLinkStatus()) {
+                    Serial.println("Device linked to user account!");
+                    break;
+                }
+                delay(5000);
+            }
+        }
+
+        if(isLinkedToUser) {
+            initializeDrumHeight();
+            readFirebaseSettings();
+        }
+
+        Serial.println("Setup complete!");
+        Serial.println("Device ID: " + deviceFirebaseId);
+        Serial.println("Device Linked: " + String(isLinkedToUser ? "Yes" : "No"));
+        Serial.println("Device Configured: " + String(isDeviceFullyConfigured ? "Yes" : "No"));
+        
+    } else {
+        Serial.println("Firebase failed to initialize or get a UID. Please check credentials and network.");
+    }
+} else {
+    Serial.println("Failed to connect to WiFi.");
+}
+
+
+  config.token_status_callback = tokenStatusCallback;
+
+
+  Serial.println("System ready!");
+}
 
 // --- Main Loop ---
 void loop() {
@@ -724,9 +740,13 @@ void loop() {
     delay(1000);
     return;
   }
-
-  if (deviceFirebaseId.length() == 0) {
-      deviceFirebaseId = auth.token.uid.c_str(); // <-- FIX
+  
+  // If not linked after setup timeout, keep showing setup screen
+  if (!isLinkedToUser) {
+      displaySetupScreen();
+      checkDeviceLinkStatus(); // Keep checking for the link
+      delay(5000);
+      return;
   }
 
   if (currentTime - lastSensorRead >= SENSOR_INTERVAL) {
@@ -746,7 +766,6 @@ void loop() {
   }
 
   if (currentTime - lastSettingsCheck >= SETTINGS_INTERVAL) {
-    checkDeviceLinkStatus();
     if (isLinkedToUser) {
       readFirebaseSettings();
       checkManualDrumMeasurement();
@@ -755,7 +774,6 @@ void loop() {
   }
 
   displayHomeScreen();
-  
   delay(100);
 }
 
@@ -776,12 +794,10 @@ void displayHydroLinkAnimation() {
   u8g2.clearBuffer();
   u8g2.setFont(u8g2_font_helvB18_tf);
   u8g2.setFontMode(1);
-  
   int text_width = u8g2.getUTF8Width(appName.c_str());
   int text_centered_x = (SCREEN_WIDTH - text_width) / 2;
   int text_height = u8g2.getFontAscent() - u8g2.getFontDescent();
   int text_centered_y = (SCREEN_HEIGHT - text_height) / 2 + u8g2.getFontAscent();
-  
   for (int i = 0; i <= appName.length(); i++) {
     u8g2.clearBuffer();
     u8g2.drawStr(text_centered_x, text_centered_y, appName.substring(0, i).c_str());
@@ -789,6 +805,29 @@ void displayHydroLinkAnimation() {
     delay(150);
   }
 }
+
+void displaySetupScreen() {
+    u8g2.clearBuffer();
+    u8g2.setFont(u8g2_font_helvB08_tf);
+
+    u8g2.drawStr(0, 12, "Device Setup");
+    u8g2.drawStr(0, 28, "Enter MAC on website:");
+    
+    // Format MAC with colons for better readability on screen
+    String formattedMac = "";
+    for(int i=0; i < deviceMacAddress.length(); i+=2) {
+      formattedMac += deviceMacAddress.substring(i, i+2);
+      if (i < deviceMacAddress.length() - 2) {
+        formattedMac += ":";
+      }
+    }
+    u8g2.drawStr(0, 44, formattedMac.c_str());
+    
+    u8g2.drawStr(0, 60, "Waiting for link...");
+    
+    u8g2.sendBuffer();
+}
+
 
 void displayHomeScreen() {
   u8g2.clearBuffer();
@@ -823,14 +862,11 @@ void drawBatteryIcon(int percentage) {
   int height = 15;
   int notchWidth = 4;
   int notchHeight = 5;
-
   u8g2.drawFrame(x, y, width, height);
   u8g2.drawBox(x + width, y + (height - notchHeight) / 2, notchWidth, notchHeight);
-
   int fillWidth = map(percentage, 0, 100, 0, width - 4);
   if (fillWidth < 0) fillWidth = 0;
   if (fillWidth > width - 4) fillWidth = width - 4;
-  
   u8g2.drawBox(x + 2, y + 2, fillWidth, height - 4);
 
   u8g2.setFont(u8g2_font_7x13_mf);
@@ -845,7 +881,6 @@ void drawWiFiIcon() {
   int y_bottom = 15;
   int bar_width = 3;
   int bar_spacing = 2;
-
   if (wifiConnected) {
     u8g2.drawBox(x_start, y_bottom - 4, bar_width, 4);
     u8g2.drawBox(x_start + bar_width + bar_spacing, y_bottom - 7, bar_width, 7);
