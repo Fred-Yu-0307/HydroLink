@@ -22,7 +22,9 @@ const int CONFIG_PORTAL_TIMEOUT_SECONDS = 180;
 #define I2C_SCL_PIN 4
 #define ULTRASONIC_TRIG_PIN 5
 #define ULTRASONIC_ECHO_PIN 18
+#define SOLENOID_PIN 13
 #define BATTERY_SENSE_PIN 1
+
 
 // Firebase configuration
 #define FIREBASE_API_KEY "AIzaSyCmFInEL6TMoD-9JwdPy-e9niNGGL5SjHA"
@@ -120,6 +122,7 @@ void storeFirebaseId(String uid);
 void handleFactoryReset();
 void debugPreferences();
 void resetFirebaseAuth();
+void controlSolenoid();
 
 // --- OLED Display Function Prototypes ---
 void displayHydroLinkAnimation();
@@ -155,6 +158,14 @@ void loadSettingsFromPreferences() {
     handleFactoryReset();
     return;
   }
+
+  // ✅ Load Firebase UID here
+  deviceFirebaseId = preferences.getString("firebase_uid", "");
+  if (deviceFirebaseId.length() > 0) {
+    Serial.println("Firebase UID loaded: " + deviceFirebaseId);
+  } else {
+    Serial.println("Firebase UID not found in preferences!");
+  }
   
   float storedDrumHeight = preferences.getFloat("drumHeight", 0.0);
   if (storedDrumHeight < 0 || storedDrumHeight > 1000) {
@@ -174,13 +185,16 @@ void loadSettingsFromPreferences() {
   isDeviceFullyConfigured = drumHeightInitialized;
   
   preferences.end();
+
   Serial.println("=== Settings Loaded from Preferences ===");
+  Serial.println("Firebase UID: " + (deviceFirebaseId.length() > 0 ? deviceFirebaseId : String("NOT_FOUND")));
   Serial.println("Drum height: " + String(drumHeightCm) + " cm");
   Serial.println("Refill threshold: " + String(refillThresholdPercentage) + "%");
   Serial.println("Max fill level: " + String(maxFillLevelPercentage) + "%");
   Serial.println("Device configured: " + String(isDeviceFullyConfigured ? "Yes" : "No"));
   Serial.println("Device linked: " + String(isLinkedToUser ? "Yes" : "No"));
 }
+
 
 void saveSettingsToPreferences() {
   preferences.begin("hydrolink", false);
@@ -383,6 +397,17 @@ void calculateWaterPercentage() {
   Serial.printf("Water: %d%% (%.1fcm / %.1fcm)\n", waterPercentage, waterLevelCm, drumHeightCm);
 }
 
+void controlSolenoid(int waterPercentage, int refillThresholdPercentage, int maxFillLevelPercentage) {
+  if (waterPercentage < refillThresholdPercentage) {
+    digitalWrite(SOLENOID_PIN, HIGH); // Open solenoid
+    Serial.println("💧 Solenoid OPEN - Refilling...");
+  } 
+  else if (waterPercentage >= maxFillLevelPercentage) {
+    digitalWrite(SOLENOID_PIN, LOW);  // Close solenoid
+    Serial.println("✅ Solenoid CLOSED - Full level reached");
+  }
+}
+
 void updateFirebaseData() {
  if (!Firebase.ready() || deviceFirebaseId.length() == 0) {
     return;
@@ -515,36 +540,36 @@ void setupFirebase() {
 
   config.api_key = FIREBASE_API_KEY;
   config.database_url = FIREBASE_DATABASE_URL;
+  config.token_status_callback = tokenStatusCallback; // optional
 
-  // Anonymous sign-in
-  if (Firebase.signUp(&config, &auth, "", "")) {
-    Serial.println("Firebase signUp successful");
-  } else {
-    Serial.printf("Firebase signUp failed: %s\n", config.signer.signupError.message.c_str());
-  }
+  // 🔑 Assign device email & password here
+  auth.user.email = "hydroLinkDevice_001@hydrolink.com";
+  auth.user.password = "hydroLink_FADY0307";
 
-  // Assign callbacks for token status
-  config.token_status_callback = tokenStatusCallback;
-
+  // Start Firebase with config + auth
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
 
-  // 🔑 Get the UID for this device
+  // Wait until UID is ready
+  unsigned long start = millis();
+  while (auth.token.uid.length() == 0 && millis() - start < 10000) {
+    delay(200);
+  }
+
   if (auth.token.uid.length() > 0) {
     deviceFirebaseId = auth.token.uid.c_str();
     Serial.println("Device UID: " + deviceFirebaseId);
 
-    // Save UID to Preferences so it loads next boot
+    // Save UID to preferences
     preferences.begin("hydrolink", false);
     preferences.putString("firebase_uid", deviceFirebaseId);
     preferences.end();
   } else {
-    Serial.println("No UID from Firebase yet.");
+    Serial.println("❌ Failed to retrieve UID from Firebase");
   }
 
   Serial.println("Firebase initialized!");
 }
-
 
 
 void resetFirebaseAuth() {
@@ -622,6 +647,9 @@ void setup() {
   pinMode(ULTRASONIC_TRIG_PIN, OUTPUT);
   pinMode(ULTRASONIC_ECHO_PIN, INPUT);
 
+  pinMode(SOLENOID_PIN, OUTPUT);
+  digitalWrite(SOLENOID_PIN, LOW);
+
   bool factoryResetRequested = false;
   if (factoryResetRequested) {
     handleFactoryReset();
@@ -640,8 +668,9 @@ if (wifiConnected) {
     Serial.println("WiFi connected!");
     Serial.print("IP: ");
     Serial.println(WiFi.localIP());
-    deviceMacAddress = getMacAddress();
+    deviceMacAddress = WiFi.macAddress();
     Serial.println("Device MAC: " + deviceMacAddress);
+
 
     // 🔥 Initialize Firebase right after WiFi is connected
     setupFirebase();
@@ -754,6 +783,8 @@ void loop() {
     if (newReading > 0) {
       waterDistanceCm = newReading;
       calculateWaterPercentage();
+      // Solenoid Control On and Off
+      controlSolenoid(waterPercentage, refillThresholdPercentage, maxFillLevelPercentage);
     }
     
     batteryPercentage = readBatteryPercentage();
