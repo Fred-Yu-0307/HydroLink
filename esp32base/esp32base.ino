@@ -9,7 +9,6 @@
 #include "addons/RTDBHelper.h"    // For debug helper
 
 // Provide the token status callbacks when using Anonymous sign-in
-// This is required for anonymous sign-in
 void tokenStatusCallback(TokenInfo info);
 
 // --- Configuration Constants ---
@@ -20,10 +19,11 @@ const int CONFIG_PORTAL_TIMEOUT_SECONDS = 180;
 // Pin Definitions for ESP32
 #define I2C_SDA_PIN 21
 #define I2C_SCL_PIN 4
-#define ULTRASONIC_TRIG_PIN 5
+#define ULTRASONIC_TRIG_PIN 5 
 #define ULTRASONIC_ECHO_PIN 18
 #define SOLENOID_PIN 13
 #define BATTERY_SENSE_PIN 1
+#define FLOW_SENSOR_PIN 2
 
 
 // Firebase configuration
@@ -43,7 +43,43 @@ const int daylightOffset_sec = 0;
 // U8g2 Display Object for a 128x64 SH1106, using full buffer, hardware I2C.
 U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 
-// Water Droplet Icon Bitmap Data (30x54 pixels)
+// Voltage Divider Config
+const float R1 = 100000.0; // From battery+ to sense pin (100kΩ)
+const float R2 = 20000.0;  // From sense pin to GND (20kΩ, made from two 10kΩ in series)
+
+// Battery voltage limits
+const float MAX_BATTERY_VOLTAGE = 4.2; // Full
+const float MIN_BATTERY_VOLTAGE = 3.7; // Empty
+
+bool solenoidState = false;  // Tracks if solenoid is ON
+
+// --- Refill Tracking Variables ---
+unsigned long refillStartTime = 0;
+float currentRefillLiters = 0.0;
+float currentRefillFlowRateSum = 0.0;
+int flowRateSamples = 0;
+
+// --- Firebase Status Variables to be updated ---
+unsigned long lastRefillDurationMs = 0;
+float lastRefillLiters = 0.0;
+float lastRefillAvgFlowRateLPM = 0.0;
+float stopWaterLevelCm = 0.0; // Water level distance (cm) when refilling stopped
+
+// --- Refill History Variables ---
+float startWaterDistanceCm = 0.0;
+String refillEventType = "Automatic"; // Only "Automatic" remains
+String refillStatus = "";
+String actionLogDetails = "";
+
+// --- No Water Retry Logic ---
+unsigned long solenoidOpenStart = 0;
+bool waitingForWater = false;
+unsigned long lastWaterRetryAttempt = 0;
+const unsigned long noFlowTimeoutMs = 5000;      // 5 seconds no flow
+const unsigned long retryIntervalMs = 5000;    // 2 minutes
+bool isNoWaterDetected = false;
+
+// 
 const unsigned char PROGMEM water_droplet_icon_30x54[] = {
  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x0e, 0x00,
@@ -122,7 +158,8 @@ void storeFirebaseId(String uid);
 void handleFactoryReset();
 void debugPreferences();
 void resetFirebaseAuth();
-void controlSolenoid();
+void openSolenoid();
+void closeSolenoid(String stopReason);
 
 // --- OLED Display Function Prototypes ---
 void displayHydroLinkAnimation();
@@ -130,6 +167,7 @@ void displayHomeScreen();
 void displaySetupScreen();
 void drawBatteryIcon(int percentage);
 void drawWiFiIcon();
+void logStatusToSerial();
 
 bool checkDeviceExists(String deviceId) {
     String path = "/hydrolink/devices/" + deviceId;
@@ -250,6 +288,50 @@ bool checkDeviceLinkStatus() {
   return isLinkedToUser;
 }
 
+volatile int flowPulseCount = 0;
+float totalLiters = 0.0;   // Track total water usage
+
+// --- Flow Sensor ISR ---
+void IRAM_ATTR flowPulseISR() {
+  flowPulseCount++;
+}
+
+// --- Setup Flow Sensor ---
+void setupFlowSensor() {
+  pinMode(FLOW_SENSOR_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN), flowPulseISR, RISING);
+}
+
+float getFlowRate() {
+  static unsigned long lastTime = 0;
+  static int lastPulseCount = 0;
+  static float flowRate = 0.0;
+  unsigned long currentTime = millis();
+  if (currentTime - lastTime >= 1000) {  // Every 1 second
+    int pulseDiff = flowPulseCount - lastPulseCount;
+    lastPulseCount = flowPulseCount;
+    lastTime = currentTime;
+
+    // For YF-S403: 450 pulses = 1 L/min
+    flowRate = (pulseDiff / 450.0) * 60.0; // L/min
+
+    // --- Track flow rate for average calculation ---
+    if (solenoidState) { // Only track when solenoid is ON
+        currentRefillFlowRateSum += flowRate;
+        flowRateSamples++;
+    }
+    // ---------------------------------------------------
+
+    totalLiters += (flowRate / 60.0); // Add liters per second
+
+    // If there’s any pulse, water is available
+    waterAvailable = (pulseDiff > 0);
+  }
+
+  return flowRate;
+}
+
+
 void handleFactoryReset() {
   Serial.println("=== FACTORY RESET DETECTED ===");
   
@@ -258,7 +340,6 @@ void handleFactoryReset() {
   preferences.end();
   
   resetFirebaseAuth();
-  
   drumHeightCm = 0.0;
   refillThresholdPercentage = 25;
   maxFillLevelPercentage = 75;
@@ -298,7 +379,6 @@ bool fetchDrumHeightFromFirebase() {
   
   String heightPath = "hydrolink/devices/" + deviceFirebaseId + "/settings/drumHeightCm";
   Serial.println("Reading drum height from: " + heightPath);
-  
   if (Firebase.RTDB.getFloat(&fbdo, heightPath)) {
     if (fbdo.dataTypeEnum() == fb_esp_rtdb_data_type_float || fbdo.dataTypeEnum() == fb_esp_rtdb_data_type_integer) {
       float newDrumHeight = fbdo.floatData();
@@ -397,16 +477,126 @@ void calculateWaterPercentage() {
   Serial.printf("Water: %d%% (%.1fcm / %.1fcm)\n", waterPercentage, waterLevelCm, drumHeightCm);
 }
 
-void controlSolenoid(int waterPercentage, int refillThresholdPercentage, int maxFillLevelPercentage) {
-  if (waterPercentage < refillThresholdPercentage) {
-    digitalWrite(SOLENOID_PIN, HIGH); // Open solenoid
-    Serial.println("💧 Solenoid OPEN - Refilling...");
-  } 
-  else if (waterPercentage >= maxFillLevelPercentage) {
-    digitalWrite(SOLENOID_PIN, LOW);  // Close solenoid
-    Serial.println("✅ Solenoid CLOSED - Full level reached");
+void logRefillHistory() {
+  // Only log if Firebase is ready, device is identified, and a refill event actually occurred (duration > 0)
+  if (!Firebase.ready() || deviceFirebaseId.length() == 0 || lastRefillDurationMs == 0) {
+    return;
+  }
+
+  // --- 1. Calculate Starting Percentage (beforeLevelPct) ---
+  float waterLevelCmStart = drumHeightCm - startWaterDistanceCm;
+  waterLevelCmStart = constrain(waterLevelCmStart, 0, drumHeightCm);
+  
+  float effectiveHeight = drumHeightCm;
+  // Account for the max fill level setting
+  if (maxFillLevelPercentage > 0 && maxFillLevelPercentage < 100) {
+    effectiveHeight = drumHeightCm * (maxFillLevelPercentage / 100.0);
+  }
+  int startWaterPercentageCalc = (waterLevelCmStart / effectiveHeight) * 100;
+  startWaterPercentageCalc = constrain(startWaterPercentageCalc, 0, 100);
+  
+  // --- 2. Build the JSON object ---
+  String basePath = "hydrolink/devices/" + deviceFirebaseId + "/refillHistory";
+
+  FirebaseJson historyJson;
+  // Refill Details
+  historyJson.set("timestamp/.sv", "timestamp"); // Use Firebase Server Value for perfect time
+  historyJson.set("type", refillEventType); 
+  historyJson.set("beforeLevelPct", startWaterPercentageCalc);
+  historyJson.set("afterLevelPct", waterPercentage); // waterPercentage is the final value from the loop()
+  historyJson.set("amountLitersAdded", String(lastRefillLiters, 2));
+  historyJson.set("durationMin", String(lastRefillDurationMs / (1000.0 * 60.0), 1)); // Store in minutes
+  historyJson.set("status", refillStatus); 
+  historyJson.set("actionsLog", actionLogDetails);
+
+  // Settings Snapshot (Config)
+  FirebaseJson configJson;
+  configJson.set("drumHeightCm", String(drumHeightCm, 1));
+  configJson.set("maxFillLevelPercentage", maxFillLevelPercentage);
+  configJson.set("refillThresholdPercentage", refillThresholdPercentage);
+
+  historyJson.set("config", configJson);
+
+  // --- 3. PUSH the new log entry ---
+  if (Firebase.RTDB.pushJSON(&fbdo, basePath, &historyJson)) {
+    Serial.println("Refill history logged successfully!");
+    // Reset the duration flag to zero so we don't log the same event twice
+    lastRefillDurationMs = 0;
+  } else {
+    Serial.println("Refill history log FAILED: " + fbdo.errorReason());
   }
 }
+
+// Simplified: Removed String type argument and logic. Solenoid is only opened for "Automatic".
+void openSolenoid() {
+  // Solenoid OPEN (Refill): Active-LOW is LOW since it is Normally Closed.
+  digitalWrite(SOLENOID_PIN, HIGH);
+  solenoidState = true; 
+
+  waterAvailable = true;
+
+  // --- START REFILL RECORDING ---
+  refillStartTime = millis();
+  currentRefillLiters = 0.0;
+  currentRefillFlowRateSum = 0.0;
+  flowRateSamples = 0;
+  
+  // Capture STARTING STATE & TYPE
+  startWaterDistanceCm = waterDistanceCm;
+  refillEventType = "Automatic"; // Hardcoded to "Automatic"
+  actionLogDetails = "NC Solenoid Open via Auto-Threshold";
+  
+  Serial.println("💧 Solenoid OPEN (Automatic) - Refilling...");
+}
+
+void closeSolenoid(String stopReason) {
+  // Solenoid CLOSED (Full): Active-LOW is HIGH.
+  digitalWrite(SOLENOID_PIN, LOW);
+  solenoidState = false; // Update the global solenoid state flag
+  
+  // --- END REFILL RECORDING & CALCULATE STATS ---
+  if (refillStartTime > 0) {
+    // 1. Calculate Duration (ms)
+    lastRefillDurationMs = millis() - refillStartTime;
+    // 2. Calculate Average Flow Rate
+    if (flowRateSamples > 0) {
+      lastRefillAvgFlowRateLPM = currentRefillFlowRateSum / flowRateSamples;
+    } else {
+      lastRefillAvgFlowRateLPM = 0.0;
+    }
+
+    // 3. Calculate Total Liters Refilled
+    // Liters = Avg_Flow_Rate (L/min) * Duration (min)
+    float refillDurationMinutes = lastRefillDurationMs / (1000.0 * 60.0);
+    lastRefillLiters = lastRefillAvgFlowRateLPM * refillDurationMinutes;
+
+    // 4. Record final water distance (cm)
+    stopWaterLevelCm = waterDistanceCm;
+    
+    // 5. Set final status and log details for history (CRITICAL FOR HISTORY LOG)
+    // Append the final stop reason to the initial actionLogDetails captured in openSolenoid()
+    actionLogDetails += " | Stop: " + stopReason;
+    
+    // Determine the final refill status based on the reason
+    if (stopReason.indexOf("No Water Detected") != -1) {
+      refillStatus = "Failed"; // Special case for water shortage
+    } else if (stopReason.indexOf("Max Fill Level Reached") != -1) {
+      refillStatus = "Completed";
+    } else {
+      refillStatus = "Interrupted"; // Should not happen in pure auto-mode unless error
+    }
+    
+    // Reset start time to prevent re-calculation
+    refillStartTime = 0;
+  }
+  
+  // Reset flow tracking variables for the next event
+  currentRefillFlowRateSum = 0.0;
+  flowRateSamples = 0;
+  Serial.printf("✅ Solenoid CLOSED - Stats: %.2f L @ %.2f L/min for %.1f sec\n", 
+    lastRefillLiters, lastRefillAvgFlowRateLPM, lastRefillDurationMs / 1000.0);
+}
+
 
 void updateFirebaseData() {
  if (!Firebase.ready() || deviceFirebaseId.length() == 0) {
@@ -427,6 +617,10 @@ void updateFirebaseData() {
   json.set("isConfigured", isDeviceFullyConfigured);
   json.set("isLinked", isLinkedToUser);
 
+  json.set("lastRefillDurationSec", lastRefillDurationMs / 1000.0); // Convert to seconds
+  json.set("lastRefillLiters", String(lastRefillLiters, 2));
+  json.set("lastRefillAvgFlowRateLPM", String(lastRefillAvgFlowRateLPM, 2));
+  json.set("stopWaterDistanceCm", String(stopWaterLevelCm, 1));
   if (Firebase.RTDB.updateNode(&fbdo, basePath, &json)) {
     Serial.println("Firebase data updated successfully");
     saveSettingsToPreferences();
@@ -447,7 +641,7 @@ void readFirebaseSettings() {
       FirebaseJsonData jsonData;
       
       bool settingsChanged = false;
-
+      
       if (json->get(jsonData, "refillThresholdPercentage")) {
         if (refillThresholdPercentage != jsonData.to<int>()) {
           refillThresholdPercentage = jsonData.to<int>();
@@ -486,7 +680,6 @@ void readFirebaseSettings() {
 
 void setSystemStatus(String status) {
   if (!Firebase.ready() || deviceFirebaseId.length() == 0) return;
-
   String statusPath = "hydrolink/devices/" + deviceFirebaseId + "/status/systemStatus";
   if (Firebase.RTDB.setString(&fbdo, statusPath, status)) {
     Serial.println("System status set to: " + status);
@@ -495,7 +688,6 @@ void setSystemStatus(String status) {
 
 void checkManualDrumMeasurement() {
   if (!isLinkedToUser || !Firebase.ready() || deviceFirebaseId.length() == 0) return;
-  
   String measurePath = "hydrolink/devices/" + deviceFirebaseId + "/settings/measureDrum";
   if (Firebase.RTDB.getBool(&fbdo, measurePath) && fbdo.boolData()) {
       Serial.println("Manual drum measurement requested");
@@ -505,11 +697,30 @@ void checkManualDrumMeasurement() {
 }
 
 int readBatteryPercentage() {
-  // This is a placeholder. For your battery-only device, you'll need to
-  // implement a proper voltage reading circuit (e.g., a voltage divider)
-  // and map the ADC value from BATTERY_SENSE_PIN to a percentage.
-  return random(90, 101);
+  const int samples = 5;
+  float totalVoltage = 0;
+  for (int i = 0; i < samples; i++) {
+    int adcValue = analogRead(BATTERY_SENSE_PIN);
+    float voltageAtPin = (adcValue / 4095.0) * 3.3;
+    float batteryVoltage = voltageAtPin * ((R1 + R2) / R2);
+    totalVoltage += batteryVoltage;
+    delay(10);
+  }
+
+  float avgVoltage = totalVoltage / samples;
+  int percentage = (int)((avgVoltage - MIN_BATTERY_VOLTAGE) /
+                         (MAX_BATTERY_VOLTAGE - MIN_BATTERY_VOLTAGE) * 100);
+  percentage = constrain(percentage, 0, 100);
+
+  Serial.print("🔋 Battery Voltage: ");
+  Serial.print(avgVoltage, 2);
+  Serial.print(" V  |  ");
+  Serial.print(percentage);
+  Serial.println("%");
+  return percentage;
 }
+
+
 
 bool ensureFirebaseConnection() {
   if (!Firebase.ready()) {
@@ -543,13 +754,13 @@ void setupFirebase() {
   config.token_status_callback = tokenStatusCallback; // optional
 
   // 🔑 Assign device email & password here
-  auth.user.email = "hydroLinkDevice_001@hydrolink.com";
-  auth.user.password = "hydroLink_FADY0307";
+  auth.user.email = "hydroLinkDevice_003@hydrolink.com";
+  auth.user.password = "hydroLink_123";
 
   // Start Firebase with config + auth
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
-
+  
   // Wait until UID is ready
   unsigned long start = millis();
   while (auth.token.uid.length() == 0 && millis() - start < 10000) {
@@ -559,7 +770,6 @@ void setupFirebase() {
   if (auth.token.uid.length() > 0) {
     deviceFirebaseId = auth.token.uid.c_str();
     Serial.println("Device UID: " + deviceFirebaseId);
-
     // Save UID to preferences
     preferences.begin("hydrolink", false);
     preferences.putString("firebase_uid", deviceFirebaseId);
@@ -599,6 +809,29 @@ void debugPreferences() {
   preferences.end();
 }
 
+void logStatusToSerial() {
+    
+    // Calculate actual water level in CM for printing
+    float actualWaterLevelCm = drumHeightCm - waterDistanceCm;
+    actualWaterLevelCm = constrain(actualWaterLevelCm, 0, drumHeightCm);
+    
+    // --- 1. Print Water Level and Status (COMBINED LINE) ---
+    Serial.printf("Water: %d%% (%.1fcm / %.1fcm) | Water Status: ", 
+                  waterPercentage, 
+                  actualWaterLevelCm, 
+                  drumHeightCm);
+    // Print the availability and end the line
+    if (waterAvailable) {
+        Serial.println("Available");
+    } else {
+        Serial.println("Unavailable");
+    }
+    
+    // --- 2. Print Battery Status ---
+    // NOTE: Using the calculated batteryPercentage but printing 0.00V as the actual voltage isn't globally available here
+    Serial.printf("🔋 Battery Voltage: %.2f V  |  %d%%\n", 0.00, batteryPercentage);
+}
+
 void mapMacToFirebaseUid() {
   if (!Firebase.ready() || deviceFirebaseId.isEmpty() || deviceMacAddress.isEmpty()) return;
 
@@ -634,7 +867,6 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   Serial.println("\n=== HydroLink ESP32 Starting ===");
-
   // --- OLED Initialization ---
   Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
   u8g2.begin();
@@ -647,8 +879,12 @@ void setup() {
   pinMode(ULTRASONIC_TRIG_PIN, OUTPUT);
   pinMode(ULTRASONIC_ECHO_PIN, INPUT);
 
+  // Solenoid is Normally Closed (NC). Set to HIGH to keep it closed.
   pinMode(SOLENOID_PIN, OUTPUT);
   digitalWrite(SOLENOID_PIN, LOW);
+
+  setupFlowSensor(); // 🔹 Initialize water flow sensor interrupt
+  Serial.println("Flow sensor initialized.");
 
   bool factoryResetRequested = false;
   if (factoryResetRequested) {
@@ -674,7 +910,6 @@ if (wifiConnected) {
 
     // 🔥 Initialize Firebase right after WiFi is connected
     setupFirebase();
-
     // Wait for Firebase to get ready and assign a UID
     unsigned long firebase_start_time = millis();
     while(!Firebase.ready() && millis() - firebase_start_time < 15000) {
@@ -689,7 +924,6 @@ if (wifiConnected) {
 
     if (Firebase.ready() && deviceFirebaseId.length() > 0) {
         Serial.println("\nFirebase ready. UID: " + deviceFirebaseId);
-
         String devicePath = "/hydrolink/devices/" + deviceFirebaseId;
         if (!Firebase.RTDB.pathExisted(&fbdo, devicePath)) {
             Serial.println("Device not found in Firebase. It might be a new device. This is normal.");
@@ -700,7 +934,7 @@ if (wifiConnected) {
         fbdo.setResponseSize(2048);
         setSystemStatus("online");
 
-        deviceMacAddress = WiFi.macAddress();   // formatted MAC
+        deviceMacAddress = WiFi.macAddress(); // formatted MAC
         Serial.println("Device MAC: " + deviceMacAddress);
 
         // After Firebase.begin(&config, &auth);
@@ -717,7 +951,6 @@ if (wifiConnected) {
 
         
         checkDeviceLinkStatus();
-        
         if (!isLinkedToUser) {
             Serial.println("Waiting for device to be linked by user...");
             unsigned long linkStartTime = millis();
@@ -740,7 +973,6 @@ if (wifiConnected) {
         Serial.println("Device ID: " + deviceFirebaseId);
         Serial.println("Device Linked: " + String(isLinkedToUser ? "Yes" : "No"));
         Serial.println("Device Configured: " + String(isDeviceFullyConfigured ? "Yes" : "No"));
-        
     } else {
         Serial.println("Firebase failed to initialize or get a UID. Please check credentials and network.");
     }
@@ -758,9 +990,9 @@ if (wifiConnected) {
 // --- Main Loop ---
 void loop() {
   unsigned long currentTime = millis();
-  
   handleWiFiReconnection();
   
+  // --- Connection Check ---
   if (WiFi.status() != WL_CONNECTED || !Firebase.ready()) {
     u8g2.clearBuffer();
     u8g2.setFont(u8g2_font_helvB08_tf);
@@ -769,33 +1001,106 @@ void loop() {
     delay(1000);
     return;
   }
-  
-  // If not linked after setup timeout, keep showing setup screen
+
+  // --- Link Status ---
   if (!isLinkedToUser) {
-      displaySetupScreen();
-      checkDeviceLinkStatus(); // Keep checking for the link
-      delay(5000);
-      return;
+    displaySetupScreen();
+    checkDeviceLinkStatus();
+    delay(5000);
+    return;
   }
 
-  if (currentTime - lastSensorRead >= SENSOR_INTERVAL) {
-    float newReading = readUltrasonicCm();
-    if (newReading > 0) {
-      waterDistanceCm = newReading;
-      calculateWaterPercentage();
-      // Solenoid Control On and Off
-      controlSolenoid(waterPercentage, refillThresholdPercentage, maxFillLevelPercentage);
-    }
+// --- Sensor Readings ---
+if (currentTime - lastSensorRead >= SENSOR_INTERVAL) {
+  float newReading = readUltrasonicCm();
+  if (newReading > 0) {
+    waterDistanceCm = newReading;
+    calculateWaterPercentage();
     
-    batteryPercentage = readBatteryPercentage();
-    lastSensorRead = currentTime;
+    // --- Read flow sensor data ---
+    float flowRate = getFlowRate();
+    Serial.printf("Flow rate: %.2f L/min | Total: %.2f L\n", flowRate, totalLiters);
+    
+    // ------------------------------------------------------------------
+    // --- COMPREHENSIVE REFILL LOGIC (Simplified Block) ---
+    // ------------------------------------------------------------------
+    
+    if (!solenoidState && isDeviceFullyConfigured) {
+        // --- AUTOMATIC REFILL LOGIC WITH RETRY ---
+        if (!waitingForWater) {
+            if (waterPercentage < refillThresholdPercentage) {
+                Serial.println("💧 Below threshold and water available — opening solenoid!");
+                openSolenoid(); // Simplified call
+                solenoidOpenStart = millis();
+                isNoWaterDetected = false;
+            }
+        } else {
+            // --- Retry every 2 minutes if water was unavailable ---
+            if (millis() - lastWaterRetryAttempt >= retryIntervalMs) {
+                Serial.println("⏳ Retrying solenoid open to check if water is back...");
+                openSolenoid(); // Simplified call
+                solenoidOpenStart = millis();
+                waitingForWater = false; // Try again
+            }
+        }
+    }
+
+    else if (solenoidState) {
+        // Solenoid is ON — monitor flow and stop conditions
+        String stopReason = "";
+        bool shouldStop = false;
+
+        float flowRate = getFlowRate();
+
+        // --- Detect No Flow for 5 seconds after opening ---
+        if (!isNoWaterDetected && flowRate <= 0.1 && (millis() - solenoidOpenStart >= noFlowTimeoutMs)) {
+            Serial.println("🚱 No water flow detected for 5 seconds — closing solenoid.");
+            stopReason = "No Water Detected";
+            shouldStop = true;
+            isNoWaterDetected = true;
+            waterAvailable = false;
+            waitingForWater = true;
+            lastWaterRetryAttempt = millis();
+        }
+
+        // --- Normal Stop Conditions (Only Automatic) ---
+        else if (!shouldStop) {
+            if (waterPercentage >= maxFillLevelPercentage) { // Simplified to just check max fill level
+                stopReason = "Max Fill Level Reached";
+                shouldStop = true;
+            } 
+        }
+
+        // --- Execute Stop if triggered ---
+        if (shouldStop) {
+            closeSolenoid(stopReason);
+            
+            if (lastRefillDurationMs > 0) {
+                logRefillHistory();
+            }
+
+            updateFirebaseData();
+        }
+    }
+
+    // ------------------------------------------------------------------
+
   }
 
+  // --- Battery Update ---
+  batteryPercentage = readBatteryPercentage();
+  lastSensorRead = currentTime;
+}
+
+
+  // --- Firebase Sync ---
   if (currentTime - lastFirebaseUpdate >= FIREBASE_INTERVAL) {
     updateFirebaseData();
+    logStatusToSerial();
     lastFirebaseUpdate = currentTime;
   }
 
+  // --- Firebase Settings ---
   if (currentTime - lastSettingsCheck >= SETTINGS_INTERVAL) {
     if (isLinkedToUser) {
       readFirebaseSettings();
@@ -806,7 +1111,8 @@ void loop() {
 
   displayHomeScreen();
   delay(100);
-}
+} 
+
 
 // --- OLED Display Functions ---
 
@@ -843,7 +1149,6 @@ void displaySetupScreen() {
 
     u8g2.drawStr(0, 12, "Device Setup");
     u8g2.drawStr(0, 28, "Enter MAC on website:");
-    
     // Format MAC with colons for better readability on screen
     String formattedMac = "";
     for(int i=0; i < deviceMacAddress.length(); i+=2) {

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
 /* Settings Page Styles */
 :root {
     --primary: #4a9ff5;
@@ -16,6 +18,12 @@
     --card-radius: 16px;
     --input-radius: 12px;
     --button-radius: 12px;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f5f9fc;
+    color: #333;
 }
 
 /* Settings Container Layout */
@@ -98,6 +106,8 @@
 .settings-content .card-body {
     padding: 1.5rem;
 }
+
+
 
 /* Tab Animation */
 .tab-pane {

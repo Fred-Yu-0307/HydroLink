@@ -19,10 +19,18 @@
     --button-radius: 12px;
 }
 
+html, body {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f5f9fc;
+    background-color: #F8FAFC;
     color: #333;
+    max-height: 100vh;
 }
 
 /* Navbar Styling */
@@ -33,19 +41,26 @@ body {
 
 /* Auth Container */
 .auth-container {
-    min-height: calc(100vh - 140px);
+    min-height: 100vh;
     display: flex;
     align-items: center;
-    padding: 2rem 0;
+    border-radius: 24px;
 }
 
+
 .auth-wrapper {
-    background-color: var(--white);
-    border-radius: var(--border-radius);
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
 }
+
+.auth-form-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 100vh;
+  padding: 2.5rem;
+}
+
 
 /* Illustration Side */
 .auth-illustration-wrapper {
@@ -229,43 +244,53 @@ body {
     margin-right: 0.5rem;
 }
 
+/* --- Fixed Auth Toggle Independent of Form Height --- */
 .auth-toggle-container {
-    display: flex;
-    background-color: #f1f5f9;
-    border-radius: 50px;
-    position: relative;
-    margin-bottom: 1rem;
+  display: flex;
+  background-color: #f1f5f9;
+  border-radius: 50px;
+  position: relative;
+  margin-bottom: 1rem;
+  height: 48px;               /* fixed height */
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
 }
 
 .auth-toggle-btn {
-    flex: 1;
-    border: none;
-    background: transparent;
-    padding: 0.75rem;
-    font-weight: 600;
-    color: var(--secondary);
-    position: relative;
-    z-index: 2;
-    transition: color 0.3s ease;
-    cursor: pointer;
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-weight: 600;
+  color: var(--secondary);
+  z-index: 2;
+  cursor: pointer;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  transition: color 0.3s ease;
+  user-select: none;
 }
 
 .auth-toggle-btn.active {
-    color: var(--white);
+  color: var(--white);
 }
 
 .auth-toggle-indicator {
-    position: absolute;
-    height: 85%;
-    width: 50%;
-    background-color: var(--primary);
-    border-radius: 50px;
-    top: 50%;
-    transform: translateY(-50%);
-    left: 0;
-    transition: left 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-    z-index: 1;
+  position: absolute;
+  top: 4px;                   /* ✅ fixed pixel position instead of percentage */
+  bottom: 4px;                /* ✅ ensures consistent vertical centering */
+  left: 4px;
+  width: calc(50% - 8px);     /* ✅ dynamic width but fixed margins */
+  background-color: var(--primary);
+  border-radius: 50px;
+  transition: left 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  z-index: 1;
 }
+
 
 .auth-title {
     font-weight: 700;
