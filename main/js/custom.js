@@ -10,7 +10,14 @@
 // in your HTML using <script type="module" src="js/custom.js"></script>
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 import { getDatabase, ref, onValue, get, set, remove } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js"; // ADDED get, set, remove
-import { getAuth, onAuthStateChanged, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js"; // ADDED auth-specific funcs
+import {
+    getAuth,
+    onAuthStateChanged,
+    signOut,  // <--- This was missing!
+    updatePassword,
+    EmailAuthProvider,
+    reauthenticateWithCredential
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
 // --- Firebase Config ---
 const firebaseConfig = {
@@ -30,7 +37,7 @@ const auth = getAuth(app);
 // --- Global State Variables ---
 let currentUserId = null;
 let DEVICE_ID = null;
-let lastUpdateCheckInterval = null; 
+let lastUpdateCheckInterval = null;
 
 let currentUser = null; // Store the current authenticated user object
 let currentDeviceBeingConfigured = null; // Stores the deviceId of the device opened in the modal
@@ -61,7 +68,7 @@ function updateSystemStatus(isOnline) {
 function checkDeviceLastUpdate() {
     if (!DEVICE_ID) {
         console.warn("DEVICE_ID not available for status check.");
-        updateSystemStatus(false); 
+        updateSystemStatus(false);
         lastUpdatedDisplay.textContent = "N/A";
         return;
     }
@@ -69,12 +76,12 @@ function checkDeviceLastUpdate() {
     const lastUpdatedRef = ref(database, `hydrolink/devices/${DEVICE_ID}/status/lastUpdated`);
     onValue(lastUpdatedRef, (snapshot) => {
         const lastUpdatedTimestamp = snapshot.val();
-        const currentTime = Date.now(); 
+        const currentTime = Date.now();
 
         if (lastUpdatedTimestamp) {
             const timeDifferenceSeconds = (currentTime - lastUpdatedTimestamp) / 1000;
             const date = new Date(lastUpdatedTimestamp);
-            lastUpdatedDisplay.textContent = date.toLocaleString(); 
+            lastUpdatedDisplay.textContent = date.toLocaleString();
 
             if (timeDifferenceSeconds < 60) { // Less than 1 minute
                 updateSystemStatus(true); // Online
@@ -82,7 +89,7 @@ function checkDeviceLastUpdate() {
                 updateSystemStatus(false); // Offline
             }
         } else {
-            updateSystemStatus(false); 
+            updateSystemStatus(false);
             lastUpdatedDisplay.textContent = "N/A";
         }
     }, { onlyOnce: false });
@@ -94,31 +101,31 @@ onAuthStateChanged(auth, (user) => {
         currentUserId = user.uid;
         currentUser = user; // 🔑 CRUCIAL: Set the global user object for all handlers
         console.log("History/Dashboard/Settings: User signed in...", "UID:", currentUserId);
-            
-            const authNavLink = document.querySelector('.navbar-nav .nav-link[href="auth.html"]');
-            if (authNavLink) {
-                authNavLink.innerHTML = '<i class="bi bi-box-arrow-right"></i> Logout';
-                authNavLink.onclick = handleLogout;
-            }
+
+        const authNavLink = document.querySelector('.navbar-nav .nav-link[href="auth.html"]');
+        if (authNavLink) {
+            authNavLink.innerHTML = '<i class="bi bi-box-arrow-right"></i>';
+            authNavLink.onclick = handleLogout;
+        }
         // 1. Check if we are on the settings page to load user data
         if (document.body.id === 'settings-page') {
             // Load all profile and address data from Firebase
-            loadUserDataAndAddress(); 
+            loadUserDataAndAddress();
         }
-        
+
         // 2. Device ID and status logic (for Dashboard/other pages)
         const storedDeviceId = localStorage.getItem(`hydrolink_device_id_${currentUserId}`);
         if (storedDeviceId) {
             DEVICE_ID = storedDeviceId;
             console.log("Loaded device ID from localStorage:", DEVICE_ID);
-            
+
             // Only run device status check if DOM elements are available
             if (systemStatusText && systemStatusDot && lastUpdatedDisplay) {
                 checkDeviceLastUpdate();
-                if (lastUpdateCheckInterval) clearInterval(lastUpdateCheckInterval); 
-                lastUpdateCheckInterval = setInterval(checkDeviceLastUpdate, 30000); 
+                if (lastUpdateCheckInterval) clearInterval(lastUpdateCheckInterval);
+                lastUpdateCheckInterval = setInterval(checkDeviceLastUpdate, 30000);
             }
-            
+
             // --- NEW: History Page Logic (after DEVICE_ID is set) ---
             if (document.body.id === 'history-page') {
                 fetchAndRenderHistory();
@@ -128,7 +135,7 @@ onAuthStateChanged(auth, (user) => {
         } else {
             console.warn("No device ID found in localStorage. Device not linked yet.");
             if (systemStatusText) {
-                updateSystemStatus(false); 
+                updateSystemStatus(false);
                 lastUpdatedDisplay.textContent = "No device linked";
             }
         }
@@ -144,16 +151,16 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-    // --- Handle Logout ---
-    function handleLogout(e) {
-        e.preventDefault();
-        signOut(auth).then(() => {
-            console.log("Signed out successfully.");
-        }).catch((error) => {
-            console.error("Error signing out:", error);
-            showCustomAlert("Error signing out. Please try again.", 'error'); // Replaced alert
-        });
-    }
+// --- Handle Logout ---
+function handleLogout(e) {
+    e.preventDefault();
+    signOut(auth).then(() => {
+        console.log("Signed out successfully.");
+    }).catch((error) => {
+        console.error("Error signing out:", error);
+        showCustomAlert("Error signing out. Please try again.", 'error'); // Replaced alert
+    });
+}
 
 // PART 2: GLOBAL UTILITY/EXPORT FUNCTIONS (Must be exposed)
 
@@ -163,15 +170,15 @@ onAuthStateChanged(auth, (user) => {
 function getDateCutoff(days) {
     if (days === 'All') {
         // Return a date far in the past to include all records
-        return new Date(0); 
+        return new Date(0);
     }
-    
+
     const daysNum = parseInt(days, 10);
     const today = new Date();
     const cutoff = new Date(today);
     cutoff.setDate(today.getDate() - daysNum);
     cutoff.setHours(0, 0, 0, 0); // Start of the cutoff day
-    
+
     return cutoff;
 }
 
@@ -182,7 +189,7 @@ function setSelectValueAndTriggerChange(selectElement, value) {
     if (selectElement && value) {
         selectElement.value = value;
         // Manually dispatch the 'change' event to trigger dependent logic
-        selectElement.dispatchEvent(new Event('change')); 
+        selectElement.dispatchEvent(new Event('change'));
     }
 }
 
@@ -207,11 +214,11 @@ function filterTable() {
         const row = rows[i];
         // Skip informational rows (like 'No data' or 'Loading')
         if (row.querySelector('td[colspan="8"]')) {
-            row.style.display = 'none'; 
+            row.style.display = 'none';
             continue;
         }
 
-        const rowDateStr = row.getAttribute('data-date'); 
+        const rowDateStr = row.getAttribute('data-date');
         const rowType = row.getAttribute('data-type');
         const rowStatus = row.getAttribute('data-status');
         let showRow = true;
@@ -244,11 +251,11 @@ function filterTable() {
  * Exports the currently visible table data (filtered rows) to a CSV file.
  */
 function exportToSpreadsheet(event) {
-    event.preventDefault(); 
+    event.preventDefault();
     // ... your exportToSpreadsheet logic ... (The one you provided is fine)
     const table = document.querySelector('.table-hover');
     // ... (CSV generation and download logic) ...
-    
+
     // START of your CSV logic
     let csv = [];
     const headerRow = table.querySelector('thead tr');
@@ -262,19 +269,19 @@ function exportToSpreadsheet(event) {
             const cells = row.querySelectorAll('td:not(:last-child)');
             cells.forEach((cell, index) => {
                 let cellText = '';
-                
+
                 if (index === 0) {
                     const strong = cell.querySelector('strong')?.innerText || '';
                     const small = cell.querySelector('small')?.innerText || '';
                     cellText = `${strong} ${small}`.trim();
-                } 
+                }
                 else if (index === 1 || index === 6) {
                     cellText = cell.querySelector('.badge')?.innerText.trim() || cell.innerText.trim();
-                } 
+                }
                 else {
                     cellText = cell.innerText.trim().replace(/[\n\r\t]/g, ' ').replace(/\s{2,}/g, ' ').replace('%', '').replace('L', '').trim();
                 }
-                
+
                 rowData.push(`"${cellText.replace(/"/g, '""')}"`); // Handle quotes in data
             });
             csv.push(rowData.join(','));
@@ -304,29 +311,29 @@ function exportToSpreadsheet(event) {
  * Exports the currently visible table data to a PDF file in Landscape orientation.
  */
 function exportToPDF(event) {
-    event.preventDefault(); 
+    event.preventDefault();
 
     // ** jsPDF FIX **
     if (typeof window.jspdf !== 'undefined' && typeof window.jsPDF === 'undefined') {
         window.jsPDF = window.jspdf.jsPDF;
     }
-    
+
     if (typeof jsPDF === 'undefined') {
         alert("The PDF Export feature is not fully loaded. Check your CDN links.");
         return;
     }
 
-    const doc = new jsPDF({ 
-        orientation: 'l', 
+    const doc = new jsPDF({
+        orientation: 'l',
         unit: 'mm',
         format: 'a4'
     });
-    
+
     if (typeof doc.autoTable !== 'function') {
         alert("jsPDF AutoTable plugin is missing or failed to load. Check the second CDN link.");
         return;
     }
-    
+
     const table = document.querySelector('.table-hover');
     const head = [];
     const body = [];
@@ -343,7 +350,7 @@ function exportToPDF(event) {
             const cells = row.querySelectorAll('td:not(:last-child)');
             cells.forEach((cell, index) => {
                 let cellText = '';
-                
+
                 if (index === 0) {
                     const strong = cell.querySelector('strong')?.innerText || '';
                     const small = cell.querySelector('small')?.innerText || '';
@@ -353,8 +360,8 @@ function exportToPDF(event) {
                 } else {
                     cellText = cell.innerText.trim().replace(/[\n\r\t]/g, ' ').replace(/\s{2,}/g, ' ').trim();
                 }
-                
-                rowData.push(cellText); 
+
+                rowData.push(cellText);
             });
             body.push(rowData);
         }
@@ -457,7 +464,7 @@ function renderTablePage() {
 
         const recordType =
             record.actionsLog?.includes('Auto') || record.actionsLog?.includes('Threshold') ? 'Automatic' :
-            record.actionsLog?.includes('Manual') ? 'Manual' : 'Scheduled';
+                record.actionsLog?.includes('Manual') ? 'Manual' : 'Scheduled';
 
         const before = parseFloat(record.beforeLevelPct);
         const after = parseFloat(record.afterLevelPct);
@@ -466,11 +473,11 @@ function renderTablePage() {
 
         const typeClass =
             recordType === 'Manual' ? 'bg-info' :
-            recordType === 'Scheduled' ? 'bg-secondary' : 'bg-primary';
+                recordType === 'Scheduled' ? 'bg-secondary' : 'bg-primary';
 
         const statusClass =
             record.status === 'Partial' ? 'bg-warning' :
-            record.status === 'Failed' ? 'bg-danger' : 'bg-success';
+                record.status === 'Failed' ? 'bg-danger' : 'bg-success';
 
         const beforeColor = before <= 25 ? 'bg-danger' : before <= 50 ? 'bg-warning' : 'bg-primary';
         const afterColor = after <= 25 ? 'bg-danger' : after <= 50 ? 'bg-warning' : 'bg-primary';
@@ -651,12 +658,12 @@ window.deleteRefillRecord = deleteRefillRecord;
 // --- NEW FUNCTION FOR HISTORY PAGE INITIALIZATION ---
 function initHistoryPage() {
     console.log("Initializing History Page.");
-    
+
     // 2. Attach Event Listeners
     const dateFilter = document.getElementById('dateRangeFilter');
     const typeFilter = document.getElementById('typeFilter');
     const statusFilter = document.getElementById('statusFilter');
-    
+
     if (dateFilter) dateFilter.addEventListener('change', filterTable);
     if (typeFilter) typeFilter.addEventListener('change', filterTable);
     if (statusFilter) statusFilter.addEventListener('change', filterTable);
@@ -731,7 +738,7 @@ async function saveModalDrumHeight() {
 function displayMessage(message, type = 'info', duration = 4000) {
     const messageBoxContainer = document.getElementById('messageBoxContainer');
     if (!messageBoxContainer) return; // Prevent errors if not on a page with the container
-    
+
     // Remove any existing message boxes to ensure only one is visible at a time
     const existingMessageBox = messageBoxContainer.querySelector('.message-box');
     if (existingMessageBox) {
@@ -782,11 +789,11 @@ function clearDependentSelects(...selects) {
  * and populates the forms on the Settings page.
  */
 async function loadUserDataAndAddress() {
-    if (!currentUserId || !currentUser) { 
+    if (!currentUserId || !currentUser) {
         displayMessage("User data not found. Cannot load data.", "warning");
         return;
     }
-    
+
     // Check if the address data structure is available in the module scope
     if (typeof addressData === 'undefined') {
         console.error("FATAL ERROR: addressData structure is not defined in custom.js scope!");
@@ -798,7 +805,7 @@ async function loadUserDataAndAddress() {
     const emailInput = document.getElementById('email');
     if (emailInput) {
         emailInput.value = currentUser.email || 'N/A';
-        emailInput.disabled = true; 
+        emailInput.disabled = true;
     }
 
     // --- 1. Load Profile Data ---
@@ -837,7 +844,7 @@ async function loadUserDataAndAddress() {
         // A. Region
         if (addressDataFirebase.region && addressData[addressDataFirebase.region]) {
             regionSelect.value = addressDataFirebase.region;
-            
+
             // Manually populate Province options using the local addressData structure
             const provinces = Object.keys(addressData[addressDataFirebase.region].provinces);
             populateSelect(provinceSelect, provinces);
@@ -851,7 +858,7 @@ async function loadUserDataAndAddress() {
             populateSelect(citySelect, cities);
             citySelect.value = addressDataFirebase.city || ''; // Set saved value
         }
-        
+
         // C. City
         if (addressDataFirebase.city) {
             const cityData = addressData[addressDataFirebase.region].provinces[addressDataFirebase.province].cities[addressDataFirebase.city];
@@ -860,7 +867,7 @@ async function loadUserDataAndAddress() {
             const barangays = cityData.barangays || [];
             populateSelect(barangaySelect, barangays);
             barangaySelect.value = addressDataFirebase.barangay || ''; // Set saved value
-            
+
             // Manually populate Zipcode
             if (cityData.zipcode) {
                 populateSelect(zipcodeSelect, [cityData.zipcode]);
@@ -876,7 +883,7 @@ async function loadUserDataAndAddress() {
 
 function initSettingsPage() {
     console.log("Initializing Settings Page logic.");
-    
+
     // Check if the page has the necessary containers before running logic
     if (!document.getElementById('deviceListContainer')) {
         console.warn("Not all Settings DOM elements found. Skipping initialization.");
@@ -886,10 +893,10 @@ function initSettingsPage() {
     // --- DOM Elements (Local to this init) ---
     // Note: The global ones like currentUser are set in onAuthStateChanged
     const updatePasswordBtn = document.getElementById('updatePasswordBtn');
-    
+
     // Modal DOM Elements (for attaching listeners)
     const configureDeviceModalEl = document.getElementById('configureDeviceModal');
-    
+
     // Address Form Elements
     const regionSelect = document.getElementById('region');
     const provinceSelect = document.getElementById('province');
@@ -897,7 +904,7 @@ function initSettingsPage() {
     const barangaySelect = document.getElementById('barangay');
     const zipcodeSelect = document.getElementById('zipcode');
 
-    
+
     // --- Attach Modal Listeners ---
     if (configureDeviceModalEl) {
         // Event listener for when the modal is hidden
@@ -909,7 +916,7 @@ function initSettingsPage() {
                 unsubscribeModalDrumHeight = null; // Clear the reference
             }
         });
-        
+
         // Modal button listeners
         const modalScanButton = document.getElementById('modalScanButton');
         const modalRescanButton = document.getElementById('modalRescanButton');
@@ -918,22 +925,22 @@ function initSettingsPage() {
         if (modalScanButton) modalScanButton.addEventListener('click', triggerModalDrumMeasurement);
         if (modalRescanButton) modalRescanButton.addEventListener('click', resetModalScanSection);
         if (modalSaveDrumHeightButton) modalSaveDrumHeightButton.addEventListener('click', saveModalDrumHeight);
-        
+
         // Listener for when the modal is shown (to load data/reset UI)
         configureDeviceModalEl.addEventListener('show.bs.modal', async (event) => {
-            const button = event.relatedTarget; 
+            const button = event.relatedTarget;
             currentDeviceBeingConfigured = button.getAttribute('data-device-id');
             const deviceName = button.getAttribute('data-device-name');
             document.getElementById('modalDeviceName').textContent = deviceName;
 
             resetModalScanSection();
-            
+
             // Load existing drum height for the device (Logic from Source 293-298)
             if (currentDeviceBeingConfigured) {
                 const deviceSettingsRef = ref(database, `hydrolink/devices/${currentDeviceBeingConfigured}/settings/drumHeightCm`);
                 const snapshot = await get(deviceSettingsRef);
                 const currentHeight = snapshot.val();
-                
+
                 const modalDrumHeightDisplay = document.getElementById('modalDrumHeightDisplay');
                 const modalScanSection = document.getElementById('modalScanSection');
                 const modalScanResults = document.getElementById('modalScanResults');
@@ -942,7 +949,7 @@ function initSettingsPage() {
                 const modalScanDescription = document.getElementById('modalScanDescription');
                 const modalSaveDrumHeightButton = document.getElementById('modalSaveDrumHeightButton');
 
-                if (currentHeight !== null && currentHeight > 0) { 
+                if (currentHeight !== null && currentHeight > 0) {
                     modalDrumHeightDisplay.textContent = `${currentHeight.toFixed(1)} cm`;
                     modalScanSection.classList.add('completed');
                     modalScanResults.classList.remove('hidden');
@@ -977,7 +984,7 @@ function initSettingsPage() {
         const bio = document.getElementById('bio').value.trim();
 
         const profileData = { firstName, middleName, lastName, phone, gender, birthdate, bio, lastUpdated: Date.now() };
-        
+
         const saveProfileBtn = document.getElementById('saveProfileBtn');
         saveProfileBtn.disabled = true;
         saveProfileBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Saving...';
@@ -999,103 +1006,103 @@ function initSettingsPage() {
     });
 
     // --- Security Tab Functionality (Change Password) ---
-// --- Security Tab Functionality (Change Password) ---
-updatePasswordBtn?.addEventListener('click', async (e) => {
-    e.preventDefault();
-    
-    // 🔑 THE FIX: Retrieve the current authenticated user object
-    const userToUpdate = getAuth().currentUser; 
+    // --- Security Tab Functionality (Change Password) ---
+    updatePasswordBtn?.addEventListener('click', async (e) => {
+        e.preventDefault();
 
-    if (!userToUpdate || !userToUpdate.email) {
-        displayMessage("You must be logged in with an email to change your password.", "danger");
-        return;
-    }
+        // 🔑 THE FIX: Retrieve the current authenticated user object
+        const userToUpdate = getAuth().currentUser;
 
-    const currentPassword = document.getElementById('currentPassword').value;
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
-
-    if (!currentPassword || !newPassword || !confirmNewPassword) {
-        displayMessage("Please fill in all password fields.", "danger");
-        return;
-    }
-    if (newPassword !== confirmNewPassword) {
-        displayMessage("New passwords do not match.", "danger");
-        return;
-    }
-    if (newPassword.length < 6) {
-        displayMessage("New password must be at least 6 characters long.", "danger");
-        return;
-    }
-
-    updatePasswordBtn.disabled = true;
-    updatePasswordBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Updating...';
-
-    try {
-        // Use the locally fetched userToUpdate object for credential checks and updates
-        const credential = EmailAuthProvider.credential(userToUpdate.email, currentPassword);
-        await reauthenticateWithCredential(userToUpdate, credential);
-        
-        await updatePassword(userToUpdate, newPassword);
-        displayMessage("Password updated successfully!", "success");
-        // Clear password fields
-        document.getElementById('currentPassword').value = '';
-        document.getElementById('newPassword').value = '';
-        document.getElementById('confirmNewPassword').value = '';
-    } catch (error) {
-        console.error("Error updating password:", error);
-        let errorMessage = `Failed to update password: ${error.message}`;
-        if (error.code === 'auth/wrong-password') {
-            errorMessage = "Incorrect current password.";
-        } else if (error.code === 'auth/requires-recent-login') {
-            errorMessage = "Please log in again to update your password (for security reasons).";
-        } else if (error.code === 'auth/weak-password') {
-            errorMessage = "The new password is too weak. Please choose a stronger one.";
+        if (!userToUpdate || !userToUpdate.email) {
+            displayMessage("You must be logged in with an email to change your password.", "danger");
+            return;
         }
-        displayMessage(errorMessage, "danger");
-    } finally {
-        updatePasswordBtn.disabled = false;
-        updatePasswordBtn.innerHTML = 'Update Password';
-    }
-});
+
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+        if (!currentPassword || !newPassword || !confirmNewPassword) {
+            displayMessage("Please fill in all password fields.", "danger");
+            return;
+        }
+        if (newPassword !== confirmNewPassword) {
+            displayMessage("New passwords do not match.", "danger");
+            return;
+        }
+        if (newPassword.length < 6) {
+            displayMessage("New password must be at least 6 characters long.", "danger");
+            return;
+        }
+
+        updatePasswordBtn.disabled = true;
+        updatePasswordBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Updating...';
+
+        try {
+            // Use the locally fetched userToUpdate object for credential checks and updates
+            const credential = EmailAuthProvider.credential(userToUpdate.email, currentPassword);
+            await reauthenticateWithCredential(userToUpdate, credential);
+
+            await updatePassword(userToUpdate, newPassword);
+            displayMessage("Password updated successfully!", "success");
+            // Clear password fields
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmNewPassword').value = '';
+        } catch (error) {
+            console.error("Error updating password:", error);
+            let errorMessage = `Failed to update password: ${error.message}`;
+            if (error.code === 'auth/wrong-password') {
+                errorMessage = "Incorrect current password.";
+            } else if (error.code === 'auth/requires-recent-login') {
+                errorMessage = "Please log in again to update your password (for security reasons).";
+            } else if (error.code === 'auth/weak-password') {
+                errorMessage = "The new password is too weak. Please choose a stronger one.";
+            }
+            displayMessage(errorMessage, "danger");
+        } finally {
+            updatePasswordBtn.disabled = false;
+            updatePasswordBtn.innerHTML = 'Update Password';
+        }
+    });
 
     // --- Address Tab Functionality ---
-    if (regionSelect) regionSelect.addEventListener('change', function() {
+    if (regionSelect) regionSelect.addEventListener('change', function () {
         const selectedRegion = this.value;
         clearDependentSelects(provinceSelect, citySelect, barangaySelect, zipcodeSelect);
-        
+
         if (selectedRegion && addressData[selectedRegion]) {
             const provinces = Object.keys(addressData[selectedRegion].provinces);
             populateSelect(provinceSelect, provinces);
         }
     });
 
-    if (provinceSelect) provinceSelect.addEventListener('change', function() {
+    if (provinceSelect) provinceSelect.addEventListener('change', function () {
         const selectedRegion = regionSelect.value;
         const selectedProvince = this.value;
         clearDependentSelects(citySelect, barangaySelect, zipcodeSelect);
-        
+
         if (selectedRegion && selectedProvince && addressData[selectedRegion].provinces[selectedProvince]) {
             const cities = Object.keys(addressData[selectedRegion].provinces[selectedProvince].cities);
             populateSelect(citySelect, cities);
         }
     });
 
-    if (citySelect) citySelect.addEventListener('change', function() {
+    if (citySelect) citySelect.addEventListener('change', function () {
         const selectedRegion = regionSelect.value;
         const selectedProvince = provinceSelect.value;
         const selectedCity = this.value;
         clearDependentSelects(barangaySelect, zipcodeSelect);
-        
-        if (selectedRegion && selectedProvince && selectedCity && 
+
+        if (selectedRegion && selectedProvince && selectedCity &&
             addressData[selectedRegion].provinces[selectedProvince].cities[selectedCity]) {
-            
+
             const cityData = addressData[selectedRegion].provinces[selectedProvince].cities[selectedCity];
-            
+
             // Populate barangays
             const barangays = cityData.barangays || [];
             populateSelect(barangaySelect, barangays);
-            
+
             // Populate zipcode
             if (cityData.zipcode) {
                 populateSelect(zipcodeSelect, [cityData.zipcode]);
@@ -1104,9 +1111,9 @@ updatePasswordBtn?.addEventListener('click', async (e) => {
     });
 
     // Address form submission handler
-    document.getElementById('addressForm')?.addEventListener('submit', function(e) {
+    document.getElementById('addressForm')?.addEventListener('submit', function (e) {
         e.preventDefault();
-        
+
         const formData = {
             region: regionSelect.value,
             province: provinceSelect.value,
@@ -1116,7 +1123,7 @@ updatePasswordBtn?.addEventListener('click', async (e) => {
             zipcode: zipcodeSelect.value,
             addressNotes: document.getElementById('addressNotes').value
         };
-        
+
         if (!currentUserId) {
             displayMessage("You must be logged in to save your address.", "danger");
             return;
@@ -1130,7 +1137,7 @@ updatePasswordBtn?.addEventListener('click', async (e) => {
         const saveAddressBtn = e.target.querySelector('button[type="submit"]');
         saveAddressBtn.disabled = true;
         saveAddressBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Saving...';
-        
+
         set(ref(database, `hydrolink/users/${currentUserId}/address`), addressDataToSave)
             .then(() => {
                 displayMessage("Address saved successfully!", "success");
@@ -1154,12 +1161,12 @@ updatePasswordBtn?.addEventListener('click', async (e) => {
 // This determines which page-specific code to run.
 // =======================================================
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // 1. Get DOM references once the page is ready (Ensure system status refs are still here)
     systemStatusText = document.getElementById('systemStatusText');
     systemStatusDot = document.getElementById('systemStatusDot');
     lastUpdatedDisplay = document.getElementById('lastUpdatedDisplay');
-    
+
     // We'll check the <body> tag's ID to know which page we are on.
     const bodyId = document.body.id;
 

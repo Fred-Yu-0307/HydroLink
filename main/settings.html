@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,23 +13,16 @@
     <!-- Font Awesome for scan icon -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/transitions.css">
     <link rel="stylesheet" href="css/settings.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         /* Custom styles for settings page */
-        body {
-            background: linear-gradient(135deg, #dbeafe 0%, #f8fafc 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            min-height: 100vh;
-        }
 
         .settings-container {
             display: flex;
             gap: 20px;
             margin-top: 30px;
-        }
-
-        .settings-nav {
-            flex: 0 0 250px; /* Fixed width for navigation */
         }
 
         .settings-content {
@@ -67,16 +61,16 @@
             border-color: #2563eb !important;
         }
 
-        .form-floating > .form-control,
-        .form-floating > .form-select,
-        .form-floating > .form-control:focus,
-        .form-floating > .form-select:focus {
+        .form-floating>.form-control,
+        .form-floating>.form-select,
+        .form-floating>.form-control:focus,
+        .form-floating>.form-select:focus {
             border-radius: 10px;
             height: calc(3.5rem + 2px);
             padding: 1rem 0.75rem;
         }
 
-        .form-floating > label {
+        .form-floating>label {
             padding: 1rem 0.75rem;
         }
 
@@ -94,37 +88,6 @@
 
         .save-btn:hover {
             background-color: #1e40af;
-        }
-
-        .user-avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            overflow: hidden;
-            position: relative;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .user-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .avatar-edit {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            background-color: #2563eb;
-            color: white;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            border: 2px solid white;
         }
 
         .section-title {
@@ -194,13 +157,27 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @keyframes fadeOut {
-            from { opacity: 1; transform: translateY(0); }
-            to { opacity: 0; transform: translateY(-20px); }
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            to {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
         }
 
         /* Styles for the modal's scan section, adapted from setup.html */
@@ -235,7 +212,8 @@
         .water-tank-visual {
             width: 100px;
             height: 200px;
-            border: 3px solid #2563eb; /* Using primary blue */
+            border: 3px solid #2563eb;
+            /* Using primary blue */
             border-radius: 10px;
             position: relative;
             margin: 0 auto 1rem;
@@ -248,7 +226,8 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(180deg, #0891b2 0%, #2563eb 100%); /* Using accent-teal and primary-blue */
+            background: linear-gradient(180deg, #0891b2 0%, #2563eb 100%);
+            /* Using accent-teal and primary-blue */
             transition: height 1s ease;
             border-radius: 0 0 7px 7px;
         }
@@ -268,36 +247,146 @@
         }
 
         @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* Mobile Settings Navigation Container */
+        @media (max-width: 768px) {
+            .settings-container {
+                flex-direction: column;
+                margin-top: 5px;
+            }
+
+            .settings-nav {
+                width: 100%;
+            }
+
+            .settings-nav .card {
+                background-color: var(--primary, #4a9ff5) !important;
+                border-radius: 20px !important;
+                padding: 0.5rem 1.5rem !important;
+                box-shadow: 0 10px 30px rgba(74, 159, 245, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+                backdrop-filter: blur(10px);
+                border: none !important;
+            }
+
+            .settings-nav .list-group {
+                flex-direction: row !important;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 12px;
+                background: transparent !important;
+                border-radius: 0 !important;
+            }
+
+            .settings-nav .list-group-item {
+                border: none !important;
+                width: 44px !important;
+                height: 44px !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 12px !important;
+                background-color: rgba(255, 255, 255, 0.08) !important;
+                color: rgba(255, 255, 255, 0.85) !important;
+                transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            }
+
+            .settings-nav .list-group-item i {
+                margin: 0 !important;
+                font-size: 20px !important;
+            }
+
+            .settings-nav .list-group-item span {
+                display: none !important;
+            }
+
+            .settings-nav .list-group-item:hover,
+            .settings-nav .list-group-item.active {
+                background-color: #ffffff !important;
+                color: var(--primary, #4a9ff5) !important;
+                transform: translateY(-3px);
+                box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15) !important;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .settings-nav {
+                width: 250px;
+                flex-shrink: 0;
+            }
         }
     </style>
 </head>
+
 <body>
+    <!-- Page Transition -->
+    <div class="page-transition-overlay" id="pageTransition">
+        <div class="transition-loader"></div>
+    </div>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand" href="#">
-                <img src="/main/materials/hydrolink-label.png" alt="HydroLink" width="160" class="d-inline-block align-text-top">
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top floating-nav container mt-3">
+        <div class="container-fluid px-2">
+            <a class="navbar-brand ms-2" href="#">
+                <img src="/main/materials/hydrolink-label.png" alt="HydroLink" width="160"
+                    class="d-inline-block align-text-top">
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+            <button class="navbar-toggler border-0 shadow-none text-white" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
+                <i class="bi bi-list fs-1"></i>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <!-- Centered Main Links -->
+                <ul class="navbar-nav mx-auto mt-3 mt-lg-0 pb-2 pb-lg-0 align-items-center">
                     <li class="nav-item">
-                        <a class="nav-link" href="index.html">Dashboard</a>
+                        <a class="nav-link" href="index.html" data-tooltip="Home">
+                            <i class="bi bi-house-door-fill"></i>
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="history.html">History</a>
+                        <a class="nav-link" href="data-analytics.html" data-tooltip="Dashboard">
+                            <i class="bi bi-grid-fill"></i>
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="settings.html">Settings</a>
+                        <a class="nav-link" href="history.html" data-tooltip="History">
+                            <i class="bi bi-clock-history"></i>
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="auth.html">
-                            <i class="bi bi-person-circle"></i> Login
+                        <a class="nav-link active" href="settings.html" data-tooltip="Settings">
+                            <i class="bi bi-gear-fill"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item position-relative">
+                        <a class="nav-link" href="notifications.html" data-tooltip="Notifications">
+                            <i class="bi bi-bell-fill"></i>
+                            <span
+                                class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle notification-badge-nav d-none"
+                                id="navNotificationBadge">
+                                <span class="visually-hidden">New alerts</span>
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+                <!-- Right-aligned Logout -->
+                <ul class="navbar-nav mt-3 mt-lg-0 pb-2 pb-lg-0 align-items-center">
+                    <li class="nav-item ms-lg-2">
+                        <a class="nav-link bg-danger bg-opacity-10 text-white hover-logout" href="auth.html"
+                            data-tooltip="Logout" style="color: #fda4af !important;">
+                            <i class="bi bi-box-arrow-right"></i>
                         </a>
                     </li>
                 </ul>
@@ -313,14 +402,6 @@
                 <h1 class="display-5 fw-bold">Account Settings</h1>
                 <p class="lead">Manage your profile, preferences, and account information</p>
             </div>
-            <div class="col-md-4 text-end d-flex align-items-center justify-content-end">
-                <div class="user-avatar">
-                    <img id="userAvatar" src="https://ui-avatars.com/api/?name=JD&background=linear-gradient(45deg,4a9ff5,9c27b0)&color=fff&rounded=true&size=200" alt="User Avatar">
-                    <div class="avatar-edit">
-                        <i class="bi bi-pencil-fill"></i>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Settings Content -->
@@ -329,20 +410,25 @@
             <div class="settings-nav">
                 <div class="card shadow-sm">
                     <div class="list-group list-group-flush">
-                        <a href="#profile" class="list-group-item list-group-item-action active" data-bs-toggle="list">
-                            <i class="bi bi-person-fill me-3"></i>Profile
+                        <a href="#profile" class="list-group-item list-group-item-action active" data-bs-toggle="list"
+                            data-tooltip="Profile">
+                            <i class="bi bi-person-fill me-3"></i><span>Profile</span>
                         </a>
-                        <a href="#address" class="list-group-item list-group-item-action" data-bs-toggle="list">
-                            <i class="bi bi-geo-alt-fill me-3"></i>Address
+                        <a href="#address" class="list-group-item list-group-item-action" data-bs-toggle="list"
+                            data-tooltip="Address">
+                            <i class="bi bi-geo-alt-fill me-3"></i><span>Address</span>
                         </a>
-                        <a href="#notifications" class="list-group-item list-group-item-action" data-bs-toggle="list">
-                            <i class="bi bi-bell-fill me-3"></i>Notifications
+                        <a href="#notifications" class="list-group-item list-group-item-action d-none"
+                            data-bs-toggle="list" data-tooltip="Notifications">
+                            <i class="bi bi-bell-fill me-3"></i><span>Notifications</span>
                         </a>
-                        <a href="#security" class="list-group-item list-group-item-action" data-bs-toggle="list">
-                            <i class="bi bi-shield-lock-fill me-3"></i>Security
+                        <a href="#security" class="list-group-item list-group-item-action" data-bs-toggle="list"
+                            data-tooltip="Security">
+                            <i class="bi bi-shield-lock-fill me-3"></i><span>Security</span>
                         </a>
-                        <a href="#devices" class="list-group-item list-group-item-action" data-bs-toggle="list">
-                            <i class="bi bi-hdd-fill me-3"></i>Devices
+                        <a href="#devices" class="list-group-item list-group-item-action" data-bs-toggle="list"
+                            data-tooltip="Devices">
+                            <i class="bi bi-hdd-fill me-3"></i><span>Devices</span>
                         </a>
                     </div>
                 </div>
@@ -362,19 +448,24 @@
                                     <div class="row mb-4">
                                         <div class="col-md-4 mb-3 mb-md-0">
                                             <div class="form-floating">
-                                                <input type="text" class="form-control" id="firstName" placeholder="First Name" value="">
-                                                <label for="firstName"><i class="bi bi-person me-2"></i>First Name</label>
+                                                <input type="text" class="form-control" id="firstName"
+                                                    placeholder="First Name" value="">
+                                                <label for="firstName"><i class="bi bi-person me-2"></i>First
+                                                    Name</label>
                                             </div>
                                         </div>
                                         <div class="col-md-4 mb-3 mb-md-0">
                                             <div class="form-floating">
-                                                <input type="text" class="form-control" id="middleName" placeholder="Middle Name" value="">
-                                                <label for="middleName"><i class="bi bi-person me-2"></i>Middle Name</label>
+                                                <input type="text" class="form-control" id="middleName"
+                                                    placeholder="Middle Name" value="">
+                                                <label for="middleName"><i class="bi bi-person me-2"></i>Middle
+                                                    Name</label>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-floating">
-                                                <input type="text" class="form-control" id="lastName" placeholder="Last Name" value="">
+                                                <input type="text" class="form-control" id="lastName"
+                                                    placeholder="Last Name" value="">
                                                 <label for="lastName"><i class="bi bi-person me-2"></i>Last Name</label>
                                             </div>
                                         </div>
@@ -383,14 +474,17 @@
                                     <div class="row mb-4">
                                         <div class="col-md-6 mb-3 mb-md-0">
                                             <div class="form-floating">
-                                                <input type="email" class="form-control" id="email" placeholder="Email" value="" readonly>
+                                                <input type="email" class="form-control" id="email" placeholder="Email"
+                                                    value="" readonly>
                                                 <label for="email"><i class="bi bi-envelope me-2"></i>Email</label>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-floating">
-                                                <input type="tel" class="form-control" id="phone" placeholder="Phone Number" value="">
-                                                <label for="phone"><i class="bi bi-telephone me-2"></i>Phone Number</label>
+                                                <input type="tel" class="form-control" id="phone"
+                                                    placeholder="Phone Number" value="">
+                                                <label for="phone"><i class="bi bi-telephone me-2"></i>Phone
+                                                    Number</label>
                                             </div>
                                         </div>
                                     </div>
@@ -404,13 +498,15 @@
                                                     <option value="other">Other</option>
                                                     <option value="prefer-not">Prefer not to say</option>
                                                 </select>
-                                                <label for="gender"><i class="bi bi-gender-ambiguous me-2"></i>Gender</label>
+                                                <label for="gender"><i
+                                                        class="bi bi-gender-ambiguous me-2"></i>Gender</label>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-floating">
                                                 <input type="date" class="form-control" id="birthdate" value="">
-                                                <label for="birthdate"><i class="bi bi-calendar-event me-2"></i>Date of Birth</label>
+                                                <label for="birthdate"><i class="bi bi-calendar-event me-2"></i>Date of
+                                                    Birth</label>
                                             </div>
                                         </div>
                                     </div>
@@ -433,98 +529,130 @@
                     </div>
 
                     <!-- Address Tab -->
-                    <div class="tab-pane fade" id="address">
-                        <div class="card shadow-sm">
-                            <div class="card-header">
-                                <h5 class="mb-0">Address Information</h5>
+                    <div class="tab-pane fade" id="address" role="tabpanel" aria-labelledby="address-tab">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-white py-3">
+                                <h5 class="card-title mb-0 text-primary fw-bold"><i
+                                        class="bi bi-geo-alt-fill me-2"></i>My Address</h5>
                             </div>
-                            <div class="card-body">
-                                <form id="addressForm">
-                                    <div class="row mb-4">
-                                        <div class="col-md-6 mb-3 mb-md-0">
-                                            <div class="form-floating">
-                                                <select class="form-select" id="region">
-                                                    <option value="" selected disabled>Select Region</option>
-                                                    <option value="ncr">National Capital Region</option>
-                                                    <option value="car">Cordillera Administrative Region</option>
-                                                    <option value="region1">Region I - Ilocos Region</option>
-                                                    <option value="region2">Region II - Cagayan Valley</option>
-                                                    <option value="region3">Region III - Central Luzon</option>
-                                                    <option value="region4a">Region IV-A - CALABARZON</option>
-                                                    <option value="region4b">Region IV-B - MIMAROPA</option>
-                                                    <option value="region5">Region V - Bicol Region</option>
-                                                    <option value="region6">Region VI - Western Visayas</option>
-                                                    <option value="region7">Region VII - Central Visayas</option>
-                                                    <option value="region8">Region VIII - Eastern Visayas</option>
-                                                    <option value="region9">Region IX - Zamboanga Peninsula</option>
-                                                    <option value="region10">Region X - Northern Mindanao</option>
-                                                    <option value="region11">Region XI - Davao Region</option>
-                                                    <option value="region12">Region XII - SOCCSKSARGEN</option>
-                                                    <option value="region13">Region XIII - Caraga</option>
-                                                    <option value="barmm">Bangsamoro Autonomous Region in Muslim Mindanao</option>
-                                                </select>
-                                                <label for="region"><i class="bi bi-map me-2"></i>Region</label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-floating">
-                                                <select class="form-select" id="province" disabled>
-                                                    <option value="" selected disabled>Select Province</option>
-                                                </select>
-                                                <label for="province"><i class="bi bi-geo me-2"></i>Province</label>
-                                            </div>
+                            <div class="card-body p-4">
+
+                                <div id="addressDisplaySection">
+                                    <div class="row mb-3">
+                                        <label class="col-sm-3 col-form-label text-muted">Region</label>
+                                        <div class="col-sm-9 d-flex align-items-center">
+                                            <span id="disp_region" class="fw-medium text-dark">--</span>
                                         </div>
                                     </div>
-
-                                    <div class="row mb-4">
-                                        <div class="col-md-6 mb-3 mb-md-0">
-                                            <div class="form-floating">
-                                                <select class="form-select" id="city" disabled>
-                                                    <option value="" selected disabled>Select City/Municipality</option>
-                                                </select>
-                                                <label for="city"><i class="bi bi-building me-2"></i>City/Municipality</label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-floating">
-                                                <select class="form-select" id="barangay" disabled>
-                                                    <option value="" selected disabled>Select Barangay</option>
-                                                </select>
-                                                <label for="barangay"><i class="bi bi-house me-2"></i>Barangay</label>
-                                            </div>
+                                    <div class="row mb-3">
+                                        <label class="col-sm-3 col-form-label text-muted">Province</label>
+                                        <div class="col-sm-9 d-flex align-items-center">
+                                            <span id="disp_province" class="fw-medium text-dark">--</span>
                                         </div>
                                     </div>
-
-                                    <div class="row mb-4">
-                                        <div class="col-md-6 mb-3 mb-md-0">
-                                            <div class="form-floating">
-                                                <input type="text" class="form-control" id="streetName" placeholder="Street Name">
-                                                <label for="streetName"><i class="bi bi-signpost me-2"></i>Street Name</label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-floating">
-                                                <select class="form-select" id="zipcode" disabled>
-                                                    <option value="" selected disabled>Select Zipcode</option>
-                                                </select>
-                                                <label for="zipcode"><i class="bi bi-mailbox me-2"></i>Zipcode</label>
-                                            </div>
+                                    <div class="row mb-3">
+                                        <label class="col-sm-3 col-form-label text-muted">City / Municipality</label>
+                                        <div class="col-sm-9 d-flex align-items-center">
+                                            <span id="disp_city" class="fw-medium text-dark">--</span>
                                         </div>
                                     </div>
-
-                                    <div class="form-floating mb-4">
-                                        <textarea class="form-control" id="addressNotes" style="height: 100px" placeholder="Additional Address Notes"></textarea>
-                                        <label for="addressNotes"><i class="bi bi-pencil me-2"></i>Additional Address Notes</label>
+                                    <div class="row mb-3">
+                                        <label class="col-sm-3 col-form-label text-muted">Barangay</label>
+                                        <div class="col-sm-9 d-flex align-items-center">
+                                            <span id="disp_barangay" class="fw-medium text-dark">--</span>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <label class="col-sm-3 col-form-label text-muted">Zip Code</label>
+                                        <div class="col-sm-9 d-flex align-items-center">
+                                            <span id="disp_zipcode" class="fw-medium text-dark">--</span>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <label class="col-sm-3 col-form-label text-muted">Street / House No.</label>
+                                        <div class="col-sm-9 d-flex align-items-center">
+                                            <span id="disp_street" class="fw-medium text-dark">--</span>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-4">
+                                        <label class="col-sm-3 col-form-label text-muted">Notes</label>
+                                        <div class="col-sm-9 d-flex align-items-center">
+                                            <span id="disp_notes" class="fw-medium text-dark fst-italic">--</span>
+                                        </div>
                                     </div>
 
                                     <div class="d-flex justify-content-end">
-                                        <button type="button" class="btn btn-light me-2">Cancel</button>
-                                        <button type="submit" class="btn btn-primary save-btn">
-                                            <span class="btn-text">Save Address</span>
-                                            <span class="btn-icon"><i class="bi bi-check-circle"></i></span>
+                                        <button type="button" class="btn btn-primary px-4" id="btnOpenAddressModal">
+                                            <i class="bi bi-pencil-square me-2"></i><span id="btnAddressActionLabel">Add
+                                                Address</span>
                                         </button>
                                     </div>
-                                </form>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                    <div class="modal fade" id="addressModal" tabindex="-1" aria-hidden="true"
+                        data-bs-backdrop="static">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header bg-light">
+                                    <h5 class="modal-title fw-bold text-primary">Manage Address</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body p-4">
+                                    <form id="addressForm">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label small text-muted">Region</label>
+                                                <select id="region" class="form-select"></select>
+                                                <input type="hidden" id="region-text">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small text-muted">Province</label>
+                                                <select id="province" class="form-select"></select>
+                                                <input type="hidden" id="province-text">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small text-muted">City / Municipality</label>
+                                                <select id="city" class="form-select"></select>
+                                                <input type="hidden" id="city-text">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small text-muted">Barangay</label>
+                                                <select id="barangay" class="form-select"></select>
+                                                <input type="hidden" id="barangay-text">
+                                            </div>
+                                            <div class="col-md-12">
+                                                <label class="form-label small text-muted">Street Name, Building, House
+                                                    No.</label>
+                                                <input type="text" class="form-control" id="street-text"
+                                                    placeholder="e.g. Block 1 Lot 2, Sunshine St.">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small text-muted">Zip Code</label>
+                                                <input type="text" class="form-control" id="zip_code"
+                                                    placeholder="Zip Code">
+                                            </div>
+                                            <div class="col-md-12">
+                                                <label class="form-label small text-muted">Additional Notes
+                                                    (Optional)</label>
+                                                <textarea class="form-control" id="address-notes" rows="2"
+                                                    placeholder="Nearest landmark, styling of gate, etc."></textarea>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="modal-footer border-0">
+                                    <button type="button" class="btn btn-light text-secondary"
+                                        data-bs-dismiss="modal">Cancel</button>
+                                    <button type="button" class="btn btn-primary px-4" id="btnSaveAddressModal">Save
+                                        Address</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -546,7 +674,8 @@
                                                     <p class="text-muted mb-0">Get notified when water level is low</p>
                                                 </div>
                                                 <div class="form-check form-switch">
-                                                    <input class="form-check-input" type="checkbox" id="waterLevelAlerts" checked>
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="waterLevelAlerts" checked>
                                                 </div>
                                             </div>
                                         </div>
@@ -554,36 +683,12 @@
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <div>
                                                     <h6 class="mb-1">Refill Completion</h6>
-                                                    <p class="text-muted mb-0">Get notified when tank refill is complete</p>
+                                                    <p class="text-muted mb-0">Get notified when tank refill is complete
+                                                    </p>
                                                 </div>
                                                 <div class="form-check form-switch">
-                                                    <input class="form-check-input" type="checkbox" id="refillCompletion" checked>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="notification-group mb-4">
-                                        <h6 class="notification-group-title">Account Notifications</h6>
-                                        <div class="notification-option">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <h6 class="mb-1">System Maintenance</h6>
-                                                    <p class="text-muted mb-0">Get notified about scheduled maintenance</p>
-                                                </div>
-                                                <div class="form-check form-switch">
-                                                    <input class="form-check-input" type="checkbox" id="systemMaintenance">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="notification-option">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <h6 class="mb-1">Tips & Updates</h6>
-                                                    <p class="text-muted mb-0">Receive water conservation tips and system updates</p>
-                                                </div>
-                                                <div class="form-check form-switch">
-                                                    <input class="form-check-input" type="checkbox" id="tipsUpdates" checked>
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="refillCompletion" checked>
                                                 </div>
                                             </div>
                                         </div>
@@ -594,7 +699,8 @@
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="pushNotifications" checked>
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="pushNotifications" checked>
                                                     <label class="form-check-label" for="pushNotifications">
                                                         <i class="bi bi-bell me-2"></i>Push Notifications
                                                     </label>
@@ -602,7 +708,8 @@
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="inAppNotifications" checked>
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="inAppNotifications" checked>
                                                     <label class="form-check-label" for="inAppNotifications">
                                                         <i class="bi bi-app-indicator me-2"></i>In-App Notifications
                                                     </label>
@@ -634,42 +741,110 @@
                                     <div class="section-title mb-3">Change Password</div>
                                     <div class="mb-4">
                                         <div class="form-floating mb-3">
-                                            <input type="password" class="form-control" id="currentPassword" placeholder="Current Password">
-                                            <label for="currentPassword"><i class="bi bi-key me-2"></i>Current Password</label>
+                                            <input type="password" class="form-control" id="currentPassword"
+                                                placeholder="Current Password">
+                                            <label for="currentPassword"><i class="bi bi-key me-2"></i>Current
+                                                Password</label>
                                         </div>
                                         <div class="form-floating mb-3">
-                                            <input type="password" class="form-control" id="newPassword" placeholder="New Password">
-                                            <label for="newPassword"><i class="bi bi-key-fill me-2"></i>New Password</label>
+                                            <input type="password" class="form-control" id="newPassword"
+                                                placeholder="New Password">
+                                            <label for="newPassword"><i class="bi bi-key-fill me-2"></i>New
+                                                Password</label>
                                         </div>
                                         <div class="form-floating mb-3">
-                                            <input type="password" class="form-control" id="confirmNewPassword" placeholder="Confirm New Password">
-                                            <label for="confirmNewPassword"><i class="bi bi-key-fill me-2"></i>Confirm New Password</label>
+                                            <input type="password" class="form-control" id="confirmNewPassword"
+                                                placeholder="Confirm New Password">
+                                            <label for="confirmNewPassword"><i class="bi bi-key-fill me-2"></i>Confirm
+                                                New Password</label>
                                         </div>
                                         <div class="password-strength mb-3">
                                             <div class="progress" style="height: 6px;">
-                                                <div class="progress-bar bg-danger" role="progressbar" style="width: 0%"></div>
+                                                <div class="progress-bar bg-danger" role="progressbar"
+                                                    style="width: 0%"></div>
                                             </div>
-                                            <small class="text-muted">Password strength: <span id="passwordStrength">Weak</span></small>
+                                            <small class="text-muted">Password strength: <span
+                                                    id="passwordStrength">Weak</span></small>
                                         </div>
-                                        <button type="submit" class="btn btn-primary" id="updatePasswordBtn">Update Password</button>
+                                        <button type="submit" class="btn btn-primary" id="updatePasswordBtn">Update
+                                            Password</button>
                                     </div>
                                 </form>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Devices Tab -->
                     <div class="tab-pane fade" id="devices">
                         <div class="card shadow-sm">
-                            <div class="card-header">
-                                <h5 class="mb-0">Connected Devices</h5>
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Device Details</h5>
+                                <span class="badge bg-secondary" id="deviceStatusBadge">Loading...</span>
                             </div>
-                            <div class="card-body" id="deviceListContainer">
-                                <!-- Devices will be loaded here dynamically -->
-                                <div class="text-center text-muted p-4" id="noDevicesMessage">
-                                    <i class="bi bi-hdd-fill" style="font-size: 2rem;"></i>
-                                    <p class="mt-2 mb-0">No devices linked yet.</p>
-                                    <p><a href="setup.html">Link a new device</a> to get started.</p>
+
+                            <div class="card-body">
+                                <div id="deviceLoading" class="text-center py-5">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <p class="mt-2 text-muted">Connecting to device...</p>
+                                </div>
+
+                                <div id="noDeviceState" class="text-center py-5 d-none">
+                                    <div class="mb-3">
+                                        <i class="bi bi-router" style="font-size: 3rem; color: #cbd5e1;"></i>
+                                    </div>
+                                    <h5>No Device Linked</h5>
+                                    <p class="text-muted">Link your HydroLink device to manage it here.</p>
+                                    <a href="setup.html" class="btn btn-primary mt-2">
+                                        <i class="fas fa-plus me-2"></i>Link New Device
+                                    </a>
+                                </div>
+
+                                <div id="deviceDetailsContent" class="d-none">
+                                    <div class="row g-4 mb-4">
+                                        <div class="col-md-6">
+                                            <label class="small text-muted text-uppercase fw-bold">Device Name</label>
+                                            <h4 class="text-dark mb-0" id="detailDeviceName">--</h4>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="small text-muted text-uppercase fw-bold">MAC Address</label>
+                                            <p class="font-monospace mb-0 text-secondary" id="detailMacAddress">--</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="p-3 bg-light rounded-3 border mb-4">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-8 mb-3 mb-md-0">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-3 text-primary">
+                                                        <i class="fas fa-wifi fa-2x"></i>
+                                                    </div>
+                                                    <div>
+                                                        <label class="small text-muted text-uppercase fw-bold">Connected
+                                                            Wi-Fi</label>
+                                                        <h5 class="mb-0" id="detailWifiSSID">--</h5>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 text-end">
+                                                <button type="button" id="btnResetWifi"
+                                                    class="btn btn-outline-warning btn-sm">
+                                                    <i class="fas fa-sync-alt me-1"></i> Reset Wi-Fi
+                                                </button>
+                                                <small class="d-block text-muted mt-1"
+                                                    style="font-size: 0.75rem;">Return to Hotspot Mode</small>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-grid gap-2 d-md-flex">
+                                        <button type="button" id="btnConfigureSingle"
+                                            class="btn btn-primary flex-grow-1" data-bs-toggle="modal"
+                                            data-bs-target="#configureDeviceModal">
+                                            <i class="fas fa-sliders-h me-2"></i>Configure Settings
+                                        </button>
+                                        <button type="button" id="btnUnlinkSingle" class="btn btn-outline-danger">
+                                            <i class="fas fa-unlink me-2"></i>Unlink Device
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -680,17 +855,21 @@
     </div>
 
     <!-- Configure Device Modal -->
-    <div class="modal fade" id="configureDeviceModal" tabindex="-1" aria-labelledby="configureDeviceModalLabel" aria-hidden="true">
+    <div class="modal fade" id="configureDeviceModal" tabindex="-1" aria-labelledby="configureDeviceModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="configureDeviceModalLabel">Configure Device: <span id="modalDeviceName"></span></h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title" id="configureDeviceModalLabel">Configure Device: <span
+                            id="modalDeviceName"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
                     <div class="alert alert-info mb-4" role="alert">
                         <i class="fas fa-info-circle me-2"></i>
-                        To re-measure your drum height, ensure the water drum is **completely EMPTY** and the device's ultrasonic sensor is properly positioned at the top.
+                        To re-measure your drum height, ensure the water drum is COMPLETELY EMPTY and the device's
+                        ultrasonic sensor is properly positioned at the top.
                     </div>
 
                     <div class="scan-section mb-4" id="modalScanSection">
@@ -717,7 +896,8 @@
                             <h6 class="text-center mb-3">Measured Drum Height</h6>
                             <div class="water-tank-visual">
                                 <div class="water-fill" id="modalWaterFill" style="height: 0%;"></div>
-                                <div class="position-absolute w-100 text-center" style="bottom: -25px; font-size: 0.75rem; color: #6b7280;">
+                                <div class="position-absolute w-100 text-center"
+                                    style="bottom: -25px; font-size: 0.75rem; color: #6b7280;">
                                     Empty Drum
                                 </div>
                             </div>
@@ -728,7 +908,8 @@
                                     <button class="btn btn-success" id="modalSaveDrumHeightButton">
                                         <i class="fas fa-check me-2"></i>Save Drum Height
                                     </button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="modalRescanButton">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                        id="modalRescanButton">
                                         <i class="fas fa-redo me-2"></i>Measure Again
                                     </button>
                                 </div>
@@ -748,7 +929,7 @@
 
     <!-- Bootstrap 5 JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Custom JS -->
+
     <script type="module">
         // Define embedUrlPrefix if it's not already defined by the environment
         const embedUrlPrefix = typeof window.__embed_url_prefix__ !== 'undefined' ? window.__embed_url_prefix__ : '';
@@ -757,7 +938,7 @@
         import { getAuth, onAuthStateChanged, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
         import { getDatabase, ref, get, set, remove, onValue } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
 
-        // Firebase configuration (same as in other files)
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyCmFInEL6TMoD-9JwdPy-e9niNGGL5SjHA",
             authDomain: "hydrolink-d3c57.firebaseapp.com",
@@ -768,15 +949,21 @@
             appId: "1:770257381412:web:a894f35854cb82274950b1"
         };
 
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const database = getDatabase(app);
 
-        let currentUser = null; // Store the current authenticated user object
+        let currentUser = null;
         let currentUserId = null;
-        let currentDeviceBeingConfigured = null; // Stores the deviceId of the device opened in the modal
-        let isScanning = false; // Flag for modal scanning
-        let unsubscribeModalDrumHeight = null; // To store the unsubscribe function for modal drum height listener
+
+        // Device Config Variables
+        let currentDeviceBeingConfigured = null;
+        let isScanning = false;
+        let unsubscribeModalDrumHeight = null;
+
+        // Address Variables (NEW)
+        let addressModal = null;
 
         // DOM Elements
         const emailInput = document.getElementById('email');
@@ -803,24 +990,18 @@
         const modalSaveDrumHeightButton = document.getElementById('modalSaveDrumHeightButton');
         const modalRescanButton = document.getElementById('modalRescanButton');
 
-        // Message Box Function (replaces alert/confirm)
+        // Message Box Function
         function displayMessage(message, type = 'info', duration = 4000) {
             const messageBoxContainer = document.getElementById('messageBoxContainer');
-            // Remove any existing message boxes to ensure only one is visible at a time
             const existingMessageBox = messageBoxContainer.querySelector('.message-box');
-            if (existingMessageBox) {
-                existingMessageBox.remove();
-            }
+            if (existingMessageBox) { existingMessageBox.remove(); }
 
             const alertDiv = document.createElement('div');
             alertDiv.className = `alert alert-${type} message-box`;
             alertDiv.setAttribute('role', 'alert');
             alertDiv.innerHTML = `<div>${message}</div>`;
             messageBoxContainer.appendChild(alertDiv);
-
-            setTimeout(() => {
-                alertDiv.remove();
-            }, duration);
+            setTimeout(() => { alertDiv.remove(); }, duration);
         }
 
         // --- Authentication State Listener ---
@@ -830,56 +1011,55 @@
                 currentUserId = user.uid;
                 console.log("Settings: User signed in:", user.email || "Anonymous", "UID:", currentUserId);
 
-                // Update Profile Tab
-                emailInput.value = user.email || 'N/A';
-                if (user.displayName) {
-                    const names = user.displayName.split(' ');
-                    document.getElementById('firstName').value = names[0] || '';
-                    document.getElementById('lastName').value = names[names.length - 1] || '';
-                    if (names.length > 2) {
-                        document.getElementById('middleName').value = names.slice(1, -1).join(' ');
-                    }
-                }
-                // Update avatar with user's initials/name
-                const avatarName = user.displayName || user.email.split('@')[0] || 'JD';
-                userAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(avatarName)}&background=linear-gradient(45deg,4a9ff5,9c27b0)&color=fff&rounded=true&size=200`;
-
-                // Load user profile data from Realtime Database (if exists)
+                // 1. Load User Profile
                 const userProfileRef = ref(database, `hydrolink/users/${currentUserId}/profile`);
                 onValue(userProfileRef, (snapshot) => {
                     const profileData = snapshot.val();
                     if (profileData) {
-                        document.getElementById('firstName').value = profileData.firstName || '';
-                        document.getElementById('middleName').value = profileData.middleName || '';
-                        document.getElementById('lastName').value = profileData.lastName || '';
-                        document.getElementById('phone').value = profileData.phone || '';
-                        document.getElementById('gender').value = profileData.gender || 'male'; // Default to male if not set
-                        document.getElementById('birthdate').value = profileData.birthdate || '';
-                        document.getElementById('bio').value = profileData.bio || '';
+                        if (document.getElementById('firstName')) document.getElementById('firstName').value = profileData.firstName || '';
+                        if (document.getElementById('middleName')) document.getElementById('middleName').value = profileData.middleName || '';
+                        if (document.getElementById('lastName')) document.getElementById('lastName').value = profileData.lastName || '';
+                        if (document.getElementById('phone')) document.getElementById('phone').value = profileData.phone || '';
+                        if (document.getElementById('gender')) document.getElementById('gender').value = profileData.gender || 'male';
+                        if (document.getElementById('birthdate')) document.getElementById('birthdate').value = profileData.birthdate || '';
+                        if (document.getElementById('bio')) document.getElementById('bio').value = profileData.bio || '';
+                        emailInput.value = user.email || 'N/A';
+                    } else {
+                        if (user.displayName) {
+                            const names = user.displayName.split(' ');
+                            if (document.getElementById('firstName')) document.getElementById('firstName').value = names[0] || '';
+                            if (document.getElementById('lastName')) document.getElementById('lastName').value = names[names.length - 1] || '';
+                        }
+                        emailInput.value = user.email || 'N/A';
                     }
-                }, { onlyOnce: true }); // Load once on page load
 
-                // Load and display linked devices
+                    // Update avatar
+                    const fName = document.getElementById('firstName').value.trim();
+                    const lName = document.getElementById('lastName').value.trim();
+                    const avatarName = fName && lName ? `${fName} ${lName}` : user.displayName || user.email.split('@')[0] || 'JD';
+                    if (userAvatar) userAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(avatarName)}&background=linear-gradient(45deg,4a9ff5,9c27b0)&color=fff&rounded=true&size=200`;
+                });
+
+                // 2. Load Linked Devices (Original Logic)
                 loadLinkedDevices();
+
+                // 3. Load Address View (NEW)
+                loadUserAddressView(currentUserId);
 
             } else {
                 currentUser = null;
                 currentUserId = null;
-                console.log("Settings: User signed out. Redirecting to login.");
+                console.log("Settings: User signed out.");
                 if (!window.location.pathname.endsWith('auth.html')) {
                     window.location.href = embedUrlPrefix + '/auth.html';
                 }
             }
         });
-        
 
         // --- Profile Tab Functionality ---
         document.getElementById('profileForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!currentUser) {
-                displayMessage("You must be logged in to update your profile.", "danger");
-                return;
-            }
+            if (!currentUser) return displayMessage("You must be logged in.", "danger");
 
             const firstName = document.getElementById('firstName').value.trim();
             const middleName = document.getElementById('middleName').value.trim();
@@ -889,386 +1069,430 @@
             const birthdate = document.getElementById('birthdate').value;
             const bio = document.getElementById('bio').value.trim();
 
-            const profileData = {
-                firstName,
-                middleName,
-                lastName,
-                phone,
-                gender,
-                birthdate,
-                bio,
-                lastUpdated: Date.now()
-            };
-
+            const profileData = { firstName, middleName, lastName, phone, gender, birthdate, bio, lastUpdated: Date.now() };
             const saveProfileBtn = document.getElementById('saveProfileBtn');
             saveProfileBtn.disabled = true;
-            saveProfileBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Saving...';
+            saveProfileBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
 
             try {
                 await set(ref(database, `hydrolink/users/${currentUserId}/profile`), profileData);
-                // Also update displayName in Firebase Auth if names are provided
                 if (firstName || lastName) {
                     const fullName = `${firstName} ${middleName ? middleName + ' ' : ''}${lastName}`.trim();
                     await currentUser.updateProfile({ displayName: fullName });
-                    console.log("Firebase Auth profile updated with displayName:", fullName);
                 }
                 displayMessage("Profile updated successfully!", "success");
             } catch (error) {
                 console.error("Error updating profile:", error);
-                displayMessage(`Failed to update profile: ${error.message}`, "danger");
+                displayMessage(`Failed: ${error.message}`, "danger");
             } finally {
                 saveProfileBtn.disabled = false;
                 saveProfileBtn.innerHTML = '<span class="btn-text">Save Changes</span><span class="btn-icon"><i class="bi bi-check-circle"></i></span>';
             }
         });
 
-
-        // --- Security Tab Functionality (Change Password) ---
+        // --- Security Tab Functionality ---
         updatePasswordBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            if (!currentUser) {
-                displayMessage("You must be logged in to change your password.", "danger");
-                return;
-            }
-            if (!currentUser.email) {
-                displayMessage("Cannot change password for this account type. Email is not associated.", "danger");
-                return;
-            }
+            if (!currentUser || !currentUser.email) return displayMessage("Cannot change password.", "danger");
 
             const currentPassword = currentPasswordInput.value;
             const newPassword = newPasswordInput.value;
             const confirmNewPassword = confirmNewPasswordInput.value;
 
-            if (!currentPassword || !newPassword || !confirmNewPassword) {
-                displayMessage("Please fill in all password fields.", "danger");
-                return;
-            }
-            if (newPassword !== confirmNewPassword) {
-                displayMessage("New passwords do not match.", "danger");
-                return;
-            }
-            if (newPassword.length < 6) {
-                displayMessage("New password must be at least 6 characters long.", "danger");
-                return;
-            }
+            if (!currentPassword || !newPassword || !confirmNewPassword) return displayMessage("Fill all fields.", "danger");
+            if (newPassword !== confirmNewPassword) return displayMessage("Passwords do not match.", "danger");
+            if (newPassword.length < 6) return displayMessage("Password too short.", "danger");
 
             updatePasswordBtn.disabled = true;
-            updatePasswordBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Updating...';
+            updatePasswordBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Updating...';
 
             try {
-                // Re-authenticate user before changing password for security
                 const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
                 await reauthenticateWithCredential(currentUser, credential);
-                
                 await updatePassword(currentUser, newPassword);
-                displayMessage("Password updated successfully!", "success");
-                // Clear password fields
-                currentPasswordInput.value = '';
-                newPasswordInput.value = '';
-                confirmNewPasswordInput.value = '';
+                displayMessage("Password updated!", "success");
+                currentPasswordInput.value = ''; newPasswordInput.value = ''; confirmNewPasswordInput.value = '';
             } catch (error) {
-                console.error("Error updating password:", error);
-                let errorMessage = `Failed to update password: ${error.message}`; // Display Firebase error message
-                if (error.code === 'auth/wrong-password') {
-                    errorMessage = "Incorrect current password.";
-                } else if (error.code === 'auth/requires-recent-login') {
-                    errorMessage = "Please log in again to update your password (for security reasons).";
-                } else if (error.code === 'auth/weak-password') {
-                    errorMessage = "The new password is too weak. Please choose a stronger one.";
-                }
-                displayMessage(errorMessage, "danger");
+                console.error(error);
+                displayMessage(`Failed: ${error.message}`, "danger");
             } finally {
                 updatePasswordBtn.disabled = false;
                 updatePasswordBtn.innerHTML = 'Update Password';
             }
         });
 
-        // --- Devices Tab Functionality ---
+        // Global variable to manage the interval (prevents multiple timers running)
+        let deviceStatusWatchdog = null;
+
         async function loadLinkedDevices() {
-            if (!currentUserId) {
-                console.warn("No current user ID to load linked devices.");
-                deviceListContainer.innerHTML = `
-                    <div class="text-center text-muted p-4">
-                        <i class="bi bi-hdd-fill" style="font-size: 2rem;"></i>
-                        <p class="mt-2 mb-0">Please log in to view your linked devices.</p>
-                    </div>
-                `;
-                return;
-            }
+            if (!currentUserId) return;
 
             const userDevicesRef = ref(database, `hydrolink/users/${currentUserId}/devices`);
-            onValue(userDevicesRef, (snapshot) => { // Use onValue for real-time updates
+
+            onValue(userDevicesRef, (snapshot) => {
                 const devices = snapshot.val();
-                deviceListContainer.innerHTML = ''; // Clear existing list
+
+                const loadingDiv = document.getElementById('deviceLoading');
+                const noDeviceDiv = document.getElementById('noDeviceState');
+                const contentDiv = document.getElementById('deviceDetailsContent');
+                const statusBadge = document.getElementById('deviceStatusBadge');
+
+                loadingDiv.classList.add('d-none');
 
                 if (devices) {
-                    noDevicesMessage.classList.add('d-none'); // Hide "No devices" message
-                    Object.entries(devices).forEach(([deviceId, deviceData]) => {
-                        const deviceItem = document.createElement('div');
-                        deviceItem.className = 'device-item';
-                        deviceItem.innerHTML = `
-                            <div class="d-flex align-items-center">
-                                <div class="device-icon me-3">
-                                    <i class="bi bi-droplet-fill"></i>
-                                </div>
-                                <div>
-                                    <h6 class="mb-1">${deviceData.deviceName || `HydroLink Device (${deviceId.substring(0, 6)}...)`}</h6>
-                                    <p class="text-muted mb-0">MAC: ${deviceData.macAddress || 'N/A'}</p>
-                                    <p class="text-muted mb-0">Connected since: ${deviceData.linkedAt ? new Date(deviceData.linkedAt).toLocaleDateString() : 'N/A'}</p>
-                                    <span class="badge bg-success">Online</span> <!-- Placeholder, actual status would come from device/status -->
-                                </div>
-                            </div>
-                            <div>
-                                <button type="button" class="btn btn-sm btn-outline-primary me-2 configure-btn" data-bs-toggle="modal" data-bs-target="#configureDeviceModal" data-device-id="${deviceId}" data-device-name="${deviceData.deviceName || `HydroLink Device (${deviceId.substring(0, 6)}...)`}">Configure</button>
-                                <button type="button" class="btn btn-sm btn-outline-danger disconnect-btn" data-device-id="${deviceId}">Disconnect</button>
-                            </div>
-                        `;
-                        deviceListContainer.appendChild(deviceItem);
-                    });
+                    // Get the first device ID found
+                    const deviceId = Object.keys(devices)[0];
+                    const deviceData = devices[deviceId];
 
-                    // Add event listeners to newly created disconnect buttons
-                    document.querySelectorAll('.disconnect-btn').forEach(button => {
-                        button.addEventListener('click', (e) => {
-                            const deviceIdToDisconnect = e.target.dataset.deviceId;
-                            confirmDisconnect(deviceIdToDisconnect);
-                        });
-                    });
+                    currentDeviceBeingConfigured = deviceId;
 
-                    // Event listener for when the modal is shown
-                    document.getElementById('configureDeviceModal').addEventListener('show.bs.modal', async (event) => {
-                        const button = event.relatedTarget; // Button that triggered the modal
-                        currentDeviceBeingConfigured = button.getAttribute('data-device-id');
-                        const deviceName = button.getAttribute('data-device-name');
-                        modalDeviceName.textContent = deviceName;
+                    noDeviceDiv.classList.add('d-none');
+                    contentDiv.classList.remove('d-none');
 
-                        // Reset modal UI to initial scan state
-                        resetModalScanSection();
+                    document.getElementById('detailDeviceName').innerText = deviceData.deviceName || 'HydroLink Device';
+                    document.getElementById('detailMacAddress').innerText = deviceData.macAddress || deviceId;
 
-                        // Load existing drum height for the device
-                        if (currentDeviceBeingConfigured) {
-                            const deviceSettingsRef = ref(database, `hydrolink/devices/${currentDeviceBeingConfigured}/settings/drumHeightCm`);
-                            const snapshot = await get(deviceSettingsRef);
-                            const currentHeight = snapshot.val();
-                            if (currentHeight !== null && currentHeight > 0) { // Check for null and positive value
-                                modalDrumHeightDisplay.textContent = `${currentHeight.toFixed(1)} cm`;
-                                modalScanSection.classList.add('completed');
-                                modalScanResults.classList.remove('hidden');
-                                modalScanIcon.className = 'fas fa-check-circle icon-large text-success';
-                                modalScanTitle.textContent = 'Current Drum Height';
-                                modalScanDescription.textContent = 'This device is already calibrated. You can re-measure if needed.';
-                                modalScanButton.style.display = 'none'; // Hide scan button if already measured
-                                modalSaveDrumHeightButton.textContent = 'Update Drum Height'; // Change button text
-                            } else {
-                                modalDrumHeightDisplay.textContent = '0.0 cm';
-                                modalSaveDrumHeightButton.textContent = 'Save Drum Height';
-                                modalScanButton.style.display = 'inline-block'; // Ensure scan button is visible
-                            }
+                    // Button Events
+                    const unlinkBtn = document.getElementById('btnUnlinkSingle');
+                    if (unlinkBtn) unlinkBtn.onclick = () => confirmDisconnect(deviceId);
+
+                    const wifiBtn = document.getElementById('btnResetWifi');
+                    if (wifiBtn) wifiBtn.onclick = () => handleWifiReset(deviceId);
+
+                    const configBtn = document.getElementById('btnConfigureSingle');
+                    if (configBtn) {
+                        configBtn.setAttribute('data-device-name', deviceData.deviceName || 'HydroLink Device');
+                        configBtn.setAttribute('data-device-id', deviceId);
+                    }
+
+                    // --- 1. LIVE STATUS LISTENER ---
+                    const deviceStatusRef = ref(database, `hydrolink/devices/${deviceId}/status`);
+
+                    // Variable to store the last known time from the device
+                    let lastDeviceTimestamp = 0;
+
+                    onValue(deviceStatusRef, (statusSnap) => {
+                        const data = statusSnap.val();
+                        const ssidDisplay = document.getElementById('detailWifiSSID');
+
+                        if (data) {
+                            // Update Wi-Fi Name
+                            if (ssidDisplay) ssidDisplay.innerText = data.wifiSSID || "Unknown";
+
+                            // ROBUST TIMESTAMP PARSING (From main.js)
+                            let ts = Number(data.lastUpdated || 0);
+                            // If timestamp is in seconds (10 digits), convert to milliseconds
+                            if (String(ts).length <= 10) ts *= 1000;
+
+                            lastDeviceTimestamp = ts;
+                            updateOnlineStatus(); // Check immediately on data change
                         }
                     });
 
+                    // --- 2. WATCHDOG TIMER (Checks every 5 seconds) ---
+                    // This ensures the badge flips to "Offline" if data stops coming
+                    if (deviceStatusWatchdog) clearInterval(deviceStatusWatchdog);
+
+                    deviceStatusWatchdog = setInterval(updateOnlineStatus, 5000);
+
+                    function updateOnlineStatus() {
+                        const now = Date.now();
+                        const diff = now - lastDeviceTimestamp;
+                        const TIMEOUT_MS = 60000; // 60 seconds timeout
+
+                        if (lastDeviceTimestamp > 0 && diff < TIMEOUT_MS) {
+                            statusBadge.className = "badge bg-success";
+                            statusBadge.innerText = "Online";
+                        } else {
+                            statusBadge.className = "badge bg-danger";
+                            statusBadge.innerText = "Offline";
+                        }
+                    }
+
                 } else {
-                    noDevicesMessage.classList.remove('d-none'); // Show "No devices" message
-                    deviceListContainer.appendChild(noDevicesMessage); // Ensure it's in the container
+                    noDeviceDiv.classList.remove('d-none');
+                    contentDiv.classList.add('d-none');
+                    statusBadge.innerText = "Not Connected";
+                    statusBadge.className = "badge bg-secondary";
                 }
             });
         }
 
-        async function confirmDisconnect(deviceId) {
-            // Using displayMessage for confirmation, which is a simple alert replacement.
-            // For a more robust solution, you'd use a custom modal.
-            const confirmAction = confirm("Are you sure you want to disconnect this device? This action cannot be undone.");
-            if (!confirmAction) {
+        // --- NEW: Handle Wi-Fi Reset ---
+        async function handleWifiReset(deviceId) {
+            if (!confirm("Are you sure? This will disconnect the device from its current Wi-Fi. It will return to Access Point mode (HydroLink_Setup).")) {
                 return;
             }
 
+            const btn = document.getElementById('btnResetWifi');
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
             try {
-                // 1. Remove device from user's linked devices
-                await remove(ref(database, `hydrolink/users/${currentUserId}/devices/${deviceId}`));
-
-                // 2. Remove user from device's linkedUsers list
-                await remove(ref(database, `hydrolink/devices/${deviceId}/linkedUsers/${currentUserId}`));
-
-                // 3. If this was the primary device stored in localStorage, remove it
-                const storedDeviceId = localStorage.getItem(`hydrolink_device_id_${currentUserId}`);
-                if (storedDeviceId === deviceId) {
-                    localStorage.removeItem(`hydrolink_device_id_${currentUserId}`);
-                    console.log("Primary device ID removed from localStorage.");
-                }
-
-                displayMessage("Device disconnected successfully!", "success");
-                // The onValue listener in loadLinkedDevices will automatically update the UI
+                // Send command to Firebase
+                await set(ref(database, `hydrolink/devices/${deviceId}/commands/resetWifi`), true);
+                displayMessage("Reset command sent! Device will restart in AP Mode.", "success");
             } catch (error) {
-                console.error("Error disconnecting device:", error);
-                displayMessage(`Failed to disconnect device: ${error.message}`, "danger");
+                console.error(error);
+                displayMessage("Failed to send command.", "danger");
+            } finally {
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalContent;
+                }, 3000);
             }
         }
 
-        // --- Modal Scan Logic (adapted from setup.html) ---
+        async function confirmDisconnect(deviceId) {
+            if (!confirm("Disconnect this device?")) return;
+            try {
+                await remove(ref(database, `hydrolink/users/${currentUserId}/devices/${deviceId}`));
+                await remove(ref(database, `hydrolink/devices/${deviceId}/linkedUsers/${currentUserId}`));
+                const storedDeviceId = localStorage.getItem(`hydrolink_device_id_${currentUserId}`);
+                if (storedDeviceId === deviceId) localStorage.removeItem(`hydrolink_device_id_${currentUserId}`);
+                displayMessage("Device disconnected!", "success");
+            } catch (error) {
+                console.error(error);
+                displayMessage("Failed to disconnect.", "danger");
+            }
+        }
 
+        // --- Modal Scan Logic ---
         modalScanButton.addEventListener('click', triggerModalDrumMeasurement);
         modalRescanButton.addEventListener('click', resetModalScanSection);
         modalSaveDrumHeightButton.addEventListener('click', saveModalDrumHeight);
 
-        // Add this listener to reset modal state when it's hidden
         document.getElementById('configureDeviceModal').addEventListener('hidden.bs.modal', function () {
             resetModalScanSection();
-            // Also unsubscribe the listener if it's still active when modal closes
-            if (unsubscribeModalDrumHeight) {
-                unsubscribeModalDrumHeight();
-                unsubscribeModalDrumHeight = null; // Clear the reference
-            }
+            if (unsubscribeModalDrumHeight) { unsubscribeModalDrumHeight(); unsubscribeModalDrumHeight = null; }
         });
 
         async function triggerModalDrumMeasurement() {
-            if (!currentUserId || !currentDeviceBeingConfigured) {
-                displayMessage("Authentication or Device ID missing. Please log in and ensure device is linked.", "danger");
-                return;
-            }
-
-            if (isScanning) return; // Prevent multiple scans
+            if (!currentUserId || !currentDeviceBeingConfigured) return displayMessage("Error: No device selected.", "danger");
+            if (isScanning) return;
 
             isScanning = true;
             modalScanButton.style.display = 'none';
             modalScanningIndicator.classList.remove('hidden');
             modalScanSection.classList.add('scanning');
             modalScanIcon.className = 'fas fa-spinner fa-spin icon-large text-warning';
-            modalScanTitle.textContent = 'Measuring Drum Height';
-            modalScanDescription.textContent = 'Please wait while your Hydrolink device measures the total height of your empty water drum...';
-            modalScanResults.classList.add('hidden'); // Hide results during scan
+            modalScanTitle.textContent = 'Measuring...';
+            modalScanDescription.textContent = 'Please wait...';
+            modalScanResults.classList.add('hidden');
 
             try {
-                // Set the flag in Firebase to true to trigger measurement on ESP32
-                const measureDrumFlagRef = ref(database, `hydrolink/devices/${currentDeviceBeingConfigured}/settings/measureDrum`);
-                await set(measureDrumFlagRef, true);
-                console.log("Requested drum measurement from ESP32 via Firebase for device:", currentDeviceBeingConfigured);
+                await set(ref(database, `hydrolink/devices/${currentDeviceBeingConfigured}/settings/measureDrum`), true);
+                await new Promise(resolve => setTimeout(resolve, 8000));
 
-                // --- ADD THE 8-SECOND DELAY HERE ---
-                console.log("Waiting 8 seconds for the ESP32 to complete measurement...");
-                await new Promise(resolve => setTimeout(resolve, 8000)); // 8-second delay
+                let timeoutId;
+                const cleanup = () => { if (unsubscribeModalDrumHeight) { unsubscribeModalDrumHeight(); unsubscribeModalDrumHeight = null; } clearTimeout(timeoutId); };
 
-                let receivedHeight = 0; // To store the height from Firebase
-                let measurementFirebasePromise = new Promise((resolve, reject) => { // Added reject for timeout
-                    const drumHeightRef = ref(database, `hydrolink/devices/${currentDeviceBeingConfigured}/settings/drumHeightCm`);
-                    let timeoutId; // To store the timeout ID
+                timeoutId = setTimeout(() => { cleanup(); displayMessage("Timeout: No measurement received.", "danger"); resetModalScanSection(); }, 20000);
 
-                    // Function to clean up the listener and timeout
-                    const cleanup = () => {
-                        if (unsubscribeModalDrumHeight) {
-                            unsubscribeModalDrumHeight();
-                            unsubscribeModalDrumHeight = null;
-                        }
-                        clearTimeout(timeoutId);
-                    };
-
-                    // Set a timeout to reject the promise if no valid measurement is received within a reasonable time
-                    // (e.g., 20 seconds, adjust if needed. This is separate from the initial 8s delay)
-                    timeoutId = setTimeout(() => {
+                if (unsubscribeModalDrumHeight) unsubscribeModalDrumHeight();
+                unsubscribeModalDrumHeight = onValue(ref(database, `hydrolink/devices/${currentDeviceBeingConfigured}/settings/drumHeightCm`), (snapshot) => {
+                    const heightCm = snapshot.val();
+                    if (heightCm !== null && typeof heightCm === 'number' && heightCm > 0) {
                         cleanup();
-                        reject(new Error("Measurement timeout: No valid drum height received from device."));
-                    }, 2000); // Give it up to 20 seconds to receive the value after the initial 8s delay
-
-                    // Unsubscribe any previous listener to avoid multiple active listeners
-                    if (unsubscribeModalDrumHeight) {
-                        unsubscribeModalDrumHeight();
+                        modalDrumHeightDisplay.textContent = `${heightCm.toFixed(1)} cm`;
+                        modalScanSection.classList.remove('scanning');
+                        modalScanSection.classList.add('completed');
+                        modalScanningIndicator.classList.add('hidden');
+                        modalScanResults.classList.remove('hidden');
+                        modalScanIcon.className = 'fas fa-check-circle icon-large text-success';
+                        modalScanTitle.textContent = 'Measurement Complete';
+                        modalScanDescription.textContent = 'Success!';
+                        isScanning = false;
                     }
-
-                    unsubscribeModalDrumHeight = onValue(drumHeightRef, (snapshot) => {
-                        const heightCm = snapshot.val();
-                        if (heightCm !== null && typeof heightCm === 'number' && heightCm > 0) {
-                            receivedHeight = heightCm;
-                            cleanup(); // Clean up listener and timeout
-                            resolve(heightCm); // Resolve the promise with the valid height
-                        } else {
-                            console.log("Received invalid or null height from Firebase, waiting for valid measurement...");
-                        }
-                    }, (error) => {
-                        // Handle potential errors from Firebase listener itself
-                        cleanup();
-                        reject(error);
-                    });
                 });
-
-                // Await the measurement promise directly after the 8-second delay
-                const height = await measurementFirebasePromise;
-
-                if (isScanning) { // Ensure we are still in scanning mode
-                    completeModalDrumHeightScan(height);
-                }
-
             } catch (error) {
-                console.error("Error during drum measurement process:", error);
-                // Check if it's a timeout error specifically
-                if (error.message.includes("Measurement timeout")) {
-                    displayMessage(`Measurement failed: ${error.message}. Please ensure the device is connected and functioning correctly.`, "danger");
-                } else {
-                    displayMessage(`Measurement failed: ${error.message || "An unexpected error occurred."}`, "danger");
-                }
+                console.error(error);
+                displayMessage("Measurement failed.", "danger");
                 resetModalScanSection();
-            } finally {
-                // Ensure isScanning is set to false regardless of success or failure
-                isScanning = false;
             }
-        }
-
-        function completeModalDrumHeightScan(heightCm) {
-            isScanning = false; // Reset scanning flag
-            modalScanSection.classList.remove('scanning');
-            modalScanSection.classList.add('completed');
-            modalScanningIndicator.classList.add('hidden');
-            modalScanIcon.className = 'fas fa-check-circle icon-large text-success';
-            modalScanTitle.textContent = 'Drum Height Measured';
-            modalScanDescription.textContent = 'Empty drum height measurement successful!';
-
-            modalScanResults.classList.remove('hidden');
-            modalDrumHeightDisplay.textContent = `${heightCm.toFixed(1)} cm`;
-            modalWaterFill.style.height = '0%'; // Ensure water fill is 0% for empty drum measurement visual
-            modalSaveDrumHeightButton.textContent = 'Save Drum Height'; // Reset button text
-            modalSaveDrumHeightButton.focus(); // Focus the save button for better UX
         }
 
         function resetModalScanSection() {
             isScanning = false;
-            modalScanSection.classList.remove('completed');
-            modalScanSection.classList.remove('scanning');
+            if (unsubscribeModalDrumHeight) { unsubscribeModalDrumHeight(); unsubscribeModalDrumHeight = null; }
+            modalScanSection.className = 'text-center py-4';
+            modalScanIcon.className = 'fas fa-ruler-vertical icon-large text-primary';
+            modalScanTitle.textContent = 'Calibrate Drum Height';
+            modalScanDescription.textContent = 'Ensure sensor is installed.';
+            modalScanningIndicator.classList.add('hidden');
             modalScanResults.classList.add('hidden');
-            modalScanButton.style.display = 'inline-block'; // Show the scan button again
-            modalScanningIndicator.classList.add('hidden'); // Hide scanning indicator
-            modalScanIcon.className = 'fas fa-radar-chart icon-large text-primary';
-            modalScanTitle.textContent = 'Ready to Scan';
-            modalScanDescription.textContent = 'Click the button below to measure the total height of your empty drum.';
-            modalDrumHeightDisplay.textContent = '0.0 cm'; // Reset displayed height
-            modalSaveDrumHeightButton.textContent = 'Save Drum Height'; // Reset button text
+            modalScanButton.style.display = 'inline-block';
         }
 
         async function saveModalDrumHeight() {
-            if (!currentUserId || !currentDeviceBeingConfigured) {
-                displayMessage("Authentication or Device ID missing. Cannot save drum height.", "danger");
-                return;
-            }
+            if (addressModal) addressModal.hide(); // Placeholder
+            displayMessage("Drum height confirmed.", "success");
+            bootstrap.Modal.getInstance(document.getElementById('configureDeviceModal')).hide();
+        }
 
-            const drumHeight = parseFloat(modalDrumHeightDisplay.textContent);
-            if (drumHeight <= 0) {
-                displayMessage("Please measure a valid drum height before saving.", "warning");
-                return;
-            }
+        // ==========================================
+        // --- ADDRESS TAB LOGIC (NEW & INTEGRATED) ---
+        // ==========================================
 
-            modalSaveDrumHeightButton.disabled = true;
-            modalSaveDrumHeightButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Saving...';
+        // Init Address Modal
+        const addrModalEl = document.getElementById('addressModal');
+        if (addrModalEl && window.bootstrap) {
+            addressModal = new bootstrap.Modal(addrModalEl);
+        }
 
-            try {
-                const deviceSettingsRef = ref(database, `hydrolink/devices/${currentDeviceBeingConfigured}/settings`);
-                // Use update to only change drumHeightCm, preserving other settings
-                await set(deviceSettingsRef, { drumHeightCm: drumHeight }, { merge: true });
-                displayMessage("Drum height updated successfully!", "success");
-                configureDeviceModal.hide(); // Close modal on success
-            } catch (error) {
-                console.error("Error saving drum height:", error);
-                displayMessage(`Failed to save drum height: ${error.message}`, "danger");
-            } finally {
-                modalSaveDrumHeightButton.disabled = false;
-                modalSaveDrumHeightButton.innerHTML = '<i class="fas fa-check me-2"></i>Save Drum Height';
+        // Open Address Modal
+        const btnOpenAddr = document.getElementById('btnOpenAddressModal');
+        if (btnOpenAddr) {
+            btnOpenAddr.addEventListener('click', () => {
+                if (addressModal) addressModal.show();
+                const regionEl = document.getElementById('region');
+                if (regionEl && regionEl.options.length <= 1) {
+                    loadJsonData('region', 'ph-json/region.json');
+                }
+            });
+        }
+
+        // Save Address
+        const btnSaveAddr = document.getElementById('btnSaveAddressModal');
+        if (btnSaveAddr) {
+            btnSaveAddr.addEventListener('click', saveAddressToFirebase);
+        }
+
+        // Setup Cascading Dropdowns
+        setupDropdownListener('region', 'province', 'ph-json/province.json', 'region_code');
+        setupDropdownListener('province', 'city', 'ph-json/city.json', 'province_code');
+        setupDropdownListener('city', 'barangay', 'ph-json/barangay.json', 'city_code');
+
+        function loadUserAddressView(uid) {
+            const addrRef = ref(database, `hydrolink/users/${uid}/address`);
+            get(addrRef).then((snapshot) => {
+                const data = snapshot.val();
+                const actionLabel = document.getElementById('btnAddressActionLabel');
+                const safeText = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+
+                if (data) {
+                    if (actionLabel) actionLabel.innerText = "Update Address";
+                    safeText('disp_region', data.regionName || data.region || 'N/A');
+                    safeText('disp_province', data.provinceName || data.province || 'N/A');
+                    safeText('disp_city', data.cityName || data.city || 'N/A');
+                    safeText('disp_barangay', data.barangayName || data.barangay || 'N/A');
+                    safeText('disp_zipcode', data.zipcode || 'N/A');
+                    safeText('disp_street', data.street || 'N/A');
+                    safeText('disp_notes', data.notes || 'None');
+                } else {
+                    if (actionLabel) actionLabel.innerText = "Add Address";
+                }
+            }).catch(err => console.error("Address Load Error:", err));
+        }
+
+        function setupDropdownListener(sourceId, targetId, jsonUrl, filterKey) {
+            const sourceEl = document.getElementById(sourceId);
+            if (sourceEl) {
+                sourceEl.addEventListener('change', function () {
+                    loadJsonData(targetId, jsonUrl, this.value, filterKey);
+                    if (targetId === 'province') { clearDropdown('city'); clearDropdown('barangay'); }
+                    if (targetId === 'city') { clearDropdown('barangay'); }
+                });
             }
         }
+
+        function loadJsonData(targetId, url, filterCode = null, filterKey = null) {
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error("File not found");
+                    return response.json();
+                })
+                .then(data => {
+                    let options = `<option value="">Select</option>`;
+                    let filteredData = data;
+
+                    // Filter data if a parent code is provided (e.g., filtering cities by province)
+                    if (filterCode && filterKey) {
+                        filteredData = data.filter(item => item[filterKey] === filterCode);
+                    }
+
+                    // Sort A-Z for better UX
+                    filteredData.sort((a, b) => {
+                        let nameA = a.region_name || a.province_name || a.city_name || a.brgy_name;
+                        let nameB = b.region_name || b.province_name || b.city_name || b.brgy_name;
+                        return nameA.localeCompare(nameB);
+                    });
+
+                    filteredData.forEach(item => {
+                        let code, name;
+
+                        // MAPPING KEYS TO MATCH THE DOWNLOADED FILES
+                        if (targetId === 'region') {
+                            code = item.region_code;
+                            name = item.region_name;
+                        } else if (targetId === 'province') {
+                            code = item.province_code;
+                            name = item.province_name;
+                        } else if (targetId === 'city') {
+                            code = item.city_code;
+                            name = item.city_name;
+                        } else if (targetId === 'barangay') {
+                            code = item.brgy_code;
+                            name = item.brgy_name;
+                        }
+
+                        if (code && name) {
+                            options += `<option value="${code}">${name}</option>`;
+                        }
+                    });
+
+                    const el = document.getElementById(targetId);
+                    if (el) el.innerHTML = options;
+                })
+                .catch(err => console.error(`Error loading ${targetId}:`, err));
+        }
+
+        function clearDropdown(id) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = `<option value="">Select</option>`;
+        }
+
+        async function saveAddressToFirebase() {
+            if (!currentUserId) return;
+            const regionEl = document.getElementById('region');
+            const provinceEl = document.getElementById('province');
+            const cityEl = document.getElementById('city');
+            const barangayEl = document.getElementById('barangay');
+
+            const addressData = {
+                region: regionEl.value,
+                province: provinceEl.value,
+                city: cityEl.value,
+                barangay: barangayEl.value,
+                regionName: regionEl.options[regionEl.selectedIndex]?.text || '',
+                provinceName: provinceEl.options[provinceEl.selectedIndex]?.text || '',
+                cityName: cityEl.options[cityEl.selectedIndex]?.text || '',
+                barangayName: barangayEl.options[barangayEl.selectedIndex]?.text || '',
+                street: document.getElementById('street-text')?.value || '',
+                zipcode: document.getElementById('zip_code')?.value || '',
+                notes: document.getElementById('address-notes')?.value || '',
+                lastUpdated: Date.now()
+            };
+
+            if (!addressData.region || !addressData.city) {
+                displayMessage("Please select at least a Region and City.", "danger");
+                return;
+            }
+
+            try {
+                await set(ref(database, `hydrolink/users/${currentUserId}/address`), addressData);
+                displayMessage("Address saved successfully!", "success");
+                if (addressModal) addressModal.hide();
+                loadUserAddressView(currentUserId);
+            } catch (error) {
+                console.error(error);
+                displayMessage("Failed to save address.", "danger");
+            }
+        }
+
     </script>
+    <script src="js/transitions.js"></script>
 </body>
+
 </html>

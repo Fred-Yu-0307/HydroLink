@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/transitions.css">
     <style>
         /* Custom styles for status indicator */
         .status-indicator {
@@ -19,30 +21,51 @@
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background-color: #ccc; /*Graay for unknown/offline */
+            background-color: #ccc;
+            /*Graay for unknown/offline */
             margin-right: 8px;
             transition: background-color 0.3s ease;
         }
 
         .status-dot.online {
-            background-color: #28a745; /* Green for online */
+            background-color: #28a745;
+            /* Green for online */
         }
 
         .status-dot.offline {
-            background-color: #dc3545; /* Red for offline */
+            background-color: #dc3545;
+            /* Red for offline */
         }
 
         /* Custom Alert Modal Styles */
         @keyframes check-animation {
-            0% { transform: scale(0.5); opacity: 0; }
-            60% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(1); }
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            60% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1);
+            }
         }
 
         @keyframes error-animation {
-            0% { transform: rotate(-10deg); }
-            50% { transform: rotate(10deg); }
-            100% { transform: rotate(0deg); }
+            0% {
+                transform: rotate(-10deg);
+            }
+
+            50% {
+                transform: rotate(10deg);
+            }
+
+            100% {
+                transform: rotate(0deg);
+            }
         }
 
         .alert-icon-container {
@@ -52,77 +75,175 @@
         }
 
         .alert-icon-success i {
-            color: #198754; /* Green */
+            color: #198754;
+            /* Green */
             animation: check-animation 0.5s ease-out forwards;
         }
 
         .alert-icon-error i {
-            color: #dc3545; /* Red */
+            color: #dc3545;
+            /* Red */
             animation: error-animation 0.3s ease-in-out infinite alternate;
         }
-        
+
         .alert-icon-info i {
-            color: #0d6efd; /* Blue */
+            color: #0d6efd;
+            /* Blue */
             animation: none;
+        }
+
+        /* --- MANUAL REFILL MODAL TANK STYLES --- */
+
+        /* Unique Container */
+        .modal-refill-tank-container {
+            width: 120px;
+            height: 180px;
+            background: rgba(230, 240, 255, 0.3);
+            border: 4px solid #e0e0e0;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
+            margin: 0 auto;
+            /* Center it */
+        }
+
+        /* Unique Water Level */
+        .modal-refill-water-level {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            /* JS will change this */
+            background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
+            transition: height 0.5s ease-out;
+            z-index: 1;
+        }
+
+        /* Unique Wave Animation */
+        .modal-refill-wave {
+            position: absolute;
+            top: -10px;
+            left: 0;
+            width: 200%;
+            height: 20px;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25" fill="%23FFFFFF"/><path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.24,22.88,168.9,40.84l7.8,2.7V0Z" opacity=".5" fill="%23FFFFFF"/><path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" fill="%23FFFFFF"/></svg>') repeat-x;
+            background-size: 50% 100%;
+            animation: modal-refill-wave-anim 3s linear infinite;
+            opacity: 0.8;
+        }
+
+        @keyframes modal-refill-wave-anim {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        /* Unique Shine */
+        .modal-refill-glass-shine {
+            position: absolute;
+            top: 0;
+            right: 10%;
+            width: 20px;
+            height: 100%;
+            background: linear-gradient(to right, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1));
+            z-index: 2;
+            pointer-events: none;
         }
     </style>
 </head>
+
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand" href="#">
-                <img src="/main/materials/hydrolink-label.png" alt="HydroLink" width="160" class="d-inline-block align-text-top">
+    <!-- Page Transition -->
+    <div class="page-transition-overlay" id="pageTransition">
+        <div class="transition-loader"></div>
+    </div>
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top floating-nav container mt-3">
+        <div class="container-fluid px-2">
+            <a class="navbar-brand ms-2" href="#">
+                <img src="/main/materials/hydrolink-label.png" alt="HydroLink" width="160"
+                    class="d-inline-block align-text-top">
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+            <button class="navbar-toggler border-0 shadow-none text-white" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
+                <i class="bi bi-list fs-1"></i>
             </button>
-            <div class="collapse navbar-collapse justify-content-center text-center" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- Centered Main Links -->
+                <ul class="navbar-nav mx-auto mt-3 mt-lg-0 pb-2 pb-lg-0 align-items-center">
                     <li class="nav-item">
-                        <a class="nav-link active" href="index.html">Dashboard</a>
+                        <a class="nav-link active" href="index.html" data-tooltip="Home">
+                            <i class="bi bi-house-door-fill"></i>
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="history.html">History</a>
-                    </li> 
-                    <li class="nav-item">
-                        <a class="nav-link" href="settings.html">Settings</a>
+                        <a class="nav-link" href="data-analytics.html" data-tooltip="Dashboard">
+                            <i class="bi bi-grid-fill"></i>
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="auth.html">
-                            <i class="bi bi-person-circle"></i> Login
+                        <a class="nav-link" href="history.html" data-tooltip="History">
+                            <i class="bi bi-clock-history"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="settings.html" data-tooltip="Settings">
+                            <i class="bi bi-gear-fill"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item position-relative">
+                        <a class="nav-link" href="notifications.html" data-tooltip="Notifications">
+                            <i class="bi bi-bell-fill"></i>
+                            <span
+                                class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle notification-badge-nav d-none"
+                                id="navNotificationBadge">
+                                <span class="visually-hidden">New alerts</span>
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+                <!-- Right-aligned Logout -->
+                <ul class="navbar-nav mt-3 mt-lg-0 pb-2 pb-lg-0 align-items-center">
+                    <li class="nav-item ms-lg-2">
+                        <a class="nav-link bg-danger bg-opacity-10 text-white hover-logout" href="auth.html"
+                            data-tooltip="Logout" style="color: #fda4af !important;">
+                            <i class="bi bi-box-arrow-right"></i>
                         </a>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
-
     <div class="container mt-4">
         <div class="row mb-4">
             <div class="col-md-8">
                 <h1 class="display-6 fw-bold">IoT-Based Automatic Water Refilling System</h1>
 
             </div>
-            <div class="col-md-4 text-end d-flex align-items-center justify-content-end">
-                
-            <div class="status-text pe-4">
-                <small class="text-muted">System Status</small>
-                
-                <p class="mb-0 fw-bold d-flex align-items-center gap-2" id="systemStatusText">
-                    Offline
-                    <span class="status-dot offline" id="systemStatusDot"></span>
-                </p>
-            </div>
-
-                <label class="switch d-none">
-                    <input type="checkbox" id="togglePower">
-                    <span class="slider"></span>
-
-                    <!-- ✅ Battery Container -->
-                    <div class="battery">
-                        <div class="battery-level" id="batteryLevel"></div>
+            <div class="col-md-4 text-end d-flex align-items-center justify-content-end gap-3">
+                <div class="battery-status pe-3 border-end">
+                    <small class="text-muted">Battery</small>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fw-bold" id="batteryPercent">--</span><span class="fw-bold">%</span>
+                        <div class="iphone-battery">
+                            <div id="batteryLevelFill" class="battery-fill"></div>
+                            <div class="battery-tip"></div>
+                        </div>
                     </div>
-                </label>
+                </div>
+
+                <div class="status-text pe-4">
+                    <small class="text-muted">System Status</small>
+                    <p class="mb-0 fw-bold d-flex align-items-center gap-2" id="systemStatusText">
+                        Offline
+                        <span class="status-dot offline" id="systemStatusDot"></span>
+                    </p>
+                </div>
             </div>
         </div>
 
@@ -132,27 +253,95 @@
                     <div class="card shadow-sm h-100">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">Current Water Level</h5>
-                            <button class="btn btn-sm btn-outline-primary" id="customizeBtn" data-bs-toggle="modal" data-bs-target="#customizeModal">
+                            <button class="btn btn-sm btn-outline-primary" id="customizeBtn" data-bs-toggle="modal"
+                                data-bs-target="#customizeModal">
                                 <i class="bi bi-gear-fill"></i> Customize
                             </button>
                         </div>
                         <div class="card-body d-flex flex-column align-items-center justify-content-center">
-                            
-                            <div class="e-card playing level-3"> 
-                                <div class="image"></div>
-                                
-                                <div class="wave"></div>
-                                <div class="wave"></div>
-                                <div class="wave"></div>
-                                
-                                <div class="infotop">
-                                    <div id="waterPercentageDisplay" style="font-size: 2.5em; margin-bottom: 0.1em; line-height: 1;">--%</div>
-                                    Current Capacity
-                                    <br>
-                                    <div class="name pt-2">Refill at: <span id="thresholdDisplay">--%</span></div>
+
+                            <!-- Modern 2D Animated Drum UI -->
+                            <div class="modern-2d-drum-container"
+                                style="position: relative; width: 260px; height: 360px; margin: 0 auto; border-radius: 20px; background: rgba(248, 250, 252, 0.4); border: 2px solid rgba(255, 255, 255, 0.8); box-shadow: 0 20px 40px rgba(0,0,0,0.08), inset 0 0 20px rgba(255,255,255,0.6); overflow: hidden; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(12px);">
+
+                                <!-- Drum Caps (Top and Bottom borders for aesthetic) -->
+                                <div
+                                    style="position: absolute; top: 0; left: 0; width: 100%; height: 16px; background: linear-gradient(90deg, #e2e8f0, #f8fafc, #e2e8f0); z-index: 3; box-shadow: 0 3px 6px rgba(0,0,0,0.05);">
                                 </div>
+                                <div
+                                    style="position: absolute; bottom: 0; left: 0; width: 100%; height: 16px; background: linear-gradient(90deg, #cbd5e1, #e2e8f0, #cbd5e1); z-index: 3; box-shadow: 0 -3px 6px rgba(0,0,0,0.05);">
+                                </div>
+
+                                <!-- Animated Gradient Blue Water Fill Area -->
+                                <div
+                                    style="position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; z-index: 1; border-radius: 0 0 18px 18px; overflow: hidden;">
+                                    <div id="drumWaterLevel" class="animated-water"
+                                        style="position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: linear-gradient(135deg, #0284c7, #0ea5e9, #38bdf8, #0284c7); background-size: 300% 300%; transition: height 1s cubic-bezier(0.25, 0.46, 0.45, 0.94); box-shadow: 0 -10px 30px rgba(14, 165, 233, 0.5);">
+                                    </div>
+                                </div>
+
+                                <!-- Premium Glass Text Overlay -->
+                                <div
+                                    style="position: relative; z-index: 5; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 25px 20px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 1); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #0f172a; font-family: 'Poppins', sans-serif; width: 85%; text-align: center;">
+                                    <div
+                                        style="font-size: 0.85rem; font-weight: 600; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase;">
+                                        Current Capacity</div>
+                                    <div id="waterPercentageDisplay"
+                                        style="font-size: 3.5rem; font-weight: 800; margin: -5px 0 5px 0; line-height: 1; background: linear-gradient(135deg, #0284c7, #0ea5e9); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                                        --%</div>
+
+                                    <div class="name"
+                                        style="font-size: 0.85rem; font-weight: 500; color: #475569; padding-bottom: 12px; border-bottom: 1px solid rgba(14, 165, 233, 0.2); width: 100%; margin-bottom: 15px;">
+                                        Refill at: <span id="thresholdDisplay"
+                                            style="font-weight: 700; color: #0284c7;">--%</span></div>
+
+                                    <div class="volume-stats"
+                                        style="font-size: 0.8rem; font-weight: 500; color: #475569; display: flex; width: 100%; justify-content: space-between;">
+                                        <div style="text-align: left;">
+                                            <div
+                                                style="font-size: 0.65rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">
+                                                Total</div>
+                                            <span id="totalVolumeDisplay"
+                                                style="font-weight: 700; font-size: 1rem; color: #0f172a;">-- L</span>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <div
+                                                style="font-size: 0.65rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">
+                                                Current</div>
+                                            <span id="currentVolumeDisplay"
+                                                style="font-weight: 700; font-size: 1rem; color: #0ea5e9;">-- L</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Keyframes for smooth gradient animations -->
+                                <style>
+                                    @keyframes gradientFlow {
+                                        0% {
+                                            background-position: 0% 50%;
+                                        }
+
+                                        50% {
+                                            background-position: 100% 50%;
+                                        }
+
+                                        100% {
+                                            background-position: 0% 50%;
+                                        }
+                                    }
+
+                                    .animated-water {
+                                        animation: gradientFlow 6s ease-in-out infinite;
+                                    }
+                                </style>
                             </div>
-                            
+
+                            <div class="text-center mt-3">
+                                <button id="btnOpenRefillModal" class="btn btn-primary btn-lg shadow-sm px-4">
+                                    <i class="bi bi-droplet-fill me-2"></i> Manual Refill
+                                </button>
+                            </div>
+
                         </div>
                         <div class="card-footer">
                             <div class="d-flex justify-content-between align-items-center">
@@ -177,7 +366,18 @@
                         <div class="card-body">
                             <div class="row g-3">
                                 <div class="col-12 col-md-6 col-lg-12">
-                                    <div class="stat-card last-refill-date-card">
+                                    <div class="stat-card stats-card">
+                                        <div class="stat-icon">
+                                            <i class="bi bi-clock"></i>
+                                        </div>
+                                        <div class="stat-info">
+                                            <h3 id="deviceCurrentState" class="fw-bold">...</h3>
+                                            <p>Current Status</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6 col-lg-12">
+                                    <div class="stat-card stats-card">
                                         <div class="stat-icon">
                                             <i class="bi bi-calendar-check"></i>
                                         </div>
@@ -188,34 +388,24 @@
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-6 col-lg-12">
-                                    <div class="stat-card total-water-card">
+                                    <div class="stat-card stats-card">
                                         <div class="stat-icon">
                                             <i class="bi bi-droplet"></i>
                                         </div>
                                         <div class="stat-info">
                                             <h3 id="totalWaterUsed">0</h3>
-                                            <p>Total Liters Used (Today)</p> </div>
+                                            <p>Total Liters Used (Today)</p>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-6 col-lg-12">
-                                    <div class="stat-card refill-month-card">
+                                    <div class="stat-card stats-card">
                                         <div class="stat-icon">
                                             <i class="bi bi-arrow-repeat"></i>
                                         </div>
                                         <div class="stat-info">
                                             <h3 id="refillCount">0</h3>
                                             <p>Refills This Month</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12 col-md-6 col-lg-12">
-                                    <div class="stat-card total-refill-hours-card">
-                                        <div class="stat-icon">
-                                            <i class="bi bi-clock"></i>
-                                        </div>
-                                        <div class="stat-info">
-                                            <h3 id="totalrefillhours">N/A</h3>
-                                            <p>Water Available</p>
                                         </div>
                                     </div>
                                 </div>
@@ -227,7 +417,7 @@
                 </div>
 
                 <div class="col-lg-4 mb-4">
-                    <div class="card shadow-sm h-100">
+                    <div class="card shadow-sm">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">Notifications</h5>
                             <span class="badge bg-primary" id="notificationBadge">0 New</span>
@@ -236,9 +426,10 @@
                             <ul class="notification-list" id="notificationsList">
                             </ul>
                         </div>
-                        
-                        <div class="card-footer text-center">
-                            <button class="btn btn-sm btn-outline-primary">View All Notifications</button>
+
+                        <div class="card-footer text-center py-5 mb-2">
+                            <a href="notifications.html" class="btn btn-sm btn-outline-primary">View All
+                                Notifications</a>
                         </div>
                     </div>
                 </div>
@@ -252,14 +443,27 @@
                         </div>
                         <div class="card-body" style="max-height: 295px; overflow-y: auto;">
                             <ul class="list-group list-group-flush" id="availabilityLogs">
-                                <li class="list-group-item">System started at: <span id="initialLoadTime">N/A</span></li>
+                                <li class="list-group-item">System started at: <span id="initialLoadTime">N/A</span>
+                                </li>
                             </ul>
                         </div>
                     </div>
                 </div>
-                
+
             </div>
         </section>
+    </div>
+
+    <div class="modal fade" id="customAlertModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center p-5">
+                    <div id="alertIconContainer" class="mb-4"></div>
+                    <h4 id="alertMessage" class="modal-title mb-4"></h4>
+                    <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Customize Modal (Original) -->
@@ -276,38 +480,42 @@
                             <span>Auto-Refill Threshold</span>
                             <span id="thresholdValue" class="badge bg-primary">25%</span>
                         </label>
-                        <input type="range" class="form-range" min="10" max="50" step="5" id="autoRefillThreshold" value="25">
-                        <small class="text-muted">System will automatically start refilling when water level drops below this threshold.</small>
+                        <input type="range" class="form-range" min="10" max="90" step="5" id="autoRefillThreshold"
+                            value="25">
+                        <small class="text-muted">System will automatically start refilling when water level drops below
+                            this threshold.</small>
                     </div>
+
                     <div class="mb-4">
                         <label for="maxFillLevel" class="form-label d-flex justify-content-between">
                             <span>Maximum Fill Level</span>
                             <span id="maxFillValue" class="badge bg-primary">75%</span>
                         </label>
-                        <input type="range" class="form-range" min="50" max="95" step="5" id="maxFillLevel" value="75">
+                        <input type="range" class="form-range" min="10" max="100" step="5" id="maxFillLevel" value="75">
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Notification Preferences</label>
-                        <div class="notification-preferences">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="notifyLowWater" checked>
-                                <label class="form-check-label" for="notifyLowWater">
-                                    Low water level alerts
-                                </label>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="notifyRefillComplete" checked>
-                                <label class="form-check-label" for="notifyRefillComplete">
-                                    Refill completion
-                                </label>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="notifyWaterSchedule" checked>
-                                <label class="form-check-label" for="notifyWaterSchedule">
-                                    Water availability schedule
-                                </label>
-                            </div>
+
+                    <div class="mb-4">
+                        <label for="refillRetrySeconds" class="form-label d-flex justify-content-between">
+                            <span>Re-attempt Wait Time (No Water)</span>
+                            <span id="refillRetryValue" class="badge bg-primary">20s</span>
+                        </label>
+                        <input type="range" class="form-range" min="10" max="3600" step="10" id="refillRetrySeconds"
+                            value="20">
+                    </div>
+
+                    <div class="mb-2 p-3 border rounded bg-light">
+                        <div class="form-check form-switch d-flex justify-content-between align-items-center ps-0">
+                            <label class="form-check-label fw-bold mb-0" for="persistentRefillToggle">
+                                Persistent Refill
+                            </label>
+                            <input class="form-check-input fs-4 m-0" type="checkbox" role="switch"
+                                id="persistentRefillToggle">
                         </div>
+                        <small class="text-muted mt-2 d-block">
+                            If refilling is interrupted by a water outage, the system will resume refilling to the
+                            maximum level once water is restored, even if the current water level is above the
+                            threshold.
+                        </small>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -327,12 +535,104 @@
                     <div class="alert-icon-container" id="alertIconContainer">
                         <!-- Icon will be injected here (e.g., <i class="bi bi-check-circle-fill"></i>) -->
                     </div>
-                    
+
                     <!-- Message content -->
                     <h5 class="fw-bold mb-3" id="alertMessage">Default Message</h5>
-                    
+
                     <!-- Back Button -->
-                    <button type="button" class="btn btn-primary w-100 fw-bold mt-5" data-bs-dismiss="modal">Back</button>
+                    <button type="button" class="btn btn-primary w-100 fw-bold mt-5"
+                        data-bs-dismiss="modal">Back</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalRefillInput" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold text-primary">Manual Refill Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted mb-4">Choose a target water level. The pump will stop automatically when this
+                        level is reached.</p>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Target Level: <span id="targetLevelDisplay"
+                                class="text-primary">100%</span></label>
+                        <input type="range" class="form-range" id="refillTargetInput" min="0" max="100" step="5">
+                        <div class="d-flex justify-content-between text-muted small">
+                            <span>Current: <span id="currentLevelRefill">--</span>%</span>
+                            <span>100%</span>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary d-none" id="btnSet100">
+                            <i class="bi bi-battery-full me-1"></i> Fill to 100%
+                        </button>
+                        <button class="btn btn-primary btn-lg fw-bold" id="btnStartRefillAction">
+                            Start Refilling <i class="bi bi-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                    <div id="refillErrorMsg" class="text-danger small mt-2 text-center" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalRefillProgress" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-body p-5 text-center">
+
+                    <h4 class="fw-bold mb-4" id="progressStatusText">Refilling Tank...</h4>
+
+                    <div class="modal-refill-tank-container mb-4">
+                        <div class="modal-refill-water-level" id="tankAnimationLevel">
+                            <div class="modal-refill-wave"></div>
+                        </div>
+                        <div class="modal-refill-glass-shine"></div>
+                    </div>
+
+                    <h2 class="fw-bold text-primary mb-1"><span id="progressPercent">0</span>%</h2>
+                    <p class="text-muted small">Current Water Level</p>
+
+                    <div id="errorStateContainer" class="mt-3 d-none">
+                        <div class="alert alert-danger d-flex align-items-center justify-content-center">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <div><strong>No Water Detected!</strong><br>Check source.</div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-danger rounded-pill px-4 mt-3" id="btnStopRefill">
+                        Stop / Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="offlineModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center pt-0 pb-4">
+                    <div class="mb-3 text-secondary animate-pulse">
+                        <i class="bi bi-wifi-off" style="font-size: 4rem;"></i>
+                    </div>
+                    <h4 class="fw-bold mb-2">Device is Offline</h4>
+                    <p class="text-muted mb-4 px-3">
+                        The HydroLink Device is currently offline. Please check if the device is turned on and connected
+                        to the WiFi.
+                    </p>
+                    <button type="button" class="btn btn-primary w-100 py-2 rounded-pill" id="btnOfflineRetry">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Try Again
+                    </button>
                 </div>
             </div>
         </div>
@@ -343,5 +643,521 @@
     <!-- Assuming main.js is in a 'js' subdirectory. If not, change src="main.js" -->
     <script type="module" src="js/main.js"></script>
     <script type="module" src="js/custom.js"></script>
+    <script type="module">
+        // 1. IMPORTS
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+        // 2. CONFIGURATION
+        const firebaseConfig = {
+            apiKey: "AIzaSyCmFInEL6TMoD-9JwdPy-e9niNGGL5SjHA",
+            authDomain: "hydrolink-d3c57.firebaseapp.com",
+            databaseURL: "https://hydrolink-d3c57-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hydrolink-d3c57",
+            storageBucket: "hydrolink-d3c57.firebasestorage.app",
+            messagingSenderId: "770257381412",
+            appId: "1:770257381412:web:a894f35854cb82274950b1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
+
+        // Variables
+        let currentDeviceID = null;
+        let globalCurrentLevel = 0;
+        let currentSystemStatus = 'offline';
+        let refillModalInput = null;
+        let refillModalProgress = null;
+
+        // 3. MAIN LOGIC
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputModalEl = document.getElementById('modalRefillInput');
+            const progressModalEl = document.getElementById('modalRefillProgress');
+
+            if (inputModalEl) refillModalInput = new bootstrap.Modal(inputModalEl);
+            if (progressModalEl) refillModalProgress = new bootstrap.Modal(progressModalEl);
+
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    const userDeviceRef = ref(database, `hydrolink/users/${user.uid}/devices`);
+                    get(userDeviceRef).then((snapshot) => {
+                        if (snapshot.exists()) {
+                            currentDeviceID = Object.keys(snapshot.val())[0];
+                            console.log("Controller Active for Device:", currentDeviceID);
+                            startRefillListeners(currentDeviceID);
+                            trackWaterUsage(currentDeviceID);
+                        }
+                    });
+                }
+            });
+
+            setupUIListeners();
+        });
+
+        function trackWaterUsage(deviceId) {
+            const historyRef = ref(database, `hydrolink/devices/${deviceId}/refillHistory`);
+            onValue(historyRef, (snapshot) => {
+                let totalToday = 0;
+                const data = snapshot.val();
+                if (data) {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const startOfToday = today.getTime();
+                    Object.values(data).forEach(entry => {
+                        if (entry.timestamp && entry.amountLitersAdded && entry.timestamp >= startOfToday) {
+                            totalToday += parseFloat(entry.amountLitersAdded);
+                        }
+                    });
+                }
+                const displayElement = document.getElementById('totalWaterUsed');
+                if (displayElement) displayElement.innerText = totalToday.toFixed(2);
+            });
+        }
+
+        function startRefillListeners(deviceId) {
+            // Listen to the entire device node to check control & status together
+            const deviceRef = ref(database, `hydrolink/devices/${deviceId}`);
+
+            onValue(deviceRef, (snapshot) => {
+                const val = snapshot.val();
+                if (!val) return;
+
+                // 1. Heartbeat Check
+                const lastSeen = val.lastUpdated || (val.status && val.status.lastUpdated) || 0;
+                const now = Date.now();
+                if (now - lastSeen < 60000) {
+                    currentSystemStatus = 'online';
+                    updateSystemStatusUI(true);
+                } else {
+                    currentSystemStatus = 'offline';
+                    updateSystemStatusUI(false);
+                }
+
+                // 2. Data Extraction
+                const data = val.status || {};
+                globalCurrentLevel = data.waterPercentage !== undefined ? data.waterPercentage : (data.waterLevel || 0);
+
+                // ==========================================
+                // ✅ NEW FEATURE: WATER VOLUME CALCULATION
+                // ==========================================
+                let estimatedTotalVolume = data.estimatedTotalVolume || 0;
+                let currentVolume = (estimatedTotalVolume * (globalCurrentLevel / 100));
+
+                // Update main card text
+                const waterPercentageDisplay = document.getElementById("waterPercentageDisplay");
+                if (waterPercentageDisplay) waterPercentageDisplay.innerText = globalCurrentLevel + "%";
+
+                // Update Volume stats
+                const totalVolDisplay = document.getElementById("totalVolumeDisplay");
+                const currentVolDisplay = document.getElementById("currentVolumeDisplay");
+
+                if (estimatedTotalVolume > 0) {
+                    if (totalVolDisplay) totalVolDisplay.innerText = estimatedTotalVolume.toFixed(2) + " L";
+                    if (currentVolDisplay) currentVolDisplay.innerText = currentVolume.toFixed(2) + " L";
+                } else {
+                    if (totalVolDisplay) totalVolDisplay.innerText = "Calibrating...";
+                    if (currentVolDisplay) currentVolDisplay.innerText = "Calibrating...";
+                }
+                // ==========================================
+
+                // ==========================================
+                // ✅ LOAD SETTINGS FROM FIREBASE
+                // ==========================================
+                const settings = val.settings || {};
+
+                if (settings.refillThresholdPercentage !== undefined) {
+                    // Update Dashboard text (if you have an element with id="thresholdDisplay")
+                    const dashboardThreshold = document.getElementById('thresholdDisplay');
+                    if (dashboardThreshold) dashboardThreshold.innerText = settings.refillThresholdPercentage + "%";
+                }
+
+                // To prevent sliders from snapping back while a user is editing them,
+                // we only fetch and update the modal's input values when the modal is NOT visible.
+                const customizeModalEl = document.getElementById('customizeModal');
+                const isCustomizeModalOpen = customizeModalEl && customizeModalEl.classList.contains('show');
+
+                if (!isCustomizeModalOpen) {
+                    if (settings.refillThresholdPercentage !== undefined) {
+                        // Update Modal Input
+                        const autoRefillThreshold = document.getElementById('autoRefillThreshold');
+                        const thresholdValue = document.getElementById('thresholdValue');
+                        if (autoRefillThreshold && thresholdValue) {
+                            autoRefillThreshold.value = settings.refillThresholdPercentage;
+                            thresholdValue.innerText = settings.refillThresholdPercentage + "%";
+                        }
+                    }
+
+                    if (settings.maxFillLevelPercentage !== undefined) {
+                        const maxFillLevel = document.getElementById('maxFillLevel');
+                        const maxFillValue = document.getElementById('maxFillValue');
+                        if (maxFillLevel && maxFillValue) {
+                            maxFillLevel.value = settings.maxFillLevelPercentage;
+                            maxFillValue.innerText = settings.maxFillLevelPercentage + "%";
+                        }
+                    }
+
+                    if (settings.refillRetrySeconds !== undefined) {
+                        const refillRetrySeconds = document.getElementById('refillRetrySeconds');
+                        const refillRetryValue = document.getElementById('refillRetryValue');
+                        if (refillRetrySeconds && refillRetryValue) {
+                            refillRetrySeconds.value = settings.refillRetrySeconds;
+
+                            let sec = parseInt(settings.refillRetrySeconds);
+                            if (sec < 60) {
+                                refillRetryValue.innerText = sec + "s";
+                            } else {
+                                let m = Math.floor(sec / 60);
+                                let s = sec % 60;
+                                refillRetryValue.innerText = s > 0 ? m + "m " + s + "s" : m + "m";
+                            }
+                        }
+                    }
+
+                    if (settings.persistentRefillEnabled !== undefined) {
+                        const persistentRefillToggle = document.getElementById('persistentRefillToggle');
+                        if (persistentRefillToggle) {
+                            persistentRefillToggle.checked = settings.persistentRefillEnabled;
+                        }
+                    }
+                }
+                // ==========================================
+
+                // 3. Smart Status Logic
+                let rawStatus = data.refillStatus || "IDLE";
+
+                // Handle stuck "WAITING" text if manual command is off
+                const manualActive = val.control && val.control.manualRefill && val.control.manualRefill.command === true;
+                if (rawStatus === "NO_WATER_WAITING" && !manualActive) {
+                    rawStatus = "NO_WATER";
+                }
+
+                // 4. MAIN DASHBOARD UI UPDATE
+                const statusText = document.getElementById('statusText');
+                const errorContainer = document.getElementById('errorContainer'); // Dashboard Alert
+                const manualBtn = document.getElementById('manualRefillBtn');
+                const waterLevelText = document.getElementById('waterLevelText');
+
+                // Always update Water Level Text
+                if (waterLevelText) waterLevelText.innerText = globalCurrentLevel + "%";
+
+                // --- PRIORITY LOGIC FOR DASHBOARD TEXT ---
+                if (statusText) {
+                    // PRIORITY 1: ERRORS
+                    if (rawStatus.includes("NO_WATER") || rawStatus.includes("ERROR") || rawStatus.includes("FAILED")) {
+                        statusText.innerText = "⚠️ Error: No Water / Check Source";
+                        statusText.className = "text-danger fw-bold";
+                        if (errorContainer) errorContainer.classList.remove('d-none');
+                    }
+                    // PRIORITY 2: WAITING
+                    else if (rawStatus.includes("WAITING")) {
+                        statusText.innerText = "⏳ Detecting Water Source...";
+                        statusText.className = "text-warning fw-bold";
+                        if (errorContainer) errorContainer.classList.add('d-none');
+                    }
+                    // PRIORITY 3: ACTIVE REFILLING (Overrides "Normal")
+                    else if (rawStatus.includes("REFILLING") || rawStatus.includes("OPENING")) {
+                        statusText.innerText = manualActive ? "💧 Manual Refill Active..." : "🔄 Auto-Refill Active...";
+                        statusText.className = "text-primary fw-bold";
+                        if (errorContainer) errorContainer.classList.add('d-none');
+                    }
+                    // PRIORITY 4: IDLE / STANDBY (Only if not refilling)
+                    else {
+                        if (globalCurrentLevel <= 20) {
+                            statusText.innerText = "Low Water Level";
+                            statusText.className = "text-warning fw-bold";
+                        } else {
+                            statusText.innerText = "Standby";
+                            statusText.className = "text-success fw-bold";
+                        }
+                        if (errorContainer) errorContainer.classList.add('d-none');
+                    }
+                }
+
+                // --- UPDATE BUTTON STATE ---
+                if (manualBtn) {
+                    const isRefilling = rawStatus.includes("REFILLING");
+                    if (isRefilling) {
+                        manualBtn.innerText = "STOP REFILL";
+                        manualBtn.classList.remove('btn-primary');
+                        manualBtn.classList.add('btn-danger');
+                    } else {
+                        manualBtn.innerText = "START MANUAL REFILL";
+                        manualBtn.classList.remove('btn-danger');
+                        manualBtn.classList.add('btn-primary');
+                    }
+                }
+
+                // Update Other UI Elements
+                const currDisplay = document.getElementById('currentLevelRefill');
+                if (currDisplay) currDisplay.innerText = globalCurrentLevel;
+
+                // Update the Modal (if open)
+                updateProgressModal(globalCurrentLevel, rawStatus);
+
+                // Battery
+                const batteryLevel = data.batteryPercentage || 0;
+                const batteryPercentText = document.getElementById('batteryPercent');
+                const batteryFill = document.getElementById('batteryLevelFill');
+
+                if (batteryPercentText) batteryPercentText.innerText = batteryLevel;
+                if (batteryFill) {
+                    batteryFill.style.width = batteryLevel + "%";
+                    batteryFill.classList.remove('bg-low', 'bg-medium', 'bg-high');
+                    if (batteryLevel <= 20) batteryFill.classList.add('bg-low');
+                    else if (batteryLevel <= 50) batteryFill.classList.add('bg-medium');
+                    else batteryFill.classList.add('bg-high');
+                }
+            });
+        }
+
+        function updateSystemStatusUI(isOnline) {
+            const statusText = document.getElementById('systemStatusText');
+            if (statusText) {
+                statusText.innerHTML = isOnline
+                    ? 'Online <span class="status-dot online" id="systemStatusDot"></span>'
+                    : 'Offline <span class="status-dot offline" id="systemStatusDot"></span>';
+            }
+        }
+
+        function setupUIListeners() {
+            // ==========================================
+            // ✅ CUSTOMIZE SETTINGS MODAL LOGIC
+            // ==========================================
+            const autoRefillThreshold = document.getElementById('autoRefillThreshold');
+            const thresholdValue = document.getElementById('thresholdValue');
+            const maxFillLevel = document.getElementById('maxFillLevel');
+            const maxFillValue = document.getElementById('maxFillValue');
+            const refillRetrySeconds = document.getElementById('refillRetrySeconds');
+            const refillRetryValue = document.getElementById('refillRetryValue');
+            const persistentRefillToggle = document.getElementById('persistentRefillToggle');
+            const saveCustomizeSettings = document.getElementById('saveCustomizeSettings');
+
+            // Update Threshold Badge when slider moves
+            if (autoRefillThreshold && thresholdValue) {
+                autoRefillThreshold.addEventListener('input', (e) => {
+                    thresholdValue.innerText = e.target.value + "%";
+                });
+            }
+
+            // Update Max Fill Badge when slider moves
+            if (maxFillLevel && maxFillValue) {
+                maxFillLevel.addEventListener('input', (e) => {
+                    maxFillValue.innerText = e.target.value + "%";
+                });
+            }
+
+            // Update Refill Retry Badge when slider moves
+            if (refillRetrySeconds && refillRetryValue) {
+                refillRetrySeconds.addEventListener('input', (e) => {
+                    let sec = parseInt(e.target.value);
+                    if (sec < 60) {
+                        refillRetryValue.innerText = sec + "s";
+                    } else {
+                        let m = Math.floor(sec / 60);
+                        let s = sec % 60;
+                        refillRetryValue.innerText = s > 0 ? m + "m " + s + "s" : m + "m";
+                    }
+                });
+            }
+
+            // Save Settings to Firebase
+            if (saveCustomizeSettings) {
+                saveCustomizeSettings.addEventListener('click', async () => {
+                    if (!currentDeviceID) return alert("Device not connected.");
+
+                    const threshold = parseInt(autoRefillThreshold.value);
+                    const maxFill = parseInt(maxFillLevel.value);
+                    const retrySec = refillRetrySeconds ? parseInt(refillRetrySeconds.value) : 20;
+                    const persist = persistentRefillToggle.checked;
+
+                    // Simple validation to prevent bad settings
+                    if (threshold >= maxFill) {
+                        alert("Threshold must be lower than Maximum Fill Level.");
+                        return;
+                    }
+
+                    try {
+                        // Update the settings button text to show loading state
+                        const originalText = saveCustomizeSettings.innerText;
+                        saveCustomizeSettings.innerText = "Saving...";
+                        saveCustomizeSettings.disabled = true;
+
+                        // Write to Firebase
+                        await set(ref(database, `hydrolink/devices/${currentDeviceID}/settings`), {
+                            refillThresholdPercentage: threshold,
+                            maxFillLevelPercentage: maxFill,
+                            refillRetrySeconds: retrySec,
+                            persistentRefillEnabled: persist,
+                            lastUpdated: Date.now()
+                        });
+
+                        // Hide modal
+                        const customizeModalEl = document.getElementById('customizeModal');
+                        const modalInstance = bootstrap.Modal.getInstance(customizeModalEl) || new bootstrap.Modal(customizeModalEl);
+                        modalInstance.hide();
+
+                        // Restore button state
+                        saveCustomizeSettings.innerText = originalText;
+                        saveCustomizeSettings.disabled = false;
+
+                    } catch (error) {
+                        console.error("Error saving settings:", error);
+                        alert("Failed to save settings.");
+                        saveCustomizeSettings.innerText = "Save Changes";
+                        saveCustomizeSettings.disabled = false;
+                    }
+                });
+            }
+            // ==========================================
+
+            const btnOpen = document.getElementById('btnOpenRefillModal');
+            if (btnOpen) {
+                btnOpen.addEventListener('click', () => {
+                    if (!currentDeviceID) return alert("Connecting...");
+                    if (currentSystemStatus !== 'online') {
+                        const offlineModal = new bootstrap.Modal(document.getElementById('offlineModal'));
+                        offlineModal.show();
+                        return;
+                    }
+
+                    const slider = document.getElementById('refillTargetInput');
+                    const display = document.getElementById('targetLevelDisplay');
+                    const errorMsg = document.getElementById('refillErrorMsg');
+
+                    if (errorMsg) errorMsg.style.display = 'none';
+                    if (slider) { slider.min = Math.min(globalCurrentLevel + 5, 100); slider.value = 100; }
+                    if (display) display.innerText = "100%";
+                    if (refillModalInput) refillModalInput.show();
+                });
+            }
+
+            const btnRetry = document.getElementById('btnOfflineRetry');
+            if (btnRetry) {
+                btnRetry.addEventListener('click', () => {
+                    const offlineModalEl = document.getElementById('offlineModal');
+                    const offlineModal = bootstrap.Modal.getInstance(offlineModalEl);
+                    if (offlineModal) offlineModal.hide();
+                    setTimeout(() => { if (btnOpen) btnOpen.click(); }, 500);
+                });
+            }
+
+            const slider = document.getElementById('refillTargetInput');
+            if (slider) {
+                slider.addEventListener('input', (e) => {
+                    const display = document.getElementById('targetLevelDisplay');
+                    if (display) display.innerText = e.target.value + "%";
+                });
+            }
+
+            const btn100 = document.getElementById('btnSet100');
+            if (btn100) {
+                btn100.addEventListener('click', () => {
+                    if (slider) slider.value = 100;
+                    const display = document.getElementById('targetLevelDisplay');
+                    if (display) display.innerText = "100%";
+                });
+            }
+
+            const btnStart = document.getElementById('btnStartRefillAction');
+            if (btnStart) {
+                btnStart.addEventListener('click', async () => {
+                    const target = parseInt(slider.value);
+                    const errorMsg = document.getElementById('refillErrorMsg');
+
+                    if (target <= globalCurrentLevel) {
+                        if (errorMsg) {
+                            errorMsg.innerText = "Target must be higher than current level!";
+                            errorMsg.style.display = 'block';
+                        }
+                        return;
+                    }
+
+                    try {
+                        await set(ref(database, `hydrolink/devices/${currentDeviceID}/control/manualRefill`), {
+                            command: true,
+                            targetLevel: target,
+                            timestamp: Date.now()
+                        });
+
+                        if (refillModalInput) refillModalInput.hide();
+
+                        const statusText = document.getElementById('progressStatusText');
+                        if (statusText) {
+                            statusText.innerText = "Initializing Pump...";
+                            statusText.className = "fw-bold mb-4 text-dark";
+                        }
+                        const errContainer = document.getElementById('errorStateContainer');
+                        if (errContainer) errContainer.classList.add('d-none');
+
+                        if (refillModalProgress) refillModalProgress.show();
+
+                    } catch (e) {
+                        alert("Error starting refill: " + e.message);
+                    }
+                });
+            }
+
+            const btnStop = document.getElementById('btnStopRefill');
+            if (btnStop) {
+                btnStop.addEventListener('click', async () => {
+                    if (currentDeviceID) {
+                        await set(ref(database, `hydrolink/devices/${currentDeviceID}/control/manualRefill`), {
+                            command: false,
+                            timestamp: Date.now()
+                        });
+                    }
+                    if (refillModalProgress) refillModalProgress.hide();
+                });
+            }
+        }
+
+        function updateProgressModal(level, status) {
+            const tankWater = document.getElementById('tankAnimationLevel');
+            const percentText = document.getElementById('progressPercent');
+
+            // Update Visuals
+            if (tankWater) tankWater.style.height = level + "%";
+            if (percentText) percentText.innerText = level;
+
+            const statusText = document.getElementById('progressStatusText');
+            const errorContainer = document.getElementById('errorStateContainer');
+
+            if (!statusText || !errorContainer) return;
+
+            const s = status ? status.toUpperCase() : "";
+
+            // --- MODAL PRIORITY LOGIC ---
+
+            if (s === "NO_WATER" || s.includes("ERROR") || s.includes("FAILED")) {
+                statusText.innerText = "No water detected";
+                statusText.className = "fw-bold mb-4 text-danger";
+                errorContainer.classList.remove('d-none');
+            }
+            else if (s.includes("WAITING")) {
+                statusText.innerText = "Detecting Water Flow...";
+                statusText.className = "fw-bold mb-4 text-warning";
+                errorContainer.classList.add('d-none');
+            }
+            else if (s.includes("REFILLING") || s.includes("OPENING")) {
+                statusText.innerText = "Refilling...";
+                statusText.className = "fw-bold mb-4 text-primary";
+                errorContainer.classList.add('d-none');
+            }
+            else if (s === "COMPLETED" || s === "SUCCESS") {
+                statusText.innerText = "Refill Complete!";
+                statusText.className = "fw-bold mb-4 text-success";
+                errorContainer.classList.add('d-none');
+            }
+            else {
+                statusText.innerText = "Ready to Refill";
+                statusText.className = "fw-bold mb-4 text-secondary";
+                errorContainer.classList.add('d-none');
+            }
+        }
+    </script>
+    <script src="js/transitions.js"></script>
 </body>
+
 </html>

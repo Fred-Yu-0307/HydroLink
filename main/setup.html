@@ -7,378 +7,389 @@
     <link rel="icon" type="image/x-icon" href="/main/materials/hydrolink-logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --primary-blue: #2563eb;
-            --secondary-blue: #1e40af;
-            --light-blue: #dbeafe;
-            --accent-teal: #0891b2;
-            --accent-green: #059669;
-            --warning-orange: #ea580c;
-            --text-dark: #1f2937;
-            --text-light: #6b7280;
+            --primary-blue: #3b82f6;
+            --secondary-blue: #1d4ed8;
+            --light-blue: #eff6ff;
+            --accent-teal: #06b6d4;
+            --accent-green: #10b981;
+            --warning-orange: #f97316;
+            --text-dark: #0f172a;
+            --text-light: #64748b;
+            --bg-color: #f8fafc;
+            --surface: #ffffff;
+            --border-radius-lg: 24px;
+            --border-radius-md: 16px;
+            --border-radius-sm: 12px;
         }
 
         body {
-            background: linear-gradient(135deg, var(--light-blue) 0%, #f8fafc 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(at 0% 0%, hsla(217,100%,94%,1) 0, transparent 50%), 
+                              radial-gradient(at 100% 100%, hsla(192,100%,94%,1) 0, transparent 50%);
+            background-attachment: fixed;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             min-height: 100vh;
+            color: var(--text-dark);
         }
 
-        #adv-settings {
-        color: #1f2937 !important;
+        /* --- Overriding Bootstrap for Modern Look --- */
+        h1, h2, h3, h4, h5, h6 { font-weight: 700; }
+        p { color: var(--text-light); }
+        
+        .form-control {
+            border-radius: var(--border-radius-sm);
+            border: 2px solid #e2e8f0;
+            padding: 14px 20px;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: none;
         }
 
-        .hero-section {
-            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
-            color: white;
-            padding: 3rem 0;
-            margin-bottom: 2rem;
+        .form-control:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
         }
 
-        .setup-card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.1);
-            border: 2px solid var(--light-blue);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        .card.setup-card {
+            background: var(--surface);
+            border: none;
+            border-radius: var(--border-radius-lg);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.03);
             overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .setup-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(37, 99, 235, 0.15);
-        }
+        .card-body { padding: 2.5rem !important; }
 
-        .step-header {
-            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-teal) 100%);
-            color: white;
-            padding: 1.5rem;
-            margin: -1.5rem -1.5rem 1.5rem -1.5rem;
-        }
-
-        .step-number {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            margin-right: 15px;
-        }
-
+        /* --- Custom Buttons --- */
+        .btn { font-weight: 600; letter-spacing: 0.3px; }
+        
         .btn-primary-custom {
             background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-teal) 100%);
             border: none;
-            border-radius: 10px;
-            padding: 12px 30px;
-            font-weight: 600;
+            border-radius: var(--border-radius-sm);
+            padding: 14px 32px;
+            color: white;
             transition: all 0.3s ease;
         }
-
-        .btn-primary-custom:hover {
+        
+        .btn-primary-custom:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+            color: white;
         }
 
         .btn-success-custom {
-            background: linear-gradient(135deg, var(--accent-green) 0%, #10b981 100%);
+            background: linear-gradient(135deg, var(--accent-green) 0%, #059669 100%);
             border: none;
-            border-radius: 10px;
-            padding: 12px 30px;
-            font-weight: 600;
+            border-radius: var(--border-radius-sm);
+            padding: 14px 32px;
+            color: white;
             transition: all 0.3s ease;
         }
 
-        .btn {
-            color: #FAFAFA;
+        .btn-success-custom:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+            color: white;
         }
 
-        .btn-success-custom:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(5, 150, 105, 0.3);
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* --- Header --- */
+        .hero-section {
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--text-dark), var(--primary-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        /* --- Stepper Navigation --- */
+        .step-nav-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface);
+            padding: 20px 30px;
+            border-radius: var(--border-radius-lg);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+            margin-bottom: 2.5rem;
+        }
+
+        .nav-action-btn {
+            background: white;
+            border: 2px solid #e2e8f0;
+            color: var(--text-dark);
+            border-radius: var(--border-radius-sm);
+            padding: 10px 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .nav-action-btn:hover:not(:disabled) {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+        
+        .nav-action-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .step-indicators {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .step-box {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px; /* Rounded square */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            background: #f1f5f9;
+            color: #94a3b8;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .step-box.completed, .step-box.active {
+            background: linear-gradient(135deg, var(--primary-blue), var(--accent-teal));
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .step-box:hover:not(.active):not(.completed) {
+            border-color: #cbd5e1;
+        }
+
+        .step-divider {
+            height: 4px;
+            width: 30px;
+            background: #f1f5f9;
+            border-radius: 2px;
+            transition: all 0.4s ease;
+        }
+
+        .step-divider.active {
+            background: linear-gradient(90deg, var(--primary-blue), var(--accent-teal));
+        }
+
+        /* --- Sections Specific Details --- */
+        .step-header {
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 1.5rem;
         }
 
         .instruction-item {
             background: #f8fafc;
-            border-left: 4px solid var(--primary-blue);
-            padding: 1rem;
+            border: 2px solid #f1f5f9;
+            padding: 1.2rem;
             margin-bottom: 1rem;
-            border-radius: 0 10px 10px 0;
+            border-radius: var(--border-radius-md);
             transition: all 0.3s ease;
         }
 
         .instruction-item:hover {
+            border-color: var(--light-blue);
             background: var(--light-blue);
             transform: translateX(5px);
         }
 
         .scan-section {
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            border: 2px dashed var(--accent-teal);
-            border-radius: 15px;
-            padding: 2rem;
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: var(--border-radius-lg);
+            padding: 3rem 2rem;
             text-align: center;
             transition: all 0.3s ease;
         }
 
         .scan-section.scanning {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            background: #fffbeb;
             border-color: var(--warning-orange);
             animation: pulse 2s infinite;
         }
 
         .scan-section.completed {
-            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            background: #f0fdf4;
             border-color: var(--accent-green);
         }
 
-        .water-level-display {
-            background: white;
-            border-radius: 15px;
+        .water-level-display, .threshold-config {
+            background: var(--surface);
+            border-radius: var(--border-radius-md);
             padding: 2rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            margin-top: 1rem;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.02);
+            border: 1px solid #f1f5f9;
         }
 
         .water-tank-visual {
             width: 100px;
             height: 200px;
-            border: 3px solid var(--primary-blue);
-            border-radius: 10px;
+            border: 4px solid #e2e8f0;
+            border-radius: 16px;
             position: relative;
-            margin: 0 auto 1rem;
+            margin: 0 auto 1.5rem;
             overflow: hidden;
             background: #f8fafc;
         }
 
         .water-fill {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            bottom: 0; left: 0; right: 0;
             background: linear-gradient(180deg, var(--accent-teal) 0%, var(--primary-blue) 100%);
-            transition: height 1s ease;
-            border-radius: 0 0 7px 7px;
+            transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .threshold-config {
-            background: white;
-            border-radius: 15px;
-            padding: 2rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        .form-range::-webkit-slider-thumb {
+            background: var(--primary-blue);
+            width: 20px; height: 20px;
+            box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
         }
-
-        .range-slider {
-            margin: 1rem 0;
-        }
-
-        .range-slider input[type="range"] {
-            width: 100%;
+        .form-range::-webkit-slider-runnable-track {
+            background: #e2e8f0;
+            border-radius: 10px;
             height: 8px;
-            border-radius: 5px;
-            background: var(--light-blue);
-            outline: none;
-            -webkit-appearance: none;
         }
 
-        .range-slider input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: var(--primary-blue);
-            cursor: pointer;
-        }
-
-        .range-slider input[type="range"]::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: var(--primary-blue);
-            cursor: pointer;
-            border: none;
-        }
-
-        .progress-indicator {
-            background: var(--light-blue);
-            height: 6px;
-            border-radius: 3px;
-            overflow: hidden;
-            margin-bottom: 2rem;
-        }
-
-        .progress-fill {
-            background: linear-gradient(90deg, var(--primary-blue) 0%, var(--accent-teal) 100%);
-            height: 100%;
-            transition: width 0.5s ease;
-        }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.875rem;
-        }
-
-        .status-badge.connected {
-            background: #dcfce7;
-            color: var(--accent-green);
-        }
-
-        .status-badge.disconnected {
-            background: #fee2e2;
-            color: #ef4444; /* Red color for disconnected */
-        }
-
-        .status-badge.scanning {
-            background: #fef3c7;
-            color: var(--warning-orange);
-        }
-
-        .status-badge.ready {
-            background: var(--light-blue);
-            color: var(--primary-blue);
-        }
+        .hidden { display: none !important; }
 
         @keyframes pulse {
             0% { opacity: 1; }
-            50% { opacity: 0.7; }
+            50% { opacity: 0.6; }
             100% { opacity: 1; }
         }
 
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .fade-in-up {
-            animation: fadeInUp 0.6s ease;
+            animation: fadeSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
-        .spinner-border-sm {
-            width: 1rem;
-            height: 1rem;
+        .icon-large { font-size: 3.5rem; margin-bottom: 1.2rem; }
+        
+        .alert {
+            border-radius: var(--border-radius-sm);
+            border: none;
+            padding: 1rem 1.2rem;
         }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .icon-large {
-            font-size: 3rem;
-            margin-bottom: 1rem;
+        
+        @media (max-width: 768px) {
+            .step-indicators { display: none; }
+            .step-nav-container { justify-content: center; gap: 20px; }
         }
     </style>
-
 </head>
 <body>
 
     <div class="hero-section">
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-12 text-center">
-                    <h1 class="display-4 fw-bold mb-3">
-                        <i class="fas fa-cogs me-3"></i>Device Setup
-                    </h1>
-                    <p class="lead mb-0">Complete the physical installation of your Hydrolink system</p>
-                </div>
-            </div>
+            <h1 class="hero-title"><i class="fas fa-cogs me-3" style="color: var(--primary-blue);"></i>Device Setup</h1>
+            <p class="lead mb-0">Follow the steps to configure your smart water system</p>
         </div>
     </div>
 
     <div class="container">
-        <div class="progress-indicator">
-            <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+        
+        <div class="step-nav-container">
+            <button class="nav-action-btn" id="btnPrevStep" disabled>
+                <i class="fas fa-chevron-left"></i> Back
+            </button>
+            
+            <div class="step-indicators" id="stepIndicators">
+                <div class="step-box active" data-step="0" title="Physical Installation">1</div>
+                <div class="step-divider"></div>
+                <div class="step-box" data-step="1" title="Link Device">2</div>
+                <div class="step-divider"></div>
+                <div class="step-box" data-step="2" title="Scan Drum">3</div>
+                <div class="step-divider"></div>
+                <div class="step-box" data-step="3" title="Configuration">4</div>
+                <div class="step-divider"></div>
+                <div class="step-box" data-step="4" title="Completion"><i class="fas fa-check"></i></div>
+            </div>
+
+            <button class="nav-action-btn" id="btnNextStep">
+                Next <i class="fas fa-chevron-right"></i>
+            </button>
         </div>
 
-        <div class="row mb-5" id="physicalInstallationSection">
+        <div class="row mb-5 fade-in-up" id="physicalInstallationSection">
             <div class="col-12">
                 <div class="card setup-card">
-                    <div class="card-body p-4">
+                    <div class="card-body">
                         <div class="step-header">
-                            <div class="d-flex align-items-center">
-                                <div class="step-number">1</div>
-                                <div>
-                                    <h3 class="mb-1">Physical Installation</h3>
-                                    <p class="mb-0 opacity-75">Connect your device components</p>
-                                </div>
-                            </div>
+                            <h3 class="mb-1">Physical Installation</h3>
+                            <p class="mb-0">Connect your device components</p>
                         </div>
 
                         <div class="row">
                             <div class="col-lg-8">
-                                <h5 class="mb-3">
-                                    <i class="fas fa-tools text-primary me-2"></i>Installation Instructions
-                                </h5>
-
+                                <h5 class="mb-3"><i class="fas fa-tools text-primary me-2"></i>Installation Instructions</h5>
                                 <div class="instruction-item">
                                     <div class="d-flex align-items-start">
-                                        <div class="me-3">
-                                            <i class="fas fa-faucet text-primary" style="font-size: 1.5rem;"></i>
-                                        </div>
+                                        <div class="me-3"><i class="fas fa-faucet text-primary" style="font-size: 1.5rem;"></i></div>
                                         <div>
-                                            <h6 class="mb-2">Connect Device to Faucet</h6>
-                                            <p class="mb-0 text-muted">Attach the Hydrolink device directly to your water faucet using the provided connector. Ensure a tight, leak-proof connection.</p>
+                                            <h6 class="mb-1 fw-bold">Connect Device to Faucet</h6>
+                                            <p class="mb-0 small">Attach the Hydrolink device directly to your water faucet using the provided connector. Ensure a tight, leak-proof connection.</p>
                                         </div>
                                     </div>
                                 </div>
-
                                 <div class="instruction-item">
                                     <div class="d-flex align-items-start">
-                                        <div class="me-3">
-                                            <i class="fas fa-grip-lines text-primary" style="font-size: 1.5rem;"></i>
-                                        </div>
+                                        <div class="me-3"><i class="fas fa-grip-lines text-primary" style="font-size: 1.5rem;"></i></div>
                                         <div>
-                                            <h6 class="mb-2">Connect Hose to Water Drum</h6>
-                                            <p class="mb-0 text-muted">Run the water hose from the device output to your water storage drum. Make sure the hose reaches the bottom of the drum.</p>
+                                            <h6 class="mb-1 fw-bold">Connect Hose to Water Drum</h6>
+                                            <p class="mb-0 small">Run the water hose from the device output to your water storage drum. Make sure the hose reaches the bottom.</p>
                                         </div>
                                     </div>
                                 </div>
-
                                 <div class="instruction-item">
                                     <div class="d-flex align-items-start">
-                                        <div class="me-3">
-                                            <i class="fas fa-satellite-dish text-primary" style="font-size: 1.5rem;"></i>
-                                        </div>
+                                        <div class="me-3"><i class="fas fa-satellite-dish text-primary" style="font-size: 1.5rem;"></i></div>
                                         <div>
-                                            <h6 class="mb-2">Place Ultrasonic Sensor</h6>
-                                            <p class="mb-0 text-muted">Position the ultrasonic sensor at the top of your water drum, pointing downward. Secure it firmly to prevent movement.</p>
+                                            <h6 class="mb-1 fw-bold">Place Ultrasonic Sensor</h6>
+                                            <p class="mb-0 small">Position the ultrasonic sensor at the top of your water drum, pointing downward. Secure it firmly to prevent movement.</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="col-lg-4">
-                                <div class="text-center">
-                                    <i class="fas fa-drum icon-large text-primary"></i>
-                                    <h5 class="text-primary">Installation Diagram</h5>
-                                    <div class="alert alert-info">
-                                        <small>
-                                            <i class="fas fa-info-circle me-1"></i>
-                                            Ensure all connections are secure before proceeding to the next step.
-                                        </small>
-                                    </div>
-                                </div>
+                            <div class="col-lg-4 d-flex flex-column justify-content-center align-items-center mt-4 mt-lg-0">
+                                <i class="fas fa-drum icon-large text-primary opacity-75"></i>
+                                <h5 class="text-primary mb-3">Diagram Ready</h5>
+                                <div class="alert alert-info w-100 text-center"><small><i class="fas fa-info-circle me-1"></i>Ensure all connections are secure.</small></div>
                             </div>
                         </div>
+                        
                         <div class="d-flex justify-content-between mt-4">
-                            <button class="btn btn-primary-custom btn-lg" onclick="window.location.href='index.html'">
-                                <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                            <button class="btn btn-outline-secondary" onclick="window.location.href='index.html'">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                             </button>
-                            <button class="btn btn-primary-custom btn-lg" id="proceedToMacAddressBtn">
-                                <i class="fas fa-arrow-right me-2"></i>Proceed to Device Linking
+                            <button class="btn btn-primary-custom" id="proceedToMacAddressBtn">
+                                Proceed to Device Linking <i class="fas fa-arrow-right ms-2"></i>
                             </button>
                         </div>
                     </div>
@@ -386,35 +397,27 @@
             </div>
         </div>
 
-        <div class="row mb-5 hidden" id="macAddressSection">
+        <div class="row mb-5 hidden fade-in-up" id="macAddressSection">
             <div class="col-12">
                 <div class="card setup-card">
-                    <div class="card-body p-4">
-                        <div class="step-header">
-                            <div class="d-flex align-items-center">
-                                <div class="step-number">2</div>
-                                <div>
-                                    <h3 class="mb-1">Identify Your Device</h3>
-                                    <p class="mb-0 opacity-75">Enter your Hydrolink device's unique MAC Address</p>
-                                </div>
-                            </div>
+                    <div class="card-body text-center">
+                        <div class="step-header text-start">
+                            <h3 class="mb-1">Identify Your Device</h3>
+                            <p class="mb-0">Link your Hydrolink device to your account</p>
                         </div>
                         <div class="row">
-                            <div class="col-lg-8 offset-lg-2 text-center">
-                                <p class="text-muted mb-4">
-                                    Please connect your Hydrolink device to power. Its unique MAC Address will be displayed on the **Serial Monitor** if connected to your computer, or on the **OLED screen** if it has one. Enter it below to link your account to this device.
+                            <div class="col-lg-8 offset-lg-2">
+                                <i class="fas fa-wifi icon-large text-primary opacity-50 mb-3"></i>
+                                <p class="mb-4">
+                                    Connect your Hydrolink device to power. Enter its unique MAC Address below (displayed on your device screen or serial monitor).
                                 </p>
-                                <div class="mb-3">
-                                    <label for="macAddressInput" class="form-label">Device MAC Address</label>
-                                    <input type="text" class="form-control" id="macAddressInput" placeholder="e.g., 6C:C8:40:55:E0:70" pattern="^([0-9A-Fa-f]{2}[-: ]){5}([0-9A-Fa-f]{2})$" required>
-                                    <div class="invalid-feedback">
-                                        Please enter a valid MAC address (e.g., XX:XX:XX:XX:XX:XX or XX-XX-XX-XX-XX-XX).
-                                    </div>
+                                <div class="mb-4 text-start">
+                                    <label for="macAddressInput" class="form-label fw-bold">Device MAC Address</label>
+                                    <input type="text" class="form-control form-control-lg" id="macAddressInput" placeholder="e.g., 6C:C8:40:55:E0:70" pattern="^([0-9A-Fa-f]{2}[-: ]){5}([0-9A-Fa-f]{2})$" required>
                                 </div>
-                                <div id="macAddressStatus" class="mb-3">
-                                    </div>
-                                <button class="btn btn-primary-custom btn-lg" id="confirmMacAddressBtn">
-                                    <i class="fas fa-link me-2"></i>Link Device
+                                <div id="macAddressStatus" class="mb-3 text-start"></div>
+                                <button class="btn btn-primary-custom w-100" id="confirmMacAddressBtn">
+                                    <i class="fas fa-link me-2"></i>Link Device Now
                                 </button>
                             </div>
                         </div>
@@ -423,59 +426,51 @@
             </div>
         </div>
 
-        <div class="row mb-5 hidden" id="scanDrumSection">
-            <div class="col-lg-6">
-                <div class="card setup-card">
-                    <div class="card-body p-4">
+        <div class="row mb-5 hidden fade-in-up" id="scanDrumSection">
+            <div class="col-lg-7">
+                <div class="card setup-card h-100">
+                    <div class="card-body">
                         <div class="step-header">
-                            <div class="d-flex align-items-center">
-                                <div class="step-number">3</div>
-                                <div>
-                                    <h3 class="mb-1">Scan Water Drum</h3>
-                                    <p class="mb-0 opacity-75">Measure total drum height</p>
-                                </div>
-                            </div>
+                            <h3 class="mb-1">Scan Water Drum</h3>
+                            <p class="mb-0">Measure the total height of your container</p>
                         </div>
 
                         <div class="scan-section" id="scanSection">
                             <i class="fas fa-radar-chart icon-large text-primary" id="scanIcon"></i>
-                            <h5 id="scanTitle">Ready to Scan</h5>
-                            <p class="text-muted mb-4" id="scanDescription">
-                                Make sure your water drum is EMPTY, then click the button below to measure the total height of your drum.
+                            <h4 id="scanTitle" class="mb-3">Ready to Scan</h4>
+                            <p class="mb-4" id="scanDescription">
+                                Make sure your water drum is <strong>EMPTY</strong>, then click below to measure the depth.
                             </p>
-
-                            <button class="btn btn-primary-custom btn-lg" id="scanButton">
+                            <button class="btn btn-primary-custom" id="scanButton">
                                 <i class="fas fa-search me-2"></i>Scan Water Drum Now
                             </button>
-
                             <div class="hidden" id="scanningIndicator">
-                                <div class="spinner-border text-primary mb-3" role="status">
-                                    <span class="visually-hidden">Scanning...</span>
-                                </div>
-                                <p class="mb-0">Scanning in progress... Awaiting measurement from device.</p>
+                                <div class="spinner-border text-primary mb-3" role="status"></div>
+                                <p class="mb-0 fw-bold">Scanning in progress... Awaiting measurement.</p>
                             </div>
                         </div>
 
-                        <div class="hidden fade-in-up" id="scanResults">
-                            <div class="water-level-display">
-                                <h6 class="text-center mb-3">Drum Height Measurement</h6>
+                        <div class="hidden mt-4 fade-in-up" id="scanResults">
+                            <div class="water-level-display text-center border-0 shadow-none bg-light">
+                                <h6 class="mb-3 text-uppercase text-muted">Drum Height Measurement</h6>
+                                
                                 <div class="water-tank-visual">
-                                    <div class="water-fill" id="waterFill"></div>
+                                    <div class="water-fill" id="waterFill" style="height: 0%;"></div>
                                     <div class="position-absolute w-100 text-center" style="bottom: -25px; font-size: 0.75rem; color: #6b7280;">
-                                        Empty Drum
+                                        Drum Bottom
                                     </div>
                                 </div>
-                                <div class="text-center">
-                                    <h3 class="text-primary mb-1" id="drumHeightDisplay">0.0 cm</h3>
-                                    <p class="text-muted mb-3">total drum height</p>
-                                    <div class="d-grid gap-2">
-                                        <button class="btn btn-success-custom" id="proceedButton">
-                                            <i class="fas fa-arrow-right me-2"></i>Proceed to Configuration
-                                        </button>
-                                        <button class="btn btn-outline-secondary btn-sm" id="rescanButton">
-                                            <i class="fas fa-redo me-2"></i>Measure Again
-                                        </button>
-                                    </div>
+
+                                <h2 class="text-primary mb-1 fw-bold" id="drumHeightDisplay">0.0 cm</h2>
+                                <p class="mb-3">total drum height</p>
+                                
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-success-custom" id="proceedButton">
+                                        Proceed to Configuration <i class="fas fa-arrow-right ms-2"></i>
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-sm" id="rescanButton">
+                                        <i class="fas fa-redo me-2"></i>Measure Again
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -483,114 +478,78 @@
                 </div>
             </div>
 
-            <div class="col-lg-6">
-                <div class="card setup-card">
-                    <div class="card-body p-4">
-                        <h5 class="mb-3">
-                            <i class="fas fa-info-circle text-info me-2"></i>Scanning Information
-                        </h5>
-
-                        <div class="alert alert-info">
+            <div class="col-lg-5 mt-4 mt-lg-0">
+                <div class="card setup-card bg-light border-0 h-100">
+                    <div class="card-body">
+                        <h5 class="mb-4"><i class="fas fa-info-circle text-info me-2"></i>Scanning Information</h5>
+                        <div class="alert alert-info bg-white border">
                             <h6 class="alert-heading">How it works</h6>
-                            <p class="mb-0">The ultrasonic sensor on your Hydrolink device measures the distance from the top of the drum to the bottom, calculating the total drum height for calibration. This value will be uploaded to the cloud.</p>
+                            <p class="mb-0 small">The ultrasonic sensor measures from the top of the drum to the bottom to establish a baseline. This value is uploaded to the cloud.</p>
                         </div>
-
-                        <div class="alert alert-warning">
-                            <h6 class="alert-heading">Important Notes</h6>
-                            <ul class="mb-0">
-                                <li>Ensure the drum is completely EMPTY for an accurate measurement.</li>
-                                <li>The sensor must be positioned at the very top of the drum.</li>
-                                <li>Keep the area quiet during measurement to avoid interference.</li>
-                                <li>This step calibrates the system for accurate water level readings.</li>
-                            </ul>
-                        </div>
-
-                        <div class="alert alert-success">
-                            <h6 class="alert-heading">Troubleshooting</h6>
-                            <p class="mb-0">If scanning fails or the device appears offline, double-check the sensor connections and ensure your Hydrolink device is powered on and connected to Wi-Fi. You can then try again.</p>
-                        </div>
+                        <ul class="text-muted small ps-3 mt-3">
+                            <li class="mb-2">Ensure the drum is <strong>completely empty</strong>.</li>
+                            <li class="mb-2">Sensor must be positioned at the highest rim.</li>
+                            <li>Keep the area clear to avoid sonar interference.</li>
+                        </ul>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="row mb-5 hidden" id="configurationSection">
+        <div class="row mb-5 hidden fade-in-up" id="configurationSection">
             <div class="col-12">
                 <div class="card setup-card">
-                    <div class="card-body p-4">
+                    <div class="card-body">
                         <div class="step-header">
-                            <div class="d-flex align-items-center">
-                                <div class="step-number">4</div>
-                                <div>
-                                    <h3 class="mb-1">Configure Water Level Thresholds</h3>
-                                    <p class="mb-0 opacity-75">Set automatic refill parameters</p>
-                                </div>
-                            </div>
+                            <h3 class="mb-1">Configure Water Level Thresholds</h3>
+                            <p class="mb-0">Set automatic refill parameters</p>
                         </div>
 
-                        <div class="row">
+                        <div class="row align-items-center">
                             <div class="col-lg-6">
-                                <div class="threshold-config">
-                                    <h5 class="mb-4">
-                                        <i class="fas fa-sliders-h text-primary me-2"></i>Refill Settings
-                                    </h5>
+                                <div class="threshold-config border-0 bg-light">
+                                    <h5 class="mb-4"><i class="fas fa-sliders-h text-primary me-2"></i>Refill Settings</h5>
 
-                                    <div class="mb-4">
-                                        <label class="form-label d-flex justify-content-between">
+                                    <div class="mb-5">
+                                        <label class="form-label d-flex justify-content-between fw-bold mb-3">
                                             <span>Start Filling At</span>
-                                            <span class="badge bg-primary" id="startFillValue">25%</span>
+                                            <span class="badge bg-primary px-3 py-2 rounded-pill" id="startFillValue">25%</span>
                                         </label>
-                                        <div class="range-slider">
-                                            <input type="range" class="form-range" min="10" max="50" step="5" value="25" id="startFillRange">
-                                        </div>
-                                        <small class="text-muted">System will start refilling when water level drops to this percentage</small>
+                                        <input type="range" class="form-range" min="10" max="50" step="5" value="25" id="startFillRange">
+                                        <small class="text-muted mt-2 d-block">System engages when water drops here</small>
                                     </div>
 
                                     <div class="mb-4">
-                                        <label class="form-label d-flex justify-content-between">
+                                        <label class="form-label d-flex justify-content-between fw-bold mb-3">
                                             <span>Stop Filling At</span>
-                                            <span class="badge bg-success" id="stopFillValue">80%</span>
+                                            <span class="badge bg-success px-3 py-2 rounded-pill" id="stopFillValue">80%</span>
                                         </label>
-                                        <div class="range-slider">
-                                            <input type="range" class="form-range" min="60" max="95" step="5" value="80" id="stopFillRange">
-                                        </div>
-                                        <small class="text-muted">System will stop refilling when water level reaches this percentage</small>
+                                        <input type="range" class="form-range" min="60" max="95" step="5" value="80" id="stopFillRange">
+                                        <small class="text-muted mt-2 d-block">System shuts off when water reaches here</small>
                                     </div>
-
-                                    <div class="alert alert-info">
+                                    
+                                    <div class="alert alert-info mt-3">
                                         <i class="fas fa-lightbulb me-2"></i>
-                                        <strong>Recommendation:</strong> Keep at least 20% difference between start and stop levels for optimal operation.
+                                        <strong>Recommendation:</strong> Keep at least 20% difference between start and stop levels.
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="col-lg-6">
-                                <div class="threshold-config">
-                                    <h5 class="mb-4">
-                                        <i class="fas fa-eye text-primary me-2"></i>Visual Preview
-                                    </h5>
-
-                                    <div class="text-center">
-                                        <div class="water-tank-visual mx-auto" style="height: 250px; width: 120px;">
-                                            <div class="position-absolute w-100 text-center" style="top: 20%; font-size: 0.75rem; color: #059669;" id="stopLine">
-                                                ← Stop: <span id="stopPreview">80%</span>
-                                            </div>
-                                            <div class="position-absolute w-100 text-center" style="top: 75%; font-size: 0.75rem; color: #2563eb;" id="startLine">
-                                                ← Start: <span id="startPreview">25%</span>
-                                            </div>
-                                            <div class="water-fill" id="previewWaterFill" style="height: 40%;"></div>
-                                        </div>
-
-                                        <div class="mt-3">
-                                            <p class="text-muted mb-3">Current Level: <span class="fw-bold" id="currentLevelPreview">40%</span></p>
-                                            <div class="d-grid">
-                                                <button class="btn btn-success-custom btn-lg" id="completeSetupButton">
-                                                    <i class="fas fa-check me-2"></i>Complete Setup
-                                                </button>
-                                            </div>
-                                        </div>
+                            <div class="col-lg-6 mt-4 mt-lg-0 text-center">
+                                <h5 class="mb-4"><i class="fas fa-eye text-primary me-2"></i>Visual Live Preview</h5>
+                                <div class="water-tank-visual mx-auto shadow-sm" style="height: 250px; width: 120px; border-width: 6px;">
+                                    <div class="position-absolute w-100 text-center fw-bold" style="top: 20%; font-size: 0.75rem; color: var(--accent-green); z-index: 10;" id="stopLine">
+                                        ← Stop: <span id="stopPreview">80%</span>
                                     </div>
+                                    <div class="position-absolute w-100 text-center fw-bold" style="top: 75%; font-size: 0.75rem; color: var(--primary-blue); z-index: 10;" id="startLine">
+                                        ← Start: <span id="startPreview">25%</span>
+                                    </div>
+                                    <div class="water-fill" id="previewWaterFill" style="height: 0%;"></div>
                                 </div>
+                                <p class="text-muted mt-3">Current Live Level: <span class="fw-bold" id="currentLevelPreview">0%</span></p>
+                                <button class="btn btn-success-custom w-75 mt-3" id="completeSetupButton">
+                                    <i class="fas fa-check-circle me-2"></i>Complete Setup
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -598,34 +557,36 @@
             </div>
         </div>
 
-        <div class="row mb-5 hidden" id="successSection">
+        <div class="row mb-5 hidden fade-in-up" id="successSection">
             <div class="col-12">
-                <div class="card setup-card">
-                    <div class="card-body p-5 text-center">
-                        <i class="fas fa-check-circle icon-large text-success"></i>
+                <div class="card setup-card text-center py-5">
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success rounded-circle" style="width: 100px; height: 100px;">
+                                <i class="fas fa-check icon-large mb-0"></i>
+                            </div>
+                        </div>
                         <h2 class="text-success mb-3">Setup Complete!</h2>
                         <p class="lead mb-4">Your Hydrolink system is now configured and ready to use.</p>
 
-                        <div class="row justify-content-center">
-                            <div class="col-md-8">
-                                <div class="alert alert-success">
-                                    <h5 class="alert-heading">What happens next?</h5>
-                                    <ul class="text-start mb-0">
-                                        <li>Your system will monitor water levels automatically</li>
-                                        <li>Refilling will start when level drops to <span class="fw-bold" id="finalStartLevel">25%</span></li>
-                                        <li>Refilling will stop when level reaches <span class="fw-bold" id="finalStopLevel">80%</span></li>
-                                        <li>You'll receive notifications about system status</li>
+                        <div class="row justify-content-center mb-5">
+                            <div class="col-md-6">
+                                <div class="bg-light p-4 rounded-4 text-start">
+                                    <h6 class="fw-bold mb-3 border-bottom pb-2">Active Configuration</h6>
+                                    <ul class="list-unstyled mb-0 text-muted">
+                                        <li class="mb-2"><i class="fas fa-tint text-primary me-2"></i> Auto-Refill starts at: <span class="fw-bold text-dark" id="finalStartLevel">25%</span></li>
+                                        <li><i class="fas fa-hand-paper text-success me-2"></i> Auto-Refill stops at: <span class="fw-bold text-dark" id="finalStopLevel">80%</span></li>
                                     </ul>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-                            <button class="btn btn-primary-custom btn-lg" onclick="window.location.href='index.html'">
-                                <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                        <div class="d-flex justify-content-center gap-3">
+                            <button class="btn btn-primary-custom" onclick="window.location.href='index.html'">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                             </button>
-                            <button class="btn btn-outline-secondary btn-lg" id="adv-settings" onclick="window.location.href='settings.html'">
-                                <i class="fas fa-cog me-2"></i>Advanced Settings
+                            <button class="btn btn-light" id="adv-settings" onclick="window.location.href='settings.html'">
+                                <i class="fas fa-cog me-2"></i>Settings
                             </button>
                         </div>
                     </div>
@@ -635,22 +596,12 @@
 
     </div>
 
-    <footer class="bg-dark text-light py-4 mt-5">
-        <div class="container text-center">
-            <p class="mb-0">
-                <i class="fas fa-water text-primary me-2"></i>
-                Hydrolink IoT &copy; 2024 - Smart Water Management Solutions
-            </p>
-        </div>
-    </footer>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, get, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
         import { getAuth, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js"; 
 
-        // Firebase configuration (initialized once)
         const firebaseConfig = {
             apiKey: "AIzaSyCmFInEL6TMoD-9JwdPy-e9niNGGL5SjHA",
             authDomain: "hydrolink-d3c57.firebaseapp.com",
@@ -665,25 +616,30 @@
         const database = getDatabase(app);
         const auth = getAuth(app);
 
-        // Global variables
         let currentUserId = null;
-        let DEVICE_ID = null; // This will be the Firebase UID of the ESP32
+        let DEVICE_ID = null;
         let isScanning = false;
+        
         let measureDrumFlagRef = null;
         let drumHeightRef = null;
-        let deviceSettingsRef = null; // Reference to device settings
-        let isAuthReady = false; // Flag to indicate if authentication is ready
+        let deviceSettingsRef = null;
+        let waterPercentageRef = null;
+        let isAuthReady = false;
 
         document.addEventListener('DOMContentLoaded', function() {
-            // DOM elements
-            const physicalInstallationSection = document.getElementById('physicalInstallationSection');
+            // -- SECTION: DOM Elements mapped to Original Code --
+            const sections = [
+                'physicalInstallationSection', 
+                'macAddressSection', 
+                'scanDrumSection', 
+                'configurationSection', 
+                'successSection'
+            ];
+            
             const proceedToMacAddressBtn = document.getElementById('proceedToMacAddressBtn');
-            const macAddressSection = document.getElementById('macAddressSection');
             const macAddressInput = document.getElementById('macAddressInput');
             const confirmMacAddressBtn = document.getElementById('confirmMacAddressBtn');
             const macAddressStatus = document.getElementById('macAddressStatus');
-            const progressFill = document.getElementById('progressFill');
-            const scanDrumSection = document.getElementById('scanDrumSection');
             const scanSection = document.getElementById('scanSection');
             const scanButton = document.getElementById('scanButton');
             const scanningIndicator = document.getElementById('scanningIndicator');
@@ -695,7 +651,6 @@
             const drumHeightDisplay = document.getElementById('drumHeightDisplay');
             const proceedButton = document.getElementById('proceedButton');
             const rescanButton = document.getElementById('rescanButton');
-            const configurationSection = document.getElementById('configurationSection');
             const startFillRange = document.getElementById('startFillRange');
             const startFillValue = document.getElementById('startFillValue');
             const stopFillRange = document.getElementById('stopFillRange');
@@ -703,143 +658,180 @@
             const startPreview = document.getElementById('startPreview');
             const stopPreview = document.getElementById('stopPreview'); 
             const currentLevelPreview = document.getElementById('currentLevelPreview');
+            const previewWaterFill = document.getElementById('previewWaterFill');
             const completeSetupButton = document.getElementById('completeSetupButton');
-            const successSection = document.getElementById('successSection');
             const finalStartLevel = document.getElementById('finalStartLevel');
             const finalStopLevel = document.getElementById('finalStopLevel');
 
-            // Function to show only one section and hide others
-            function showSection(sectionIdToShow) {
-                const sections = [
-                    physicalInstallationSection,
-                    macAddressSection,
-                    scanDrumSection,
-                    configurationSection,
-                    successSection
-                ];
+            // -- SECTION: Stepper Navigation Logic --
+            let currentStepIndex = 0;
+            let highestStepReached = 0;
 
-                sections.forEach(section => {
-                    if (section.id === sectionIdToShow) {
-                        section.classList.remove('hidden');
-                        section.scrollIntoView({ behavior: 'smooth' });
+            const btnPrevStep = document.getElementById('btnPrevStep');
+            const btnNextStep = document.getElementById('btnNextStep');
+            const stepBoxes = document.querySelectorAll('.step-box');
+            const stepDividers = document.querySelectorAll('.step-divider');
+
+            function showSection(sectionIdToShow) {
+                const index = sections.indexOf(sectionIdToShow);
+                if (index !== -1) {
+                    goToStep(index);
+                }
+            }
+
+            function goToStep(index) {
+                if(index < 0 || index >= sections.length) return;
+                
+                // Hide all, show targeted
+                sections.forEach(id => document.getElementById(id).classList.add('hidden'));
+                const activeSection = document.getElementById(sections[index]);
+                activeSection.classList.remove('hidden');
+                activeSection.scrollIntoView({ behavior: 'smooth' });
+                
+                currentStepIndex = index;
+                if(currentStepIndex > highestStepReached) {
+                    highestStepReached = currentStepIndex;
+                }
+
+                // Update UI Navigation Buttons
+                btnPrevStep.disabled = currentStepIndex === 0 || currentStepIndex === sections.length - 1; 
+                btnNextStep.style.display = currentStepIndex === sections.length - 1 ? 'none' : 'flex';
+
+                // Update Stepper Visuals
+                stepBoxes.forEach((box, i) => {
+                    box.classList.remove('active', 'completed');
+                    if (i === currentStepIndex) {
+                        box.classList.add('active');
+                    } else if (i < currentStepIndex || i <= highestStepReached) {
+                        box.classList.add('completed');
+                    }
+                });
+
+                stepDividers.forEach((divider, i) => {
+                    if (i < currentStepIndex || (i < highestStepReached && i < currentStepIndex)) {
+                        divider.classList.add('active');
                     } else {
-                        section.classList.add('hidden');
+                        divider.classList.remove('active');
                     }
                 });
             }
 
-            // Authentication state listener - this is now the primary entry point for auth logic
+            // Next/Back Global Buttons
+            btnPrevStep.addEventListener('click', () => {
+                if (currentStepIndex > 0) goToStep(currentStepIndex - 1);
+            });
+
+            btnNextStep.addEventListener('click', () => {
+                if (currentStepIndex === 1 && !DEVICE_ID) {
+                    displayMessage('Please link your device first before proceeding.', 'warning');
+                    return;
+                }
+                if (currentStepIndex === 2 && parseFloat(drumHeightDisplay.innerText) === 0) {
+                     displayMessage('Please complete the scan before proceeding.', 'warning');
+                     return;
+                }
+                if (currentStepIndex < sections.length - 1) goToStep(currentStepIndex + 1);
+            });
+
+            // Allow free navigation to visited steps
+            stepBoxes.forEach(box => {
+                box.addEventListener('click', (e) => {
+                    const targetStep = parseInt(e.target.closest('.step-box').dataset.step);
+                    if (targetStep <= highestStepReached) {
+                        goToStep(targetStep);
+                    }
+                });
+            });
+
+            // Initialize app on Step 0
+            goToStep(0);
+
+            // -- SECTION: Core Logic Integration --
+            
             onAuthStateChanged(auth, async (user) => { 
                 if (user) {
                     currentUserId = user.uid;
-                    console.log("User signed in:", user.email || "Anonymous", "UID:", currentUserId);
                     confirmMacAddressBtn.disabled = false;
                     macAddressStatus.innerHTML = `<div class="alert alert-info mt-2">Logged in as ${user.email || 'Anonymous User'}. Ready to link device.</div>`;
-
                     isAuthReady = true; 
 
-                    // Attempt to sign in with custom token if available and not already signed in with it
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token && user.uid !== auth.currentUser.uid) {
                          try {
                              await signInWithCustomToken(auth, __initial_auth_token);
-                             console.log("Signed in with custom token (after initial session check).");
                          } catch (error) {
-                             console.error("Firebase authentication error with custom token:", error);
                              displayMessage(`Authentication failed: ${error.message}. Please refresh the page.`, "danger");
                          }
                     }
 
-                    // Attempt to load previously linked device ID from localStorage
                     const storedDeviceId = localStorage.getItem(`hydrolink_device_id_${currentUserId}`);
                     if (storedDeviceId) {
                         DEVICE_ID = storedDeviceId;
-                        console.log("Loaded device ID from localStorage:", DEVICE_ID);
-                        // Set Firebase refs for this device
                         initializeFirebaseRefs();
-                        // If device is already linked, check its setup status
                         checkDeviceSetupStatus();
                     } else {
-                        // If no stored device ID, show physical installation first
                         showSection('physicalInstallationSection');
-                        updateProgress(0);
                     }
-
                 } else {
                     currentUserId = null;
-                    DEVICE_ID = null; // Clear device ID if user signs out
-                    localStorage.removeItem(`hydrolink_device_id_${currentUserId}`); // Clear stored device ID
-                    console.log("User signed out. Redirecting to login.");
-                    // Only redirect if not already on auth.html to prevent loop
+                    DEVICE_ID = null;
+                    localStorage.removeItem(`hydrolink_device_id_${currentUserId}`);
                     if (!window.location.pathname.endsWith('auth.html')) {
                         window.location.href = 'auth.html';
                     }
                 }
             });
 
-            // Function to initialize Firebase references once DEVICE_ID is known
             function initializeFirebaseRefs() {
                 if (DEVICE_ID) {
                     measureDrumFlagRef = ref(database, `hydrolink/devices/${DEVICE_ID}/settings/measureDrum`);
                     drumHeightRef = ref(database, `hydrolink/devices/${DEVICE_ID}/settings/drumHeightCm`);
                     deviceSettingsRef = ref(database, `hydrolink/devices/${DEVICE_ID}/settings`);
-                    console.log("Firebase refs initialized for DEVICE_ID:", DEVICE_ID);
-                } else {
-                    console.error("DEVICE_ID is null. Cannot initialize Firebase refs.");
+                    
+                    // Added real-time status reference
+                    waterPercentageRef = ref(database, `hydrolink/devices/${DEVICE_ID}/status/waterPercentage`);
                 }
             }
 
-            // Function to check the overall setup status of the linked device
             async function checkDeviceSetupStatus() {
                 if (!DEVICE_ID) {
                     showSection('physicalInstallationSection'); 
-                    updateProgress(0);
                     return;
                 }
 
-                // First, check if the device is linked to the current user in Firebase
                 const userDeviceLinkRef = ref(database, `hydrolink/users/${currentUserId}/devices/${DEVICE_ID}`);
                 const linkSnapshot = await get(userDeviceLinkRef);
 
                 if (!linkSnapshot.exists() || !linkSnapshot.val()) {
-                    console.warn("Device ID found in localStorage but not linked to current user in Firebase. Resetting.");
                     localStorage.removeItem(`hydrolink_device_id_${currentUserId}`);
-                    DEVICE_ID = null; // Clear global DEVICE_ID
+                    DEVICE_ID = null; 
                     showSection('physicalInstallationSection');
-                    updateProgress(0);
                     return;
                 }
 
-                // If linked, check drum height and other settings
-                const settingsSnapshot = await get(deviceSettingsRef); // Use get for one-time read
+                if(linkSnapshot.val().macAddress) {
+                    macAddressInput.value = linkSnapshot.val().macAddress;
+                }
+
+                const settingsSnapshot = await get(deviceSettingsRef); 
                 const settings = settingsSnapshot.val();
 
-                if (settings && settings.drumHeightCm && settings.drumHeightCm > 0) {
-                    console.log("Device already has drum height calibrated:", settings.drumHeightCm);
-                    drumHeightDisplay.textContent = `${settings.drumHeightCm.toFixed(1)} cm`; 
-                    scanSection.classList.add('completed');
-                    scanResults.classList.remove('hidden');
-                    updateProgress(100); 
-                    showSection('configurationSection');
-                    loadExistingDeviceSettings(); // Load thresholds if drum height is already set
-                } else {
-                    console.log("Device linked but drum height not calibrated. Proceeding to scan drum.");
-                    showSection('scanDrumSection');
-                    updateProgress(66); 
-                    listenForDrumHeightMeasurement(); 
+                highestStepReached = 3; 
+                showSection('scanDrumSection');
+                
+                if (settings) {
+                    loadExistingDeviceSettings(); 
                 }
+                
+                listenForDrumHeightMeasurement(); 
+                listenForRealTimeWaterLevel(); // Activate real-time gauge listener
             }
 
-
-            // Event listener for "Proceed to Device Linking" button
             proceedToMacAddressBtn.addEventListener('click', () => {
                 showSection('macAddressSection');
-                updateProgress(33); 
             });
 
-            // MAC address validation and linking
             confirmMacAddressBtn.addEventListener('click', async () => {
                 const macAddress = macAddressInput.value.trim().toUpperCase();
-                // Updated pattern to correctly handle hyphen or colon as separator
                 const macRegex = /^([0-9A-F]{2}[-: ]){5}([0-9A-F]{2})$/; 
 
                 macAddressStatus.innerHTML = '';
@@ -851,14 +843,14 @@
                 if (!currentUser) {
                     displayMessage("You must be logged in to link a device.", "danger");
                     confirmMacAddressBtn.disabled = false;
-                    confirmMacAddressBtn.innerHTML = '<i class="fas fa-link me-2"></i>Link Device';
+                    confirmMacAddressBtn.innerHTML = '<i class="fas fa-link me-2"></i>Link Device Now';
                     return;
                 }
 
                 try {
                     if (!macRegex.test(macAddress)) {
                         macAddressInput.classList.add('is-invalid');
-                        displayMessage('Please enter a valid MAC address (e.g., XX:XX:XX:XX:XX:XX or XX-XX-XX-XX-XX-XX).', "danger");
+                        displayMessage('Please enter a valid MAC address (e.g., XX:XX:XX:XX:XX:XX).', "danger");
                         return;
                     }
 
@@ -869,16 +861,11 @@
 
                     if (!macSnapshot.exists()) {
                         macAddressInput.classList.add('is-invalid');
-                        displayMessage(`
-                            <strong>Device not found!</strong><br>
-                            The device with MAC address <code>${macAddress}</code> is not registered or not online.<br>
-                            <small class="text-muted">Make sure your HydroLink device is powered on and connected to WiFi.</small>
-                        `, "warning");
+                        displayMessage(`<strong>Device not found!</strong><br>The device with MAC address <code>${macAddress}</code> is not registered or not online.<br>`, "warning");
                         return;
                     }
 
                     const deviceId = macSnapshot.val(); 
-                    displayMessage('Device found! Checking linking status...', "info");
 
                     const deviceLinkedUsersRef = ref(database, `hydrolink/devices/${deviceId}/linkedUsers`);
                     const linkedUsersSnapshot = await get(deviceLinkedUsersRef);
@@ -886,38 +873,20 @@
 
                     if (linkedUsers && Object.keys(linkedUsers).length > 0) {
                         const linkedUserIds = Object.keys(linkedUsers);
-
                         if (linkedUserIds.includes(currentUser.uid)) {
-                            displayMessage(`
-                                <i class="fas fa-check-circle me-2"></i>
-                                <strong>Device Already Linked!</strong><br>
-                                This device is already connected to your account. Redirecting to dashboard...
-                            `, "success");
+                            displayMessage(`<i class="fas fa-check-circle me-2"></i><strong>Device Already Linked!</strong><br>This device is already connected to your account.`, "success");
                             localStorage.setItem(`hydrolink_device_id_${currentUser.uid}`, deviceId);
                             DEVICE_ID = deviceId; 
                             initializeFirebaseRefs(); 
-                            setTimeout(() => {
-                                window.location.href = 'index.html'; 
-                            }, 2000);
+                            setTimeout(() => { window.location.href = 'index.html'; }, 2000);
                             return;
                         } else {
                             macAddressInput.classList.add('is-invalid');
-                            displayMessage(`
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                <strong>Device Already Linked!</strong><br>
-                                This device is already connected to another user account and cannot be linked again.<br>
-                                <small class="text-muted mt-2 d-block">
-                                    Each HydroLink device can only be linked to one user account for security reasons.
-                                    If this is your device, please contact support to transfer ownership.
-                                </small>
-                            `, "danger");
+                            displayMessage(`<i class="fas fa-exclamation-triangle me-2"></i><strong>Device Already Linked!</strong><br>This device is already connected to another user account.`, "danger");
                             return;
                         }
                     }
 
-                    displayMessage('Device available! Linking to your account...', "info");
-
-                    // Set both user-device link and device-user link
                     await Promise.all([
                         set(ref(database, `hydrolink/users/${currentUser.uid}/devices/${deviceId}`), {
                             macAddress: macAddress,
@@ -935,88 +904,94 @@
                     DEVICE_ID = deviceId; 
                     initializeFirebaseRefs(); 
 
-                    displayMessage(`
-                        <i class="fas fa-check-circle me-2"></i>
-                        <strong>Device Successfully Linked!</strong><br>
-                        Your HydroLink device has been connected to your account. Proceeding to setup...
-                    `, "success");
-
-                    updateProgress(66); 
+                    displayMessage(`<i class="fas fa-check-circle me-2"></i><strong>Device Successfully Linked!</strong><br>Proceeding to setup...`, "success");
 
                     setTimeout(() => {
+                        highestStepReached = 2;
                         showSection('scanDrumSection');
                         loadExistingDeviceSettings(); 
                         listenForDrumHeightMeasurement(); 
+                        listenForRealTimeWaterLevel();
                     }, 1500);
 
                 } catch (error) {
                     console.error("Error linking device:", error);
-                    displayMessage(`
-                        <i class="fas fa-times-circle me-2"></i>
-                        <strong>Error Linking Device:</strong><br>
-                        ${error.message}<br>
-                        Please try again.
-                    `, "danger");
+                    displayMessage(`<i class="fas fa-times-circle me-2"></i><strong>Error Linking Device:</strong><br>${error.message}`, "danger");
                 } finally {
                     confirmMacAddressBtn.disabled = false;
-                    confirmMacAddressBtn.innerHTML = '<i class="fas fa-link me-2"></i>Link Device';
+                    confirmMacAddressBtn.innerHTML = '<i class="fas fa-link me-2"></i>Link Device Now';
                 }
             });
 
-            // Loads existing device settings (drumHeight, thresholds) from Firebase
             async function loadExistingDeviceSettings() {
                 if (!currentUserId || !DEVICE_ID || !deviceSettingsRef) return;
-
-                // Use get() for a one-time read when loading existing settings
                 const snapshot = await get(deviceSettingsRef); 
                 const settings = snapshot.val();
+                
                 if (settings) {
-                    console.log("Loading existing device settings:", settings);
-                    if (settings.drumHeightCm && settings.drumHeightCm > 0) {
-                        drumHeightDisplay.textContent = `${settings.drumHeightCm.toFixed(1)} cm`;
+                    const drumHeightVal = parseFloat(settings.drumHeightCm);
+                    
+                    if (!isNaN(drumHeightVal) && drumHeightVal > 0) {
+                        drumHeightDisplay.textContent = `${drumHeightVal.toFixed(1)} cm`;
+                        
+                        scanSection.classList.remove('scanning');
                         scanSection.classList.add('completed');
-                        scanResults.classList.remove('hidden');
+                        scanButton.classList.add('hidden'); 
+                        scanResults.classList.remove('hidden'); 
+                        
                         scanIcon.className = 'fas fa-check-circle icon-large text-success';
-                        scanTitle.textContent = 'Drum Height Measured';
-                        scanDescription.textContent = 'Empty drum height measurement successful!';
+                        scanTitle.textContent = 'Drum Height Found';
+                        scanDescription.textContent = 'A previous measurement is already saved for this device. You can proceed or measure again if you moved the sensor.';
                     }
-                    if (settings.refillThresholdPercentage) {
-                        startFillRange.value = settings.refillThresholdPercentage;
+                    
+                    // --- MAP FIREBASE DB THRESHOLDS TO UI ---
+                    if (settings.refillThresholdPercentage !== undefined) {
+                        startFillRange.value = parseInt(settings.refillThresholdPercentage);
                         updateStartFillValue();
                     }
-                    if (settings.maxFillLevelPercentage) {
-                        stopFillRange.value = settings.maxFillLevelPercentage;
+                    if (settings.maxFillLevelPercentage !== undefined) {
+                        stopFillRange.value = parseInt(settings.maxFillLevelPercentage);
                         updateStopFillValue();
                     }
-                } else {
-                    console.log("No existing settings found for this device. Will use defaults.");
                 }
             }
 
-            // Listen for drum height measurement from Firebase
-            function listenForDrumHeightMeasurement() {
-                if (!drumHeightRef) {
-                    console.error("drumHeightRef is not initialized. Cannot listen for drum height.");
-                    return;
-                }
-
-                // Attach listener only if not already listening
-                // This 'onValue' listener should ideally be set up once when entering the scan drum section
-                // and potentially detached when leaving it if performance is critical,
-                // but for a setup flow, keeping it active is fine.
-                onValue(drumHeightRef, (snapshot) => {
-                    const heightCm = snapshot.val();
-                    if (heightCm !== null && typeof heightCm === 'number' && heightCm > 0 && isScanning) {
-                        console.log("Received drum height measurement:", heightCm);
-                        completeDrumHeightScan(heightCm);
-                    } else if (heightCm === 0 && isScanning) {
-                         // If 0 is received while scanning, it might indicate an.
-                         // For now, we'll just let the scan timeout or user rescan
+            // --- REAL-TIME WATER LEVEL LISTENER ---
+            function listenForRealTimeWaterLevel() {
+                if (!waterPercentageRef) return;
+                
+                onValue(waterPercentageRef, (snapshot) => {
+                    const pctVal = snapshot.val();
+                    const pct = parseFloat(pctVal);
+                    
+                    if (!isNaN(pct)) {
+                        // Configuration Live Preview Update
+                        if (currentLevelPreview) currentLevelPreview.textContent = `${pct.toFixed(0)}%`;
+                        if (previewWaterFill) previewWaterFill.style.height = `${pct}%`;
+                        
+                        // Scan Drum Preview Update (only if already scanned/completed)
+                        if (waterFill && scanSection.classList.contains('completed')) {
+                            waterFill.style.height = `${pct}%`;
+                        }
+                    } else {
+                        if (currentLevelPreview) currentLevelPreview.textContent = `0%`;
+                        if (previewWaterFill) previewWaterFill.style.height = `0%`;
+                        if (waterFill && scanSection.classList.contains('completed')) waterFill.style.height = `0%`;
                     }
                 });
             }
 
-            // Event listener for "Scan Water Drum Now" button
+            function listenForDrumHeightMeasurement() {
+                if (!drumHeightRef) return;
+                
+                onValue(drumHeightRef, (snapshot) => {
+                    const heightVal = parseFloat(snapshot.val());
+                    if (!isNaN(heightVal) && heightVal > 0 && isScanning) {
+                        completeDrumHeightScan(heightVal);
+                    }
+                });
+            }
+
             scanButton.addEventListener('click', triggerDrumMeasurement);
 
             async function triggerDrumMeasurement() {
@@ -1024,11 +999,10 @@
                     displayMessage("Authentication or Device ID missing. Please log in and ensure device is linked.", "danger");
                     return;
                 }
-
                 if (isScanning) return; 
 
                 isScanning = true;
-                scanButton.style.display = 'none';
+                scanButton.classList.add('hidden');
                 scanningIndicator.classList.remove('hidden');
                 scanSection.classList.add('scanning');
                 scanIcon.className = 'fas fa-spinner fa-spin icon-large text-warning';
@@ -1037,9 +1011,7 @@
 
                 try {
                     await set(measureDrumFlagRef, true);
-                    console.log("Requested drum measurement from ESP32 via Firebase.");
                 } catch (error) {
-                    console.error("Error requesting drum measurement from Firebase:", error);
                     displayMessage("Failed to request drum measurement from device. Please check Firebase connection and try again.", "danger");
                     resetScanSection();
                 }
@@ -1050,48 +1022,41 @@
                 scanSection.classList.remove('scanning');
                 scanSection.classList.add('completed');
                 scanningIndicator.classList.add('hidden');
+                
+                scanButton.classList.add('hidden'); 
+                
                 scanIcon.className = 'fas fa-check-circle icon-large text-success';
                 scanTitle.textContent = 'Drum Height Measured';
                 scanDescription.textContent = 'Empty drum height measurement successful!';
 
                 scanResults.classList.remove('hidden');
-                updateDrumHeightDisplay(heightCm);
+                drumHeightDisplay.textContent = `${parseFloat(heightCm).toFixed(1)} cm`;
                 proceedButton.focus(); 
             }
 
-            function updateDrumHeightDisplay(heightCm) {
-                drumHeightDisplay.textContent = `${heightCm.toFixed(1)} cm`;
-                waterFill.style.height = '0%'; 
-                currentLevelPreview.textContent = '0% (Empty)'; 
-            }
-
-            // Event listener for "Proceed to Configuration" button
             proceedButton.addEventListener('click', () => {
                 showSection('configurationSection');
-                updateProgress(100); 
                 updateStartFillValue();
                 updateStopFillValue();
             });
 
-            // Event listener for "Measure Again" button
             rescanButton.addEventListener('click', resetScanSection);
 
             function resetScanSection() {
                 isScanning = false;
-                scanSection.classList.remove('completed');
-                scanSection.classList.remove('scanning');
-                scanResults.classList.add('hidden');
-                scanButton.style.display = 'inline-block'; 
+                
+                scanSection.classList.remove('completed', 'scanning');
+                scanResults.classList.add('hidden'); 
+                scanButton.classList.remove('hidden'); 
                 scanningIndicator.classList.add('hidden'); 
+                
                 scanIcon.className = 'fas fa-radar-chart icon-large text-primary';
                 scanTitle.textContent = 'Ready to Scan';
-                scanDescription.textContent = 'Make sure your water drum is EMPTY, then click the button below to measure the total height of your drum.';
-                updateProgress(66); 
+                scanDescription.innerHTML = 'Make sure your water drum is <strong>EMPTY</strong>, then click below to measure the depth.';
                 drumHeightDisplay.textContent = '0.0 cm'; 
-                showSection('scanDrumSection'); 
+                if(waterFill) waterFill.style.height = '0%';
             }
 
-            // Event listeners for range sliders
             startFillRange.addEventListener('input', updateStartFillValue);
             stopFillRange.addEventListener('input', updateStopFillValue);
 
@@ -1101,11 +1066,12 @@
                 startPreview.textContent = value + '%';
                 const startLine = document.getElementById('startLine');
                 startLine.style.top = (100 - value) + '%';
+                
+                // Prevent overlap logic
                 if (parseInt(stopFillRange.value) <= value) {
                     stopFillRange.value = Math.min(value + 20, parseInt(stopFillRange.max));
                     updateStopFillValue();
                 }
-                updatePreviewWaterFill();
             }
 
             function updateStopFillValue() {
@@ -1114,23 +1080,14 @@
                 stopPreview.textContent = value + '%';
                 const stopLine = document.getElementById('stopLine');
                 stopLine.style.top = (100 - value) + '%';
+                
+                // Prevent overlap logic
                 if (parseInt(startFillRange.value) >= value) {
                     startFillRange.value = Math.max(value - 20, parseInt(startFillRange.min));
                     updateStartFillValue();
                 }
-                updatePreviewWaterFill();
             }
 
-            function updatePreviewWaterFill() {
-                const startValue = parseInt(startFillRange.value);
-                const stopValue = parseInt(stopFillRange.value);
-
-                const visualCurrentLevel = (startValue + stopValue) / 2;
-                currentLevelPreview.textContent = `${visualCurrentLevel.toFixed(0)}%`;
-                previewWaterFill.style.height = `${visualCurrentLevel}%`;
-            }
-
-            // Event listener for "Complete Setup" button
             completeSetupButton.addEventListener('click', completeSetup);
 
             async function completeSetup() {
@@ -1152,21 +1109,14 @@
 
                     await set(deviceSettingsRef, settings);
                     
-                    console.log("Settings saved successfully:", settings);
-                    
                     finalStartLevel.textContent = `${startLevel}%`;
                     finalStopLevel.textContent = `${stopLevel}%`;
 
                     showSection('successSection');
                     
                 } catch (error) {
-                    console.error("Error saving settings:", error);
                     displayMessage(`Failed to save settings: ${error.message}. Please try again.`, "danger");
                 }
-            }
-
-            function updateProgress(percentage) {
-                progressFill.style.width = percentage + '%';
             }
 
             function displayMessage(message, type) {
@@ -1176,9 +1126,7 @@
                     document.body.appendChild(messageContainer);
                 }
                 messageContainer.innerHTML = `<div class="alert alert-${type} mt-2">${message}</div>`;
-                setTimeout(() => {
-                    messageContainer.innerHTML = ''; 
-                }, 4000);
+                setTimeout(() => { messageContainer.innerHTML = ''; }, 4000);
             }
         });
     </script>

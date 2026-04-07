@@ -1,0 +1,2273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Analytics</title>
+    <link rel="icon" type="image/x-icon" href="/main/materials/hydrolink-logo.png">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/transitions.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #3b7fd0;
+            --primary-light: #5a9be8;
+            --primary-dark: #2a5f9e;
+            --primary-bg: rgba(59, 127, 208, 0.1);
+            --primary-bg-hover: rgba(59, 127, 208, 0.15);
+            --gradient-primary: linear-gradient(135deg, #3b7fd0 0%, #2a5f9e 100%);
+            --gradient-secondary: linear-gradient(135deg, #5a9be8 0%, #3b7fd0 100%);
+            --text-dark: #1a2942;
+            --text-muted: #6b7a90;
+            --border-color: #e2e8f0;
+            --card-shadow: 0 4px 20px rgba(59, 127, 208, 0.08);
+            --card-shadow-hover: 0 8px 30px rgba(59, 127, 208, 0.15);
+        }
+
+        .system-status {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+            font-size: 0.85rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.7;
+                transform: scale(1.1);
+            }
+        }
+
+        /* Top Header */
+        .top-header {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-search {
+            position: relative;
+            width: 320px;
+        }
+
+        .header-search input {
+            width: 100%;
+            padding: 0.625rem 1rem 0.625rem 2.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .header-search input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px var(--primary-bg);
+        }
+
+        .header-search i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            border: none;
+            background: var(--primary-bg);
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .header-btn:hover {
+            background: var(--primary-bg-hover);
+            transform: translateY(-2px);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: 0.5rem;
+        }
+
+        .user-profile:hover {
+            background: var(--primary-bg);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .user-info h6 {
+            margin: 0;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .user-info small {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        /* Dashboard Content */
+        .dashboard-content {
+            padding: 0rem 1rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header h2 {
+            font-weight: 700;
+            color: var(--text-dark);
+            font-size: 1.75rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .date-range-selector {
+            background: white;
+            border-radius: 12px;
+            padding: 0.5rem;
+            display: inline-flex;
+            gap: 0.25rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .date-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .date-btn:hover {
+            color: var(--primary-color);
+            background: var(--primary-bg);
+        }
+
+        .date-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Stats Cards */
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            height: 100%;
+        }
+
+        .stat-card:hover {
+            box-shadow: var(--card-shadow-hover);
+            transform: translateY(-4px);
+            border-color: var(--primary-bg);
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+
+        .stat-icon.primary {
+            background: var(--primary-bg);
+            color: var(--primary-color);
+        }
+
+        .stat-icon.success {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+        }
+
+        .stat-icon.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+
+        .stat-icon.info {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+        }
+
+        .stat-trend.up {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+        }
+
+        .stat-trend.down {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            line-height: 1.2;
+        }
+
+        .stat-value span {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Main Dashboard Card */
+        .dashboard-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .card-header-custom {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header-custom h5 {
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .card-header-custom h5 i {
+            color: var(--primary-color);
+        }
+
+        .card-body-custom {
+            padding: 1.5rem;
+        }
+
+        /* Usage Volume Section */
+        .volume-display {
+            text-align: center;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, var(--primary-bg) 0%, rgba(59, 127, 208, 0.05) 100%);
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+        }
+
+        .volume-value {
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+        }
+
+        .volume-unit {
+            font-size: 1.25rem;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .volume-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Volume Bars */
+        .volume-bars {
+            display: flex;
+            gap: 0.5rem;
+            height: 140px;
+            align-items: flex-end;
+            padding: 0 0.5rem;
+        }
+
+        .volume-bar-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .volume-bar {
+            width: 100%;
+            background: var(--gradient-secondary);
+            border-radius: 8px 8px 0 0;
+            position: relative;
+            min-height: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .volume-bar:hover {
+            filter: brightness(1.1);
+            transform: scaleY(1.02);
+        }
+
+        .volume-bar-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .volume-bar-value {
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            white-space: nowrap;
+        }
+
+        /* Weekly Summary */
+        .weekly-summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.875rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .weekly-summary-row:last-child {
+            border-bottom: none;
+        }
+
+        .weekly-day {
+            font-weight: 500;
+            color: var(--text-dark);
+            min-width: 100px;
+        }
+
+        .weekly-bar {
+            flex: 1;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            margin: 0 1rem;
+            overflow: hidden;
+        }
+
+        .weekly-bar-fill {
+            height: 100%;
+            background: var(--gradient-primary);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .weekly-value {
+            font-weight: 600;
+            color: var(--primary-color);
+            min-width: 60px;
+            text-align: right;
+        }
+
+        /* Calendar Section */
+        .calendar-container {
+            background: white;
+            border-radius: 12px;
+        }
+
+        .calendar-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .calendar-nav h6 {
+            margin: 0;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .calendar-nav-btns {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .calendar-nav-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-muted);
+        }
+
+        .calendar-nav-btn:hover {
+            background: var(--primary-bg);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.25rem;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            border: 2px solid transparent;
+        }
+
+        .calendar-day:hover {
+            background: var(--primary-bg);
+            transform: scale(1.05);
+        }
+
+        .calendar-day.other-month {
+            color: #cbd5e1;
+        }
+
+        .calendar-day.today {
+            background: var(--gradient-primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        .calendar-day.peak-low {
+            background: rgba(59, 127, 208, 0.1);
+            border-color: rgba(59, 127, 208, 0.2);
+        }
+
+        .calendar-day.peak-medium {
+            background: rgba(59, 127, 208, 0.25);
+            border-color: rgba(59, 127, 208, 0.4);
+        }
+
+        .calendar-day.peak-high {
+            background: rgba(59, 127, 208, 0.5);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .calendar-day.peak-very-high {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-dark);
+        }
+
+        .peak-indicator {
+            position: absolute;
+            bottom: 4px;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--primary-color);
+        }
+
+        .calendar-day.today .peak-indicator {
+            background: white;
+        }
+
+        /* Calendar Legend */
+        .calendar-legend {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        .legend-color.low {
+            background: rgba(59, 127, 208, 0.1);
+        }
+
+        .legend-color.medium {
+            background: rgba(59, 127, 208, 0.25);
+        }
+
+        .legend-color.high {
+            background: rgba(59, 127, 208, 0.5);
+        }
+
+        .legend-color.very-high {
+            background: var(--primary-color);
+        }
+
+        /* Peak Times Card */
+        .peak-time-card {
+            background: var(--primary-bg);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        .peak-time-card:hover {
+            background: var(--primary-bg-hover);
+            transform: translateX(4px);
+        }
+
+        .peak-time-icon {
+            width: 44px;
+            height: 44px;
+            background: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            box-shadow: 0 2px 8px rgba(59, 127, 208, 0.15);
+        }
+
+        .peak-time-info h6 {
+            margin: 0;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .peak-time-info small {
+            color: var(--text-muted);
+        }
+
+        .peak-time-value {
+            margin-left: auto;
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+
+        /* Refill Cycles Section */
+        .cycle-tabs {
+            display: flex;
+            gap: 0.5rem;
+            background: #f1f5f9;
+            padding: 0.375rem;
+            border-radius: 10px;
+        }
+
+        .cycle-tab {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .cycle-tab:hover {
+            color: var(--primary-color);
+        }
+
+        .cycle-tab.active {
+            background: white;
+            color: var(--primary-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .cycle-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .cycle-stat {
+            text-align: center;
+            padding: 1.25rem;
+            background: #f8fafc;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .cycle-stat:hover {
+            background: var(--primary-bg);
+        }
+
+        .cycle-stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .cycle-stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Cycle Timeline */
+        .cycle-timeline {
+            margin-top: 1.5rem;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+
+        .timeline-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .timeline-icon.open {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+        }
+
+        .timeline-icon.close {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .timeline-content {
+            flex: 1;
+        }
+
+        .timeline-content h6 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .timeline-content small {
+            color: var(--text-muted);
+        }
+
+        .timeline-time {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* --- TANK DESIGN (Rectangular Version) --- */
+        .modal-refill-tank-container {
+            width: 140px;
+            /* Width of the tank */
+            height: 200px;
+            /* Height (Taller than wide) */
+            border-radius: 15px;
+            /* Rounded corners (Not a circle) */
+            border: 4px solid #e2e8f0;
+            position: relative;
+            background: white;
+            overflow: hidden;
+            /* Clips the water inside */
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05), 0 10px 20px rgba(59, 127, 208, 0.15);
+            z-index: 1;
+            margin: 0 auto;
+            /* Centers the tank */
+        }
+
+        /* The Water Fill */
+        .modal-refill-water-level {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            /* Default height is 0%, updated by JS */
+            background: linear-gradient(180deg, #3b7fd0 0%, #2a5f9e 100%);
+            transition: height 0.5s ease-in-out;
+            z-index: 0;
+        }
+
+        /* The Animated Wave */
+        .modal-refill-wave {
+            position: absolute;
+            top: -10px;
+            left: 0;
+            width: 200%;
+            height: 20px;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg"><path fill="%233b7fd0" fill-opacity="1" d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
+            background-size: 50% 100%;
+            animation: wave-move 3s linear infinite;
+            opacity: 0.8;
+        }
+
+        /* Glass Shine Effect (Vertical Stripe for Tank) */
+        .modal-refill-glass-shine {
+            position: absolute;
+            top: 0;
+            left: 20px;
+            /* Offset from left */
+            width: 15px;
+            /* Thin vertical highlight */
+            height: 100%;
+            background: rgba(255, 255, 255, 0.3);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* Wave Animation Keyframes */
+        @keyframes wave-move {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        /* Progress Ring */
+        .progress-ring-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem 0;
+        }
+
+        .progress-ring {
+            position: relative;
+            width: 180px;
+            height: 180px;
+        }
+
+        .progress-ring-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(var(--primary-color) 0deg,
+                    var(--primary-color) 252deg,
+                    #e2e8f0 252deg,
+                    #e2e8f0 360deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .progress-ring-inner {
+            width: 140px;
+            height: 140px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .progress-ring-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .progress-ring-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Alerts Section */
+        .alert-custom {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            border-left: 4px solid;
+        }
+
+        .alert-custom.alert-info {
+            background: rgba(59, 127, 208, 0.08);
+            border-color: var(--primary-color);
+        }
+
+        .alert-custom.alert-warning {
+            background: rgba(245, 158, 11, 0.08);
+            border-color: #f59e0b;
+        }
+
+        .alert-custom.alert-success {
+            background: rgba(34, 197, 94, 0.08);
+            border-color: #22c55e;
+        }
+
+        .alert-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .alert-info .alert-icon {
+            background: rgba(59, 127, 208, 0.15);
+            color: var(--primary-color);
+        }
+
+        .alert-warning .alert-icon {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+
+        .alert-success .alert-icon {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+
+        .alert-content h6 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+
+        .alert-content p {
+            margin: 0.25rem 0 0;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .alert-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-left: auto;
+            white-space: nowrap;
+        }
+
+        /* Responsive Sidebar Toggle */
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1001;
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            border: none;
+            background: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(59, 127, 208, 0.3);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .sidebar-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+            }
+
+            .sidebar-overlay.show {
+                display: block;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .top-header {
+                padding: 1rem;
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+
+            .header-search {
+                width: 100%;
+                order: 3;
+            }
+
+            .dashboard-content {
+                padding: 1rem;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 1rem;
+            }
+
+            .volume-value {
+                font-size: 2.5rem;
+            }
+
+            .cycle-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .calendar-legend {
+                gap: 0.75rem;
+            }
+
+            .user-info {
+                display: none;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stat-card {
+                padding: 1.25rem;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .weekly-day {
+                min-width: 60px;
+                font-size: 0.85rem;
+            }
+
+            .weekly-value {
+                min-width: 50px;
+                font-size: 0.85rem;
+            }
+        }
+
+
+
+
+        /* Graph Container - The "Canvas" */
+        #dailyVolumeContainer {
+            display: flex;
+            justify-content: space-between;
+            /* Space bars evenly */
+            align-items: flex-end;
+            /* Align bars to the bottom */
+            height: 250px;
+            /* Fixed height is REQUIRED for a graph */
+            padding-top: 30px;
+            /* Space for top labels */
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+            /* The X-Axis Line */
+            box-sizing: border-box;
+        }
+
+        /* Individual Column Wrapper */
+        .volume-bar-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            height: 100%;
+            width: 12%;
+            /* Responsive width */
+            position: relative;
+        }
+
+        /* The Colored Bar */
+        .volume-bar {
+            width: 100%;
+            background: linear-gradient(to top, #3b7fd0, #5da2ff);
+            /* Nice Blue Gradient */
+            border-radius: 6px 6px 0 0;
+            /* Rounded top corners */
+            transition: height 0.6s ease-out;
+            /* Smooth animation */
+            min-height: 4px;
+            /* Ensure empty days show a tiny line on axis */
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* The Number on Top of the Bar */
+        .volume-bar-value {
+            position: absolute;
+            top: -25px;
+            /* Float above the bar */
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: bold;
+            color: #555;
+            white-space: nowrap;
+        }
+
+        /* The Day Label (Mon, Tue...) */
+        .volume-bar-label {
+            margin-top: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        /* Hover Effect */
+        .volume-bar:hover {
+            background: #2a5c99;
+            cursor: pointer;
+        }
+
+        .loading-indicator {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.85rem;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        /* --- CALENDAR STYLES --- */
+        .calendar-container {
+            padding: 10px;
+        }
+
+        .calendar-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .calendar-nav-btn {
+            background: none;
+            border: 1px solid #ddd;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .calendar-nav-btn:hover {
+            background-color: #f0f2f5;
+            color: var(--primary-color);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .calendar-header {
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #888;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1/1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #555;
+            background-color: #f8f9fa;
+            cursor: default;
+        }
+
+        .calendar-day:hover {
+            transform: scale(1.05);
+            z-index: 2;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .calendar-day.empty {
+            background-color: transparent;
+            pointer-events: none;
+        }
+
+        /* --- CALENDAR COLORS --- */
+        .calendar-day.low {
+            background-color: #d1e7dd;
+            color: #0f5132;
+            border: 1px solid #badbcc;
+        }
+
+        /* 0-50L */
+        .calendar-day.medium {
+            background-color: #fff3cd;
+            color: #664d03;
+            border: 1px solid #ffecb5;
+        }
+
+        /* 51-100L */
+        .calendar-day.high {
+            background-color: #ffe5d0;
+            color: #fd7e14;
+            border: 1px solid #ffd0b0;
+        }
+
+        /* 101-150L */
+        .calendar-day.very-high {
+            background-color: #f8d7da;
+            color: #842029;
+            border: 1px solid #f5c2c7;
+        }
+
+        /* >151L */
+
+        /* Legend Colors */
+        .legend-color.low {
+            background: #d1e7dd;
+            border: 1px solid #badbcc;
+        }
+
+        .legend-color.medium {
+            background: #fff3cd;
+            border: 1px solid #ffecb5;
+        }
+
+        .legend-color.high {
+            background: #ffe5d0;
+            border: 1px solid #ffd0b0;
+        }
+
+        .legend-color.very-high {
+            background: #f8d7da;
+            border: 1px solid #f5c2c7;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Page Transition -->
+    <div class="page-transition-overlay" id="pageTransition">
+        <div class="transition-loader"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top floating-nav container mt-3">
+        <div class="container-fluid px-2">
+                <a class="navbar-brand ms-2" href="#">
+                    <img src="/main/materials/hydrolink-label.png" alt="HydroLink" width="160"
+                        class="d-inline-block align-text-top">
+                </a>
+                <button class="navbar-toggler border-0 shadow-none text-white" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarNav">
+                    <i class="bi bi-list fs-1"></i>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <!-- Centered Main Links -->
+                    <ul class="navbar-nav mx-auto mt-3 mt-lg-0 pb-2 pb-lg-0 align-items-center">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html" data-tooltip="Home">
+                                <i class="bi bi-house-door-fill"></i>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="data-analytics.html" data-tooltip="Dashboard">
+                                <i class="bi bi-grid-fill"></i>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="history.html" data-tooltip="History">
+                                <i class="bi bi-clock-history"></i>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="settings.html" data-tooltip="Settings">
+                                <i class="bi bi-gear-fill"></i>
+                            </a>
+                        </li>
+                        <li class="nav-item position-relative">
+                            <a class="nav-link" href="notifications.html" data-tooltip="Notifications">
+                                <i class="bi bi-bell-fill"></i>
+                                <span
+                                    class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle notification-badge-nav d-none"
+                                    id="navNotificationBadge">
+                                    <span class="visually-hidden">New alerts</span>
+                                </span>
+                            </a>
+                        </li>
+                    </ul>
+                    <!-- Right-aligned Logout -->
+                    <ul class="navbar-nav mt-3 mt-lg-0 pb-2 pb-lg-0 align-items-center">
+                        <li class="nav-item ms-lg-2">
+                            <a class="nav-link bg-danger bg-opacity-10 text-white hover-logout" href="auth.html"
+                                data-tooltip="Logout" style="color: #fda4af !important;">
+                                <i class="bi bi-box-arrow-right"></i>
+                            </a>
+                        </li>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Dashboard Content -->
+        <div class="dashboard-content container">
+            <!-- Page Header -->
+            <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h2>Water Analytics Dashboard</h2>
+                    <p class="text-muted mb-0" id="currentDateRangeLabel">Showing data for: Today</p>
+                </div>
+
+                <div class="d-flex flex-column align-items-end">
+                    <div class="date-range-selector">
+                        <button class="date-btn active" data-range="today">Today</button>
+                        <button class="date-btn" data-range="week">This Week</button>
+                        <button class="date-btn" data-range="month">This Month</button>
+                        <button class="date-btn" id="btnCustomRange" data-range="custom">Custom</button>
+                    </div>
+
+                    <div id="customDateInputs" class="mt-2" style="display: none;">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">From</span>
+                            <input type="date" class="form-control" id="startDateInput">
+                            <span class="input-group-text">To</span>
+                            <input type="date" class="form-control" id="endDateInput">
+                            <button class="btn btn-primary" id="applyCustomBtn">Apply</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards Row -->
+            <div class="row g-4 mb-4">
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div class="stat-icon primary"><i class="bi bi-droplet-fill"></i></div>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">
+                                <span id="kpiTotalVolume">0</span> <span class="unit">L</span>
+                            </div>
+                            <div class="stat-label">Total Water Used</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div class="stat-icon success"><i class="bi bi-arrow-repeat"></i></div>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">
+                                <span id="kpiTotalRefills">0</span> <span class="unit">Times</span>
+                            </div>
+                            <div class="stat-label">Refill Cycles</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div class="stat-icon warning"><i class="bi bi-clock-fill"></i></div>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">
+                                <span id="kpiAvgTime">0m 0s</span>
+                            </div>
+                            <div class="stat-label">Avg Refill Duration</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div class="stat-icon info"><i class="bi bi-speedometer2"></i></div>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">
+                                <span id="kpiAvgSpeed">0</span> <span class="unit">L/min</span>
+                            </div>
+                            <div class="stat-label">Avg Flow Speed</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Row -->
+            <div class="row g-4 mb-4">
+                <!-- Daily & Weekly Usage Volume -->
+                <div class="col-12 col-lg-7">
+                    <div class="dashboard-card">
+                        <div class="card-header-custom">
+                            <h5><i class="bi bi-bar-chart-line-fill"></i> Daily & Weekly Usage Volume</h5>
+
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                                    data-bs-toggle="dropdown">
+                                    <i class="bi bi-download me-1"></i> Export
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" id="btnExportPDF">Export as PDF</a></li>
+                                    <li><a class="dropdown-item" href="#" id="btnExportExcel">Export as Excel</a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="card-body-custom">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="volume-display">
+                                        <div class="volume-value" id="volTotalDisplay">0</div>
+                                        <div class="volume-unit">Liters</div>
+                                        <div class="volume-label" id="volTotalLabel">Total This Week</div>
+                                    </div>
+
+                                    <div class="d-none flex-column align-items-center justify-content-center py-4">
+                                        <div class="modal-refill-tank-container mb-3">
+                                            <div class="modal-refill-water-level" id="tankAnimationLevel"
+                                                style="height: 0%;">
+                                                <div class="modal-refill-wave"></div>
+                                            </div>
+                                            <div class="modal-refill-glass-shine"></div>
+                                        </div>
+
+                                        <h2 class="fw-bold text-primary mb-1"><span id="tankTextValue">0</span>%</h2>
+                                        <p class="text-muted small">Current Water Level</p>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="mb-0" style="font-weight: 600; color: var(--text-dark);">Daily
+                                            Consumption</h6>
+
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-outline-primary active"
+                                                id="btnWeekCurrent">This Week</button>
+                                            <button type="button" class="btn btn-outline-primary" id="btnWeekLast">Last
+                                                Week</button>
+
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button type="button" class="btn btn-outline-primary dropdown-toggle"
+                                                    data-bs-toggle="dropdown" id="btnWeekSelect">
+                                                    Select Week
+                                                </button>
+                                                <ul class="dropdown-menu" id="weekDropdownList">
+                                                    <li><span class="dropdown-item text-muted">Loading...</span></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="volume-bars" id="dailyVolumeContainer">
+                                        <div class="text-center w-100 text-muted mt-4">Loading data...</div>
+                                    </div>
+
+                                    <hr class="my-4">
+
+                                    <h6 class="mb-3" style="font-weight: 600; color: var(--text-dark);">Weekly Summary
+                                        (Current Month)</h6>
+                                    <div id="weeklySummaryContainer">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Alerts -->
+                <div class="col-12 col-lg-5">
+                    <div class="dashboard-card">
+                        <div class="card-header-custom">
+                            <h5><i class="bi bi-bell-fill"></i> System Alerts</h5>
+                            <a href="#"
+                                style="color: var(--primary-color); font-size: 0.85rem; text-decoration: none;">Live
+                                Feed</a>
+                        </div>
+                        <div class="card-body-custom" id="systemAlertsContainer"
+                            style="max-height: 650px; overflow-y: auto;">
+                            <div class="text-center text-muted mt-3">Loading alerts...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendar & Refill Cycles Row -->
+            <div class="row g-4 mb-4">
+                <!-- Peak Usage Calendar -->
+                <div class="col-12 col-lg-8">
+                    <div class="dashboard-card">
+                        <div class="card-header-custom">
+                            <h5><i class="bi bi-calendar3"></i> Peak Usage Calendar</h5>
+                            <span class="badge" id="calendarBadge"
+                                style="background: var(--primary-bg); color: var(--primary-color); font-weight: 500;">
+                                Loading...
+                            </span>
+                        </div>
+                        <div class="card-body-custom">
+                            <div class="calendar-container">
+                                <div class="calendar-nav">
+                                    <div class="calendar-nav-btns">
+                                        <button class="calendar-nav-btn" id="btnPrevMonth">
+                                            <i class="bi bi-chevron-left"></i>
+                                        </button>
+                                    </div>
+                                    <h6 id="calendarMonthLabel">Loading...</h6>
+                                    <div class="calendar-nav-btns">
+                                        <button class="calendar-nav-btn" id="btnNextMonth">
+                                            <i class="bi bi-chevron-right"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="calendar-grid" id="calendarGrid">
+                                </div>
+
+                                <div class="calendar-legend">
+                                    <div class="legend-item">
+                                        <div class="legend-color low"></div><span>Low (0-50L)</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-color medium"></div><span>Med (51-100L)</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-color high"></div><span>High (101-150L)</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-color very-high"></div><span>V.High (>151L)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monthly Overview -->
+                <div class="col-12 col-lg-4">
+                    <div class="dashboard-card">
+                        <div class="card-header-custom">
+                            <h5><i class="bi bi-pie-chart-fill"></i> Monthly Overview</h5>
+                            <select class="form-select form-select-sm" id="overviewMonthSelect" style="width: auto;">
+                                <option value="">Loading...</option>
+                            </select>
+                        </div>
+                        <div class="card-body-custom">
+                            <div class="row align-items-center">
+                                <div class="col-12 mb-4">
+                                    <div class="progress-ring-container"
+                                        style="display:flex; justify-content:center; align-items:center;">
+                                        <div class="progress-ring" id="overviewRing"
+                                            style="width:140px; height:140px; border-radius:50%; position:relative; background:conic-gradient(var(--primary-color) 0%, #f0f0f0 0%); box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+
+                                            <div class="progress-ring-inner"
+                                                style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:110px; height:110px; background:white; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);">
+
+                                                <div class="progress-ring-value" id="overviewTargetVal"
+                                                    style="font-size:1.8rem; font-weight:700; color:var(--primary-color); line-height: 1;">
+                                                    0%</div>
+                                                <div class="progress-ring-label"
+                                                    style="font-size:0.75rem; color:#6c757d; margin-top: 2px;">Target
+                                                    Met</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span style="font-size: 0.85rem; color: var(--text-muted);">Total
+                                                Volume</span>
+                                            <span style="font-weight: 600; color: var(--text-dark);"
+                                                id="overviewTotalVol">0 L</span>
+                                        </div>
+                                        <div class="progress" style="height: 6px; border-radius: 3px;">
+                                            <div class="progress-bar" id="overviewTotalVolBar"
+                                                style="width: 0%; background: var(--primary-color);"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span style="font-size: 0.85rem; color: var(--text-muted);">Refill
+                                                Cycles</span>
+                                            <span style="font-weight: 600; color: var(--text-dark);"
+                                                id="overviewCycles">0</span>
+                                        </div>
+                                        <div class="progress" style="height: 6px; border-radius: 3px;">
+                                            <div class="progress-bar" id="overviewCyclesBar"
+                                                style="width: 0%; background: #22c55e;"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span style="font-size: 0.85rem; color: var(--text-muted);">Avg Daily
+                                                Usage</span>
+                                            <span style="font-weight: 600; color: var(--text-dark);"
+                                                id="overviewAvgDaily">0 L</span>
+                                        </div>
+                                        <div class="progress" style="height: 6px; border-radius: 3px;">
+                                            <div class="progress-bar" id="overviewAvgDailyBar"
+                                                style="width: 0%; background: #f59e0b;"></div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span style="font-size: 0.85rem; color: var(--text-muted);">Success
+                                                Rate</span>
+                                            <span style="font-weight: 600; color: var(--text-dark);"
+                                                id="overviewSuccessRate">100%</span>
+                                        </div>
+                                        <div class="progress" style="height: 6px; border-radius: 3px;">
+                                            <div class="progress-bar" id="overviewSuccessBar"
+                                                style="width: 100%; background: #3b82f6;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </main>
+
+    <div class="modal fade" id="exportModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Export Options</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Please select the data range you wish to export:</p>
+
+                    <div class="d-grid gap-2">
+                        <div class="form-check p-3 border rounded mb-2 hover-bg-light">
+                            <input class="form-check-input" type="radio" name="exportRange" id="rangeCurrent"
+                                value="current" checked>
+                            <label class="form-check-label fw-bold w-100" for="rangeCurrent" style="cursor:pointer;">
+                                Current View
+                                <div class="small text-muted fw-normal">Exports only the data currently visible on the
+                                    graph (e.g., This Week or Custom Range).</div>
+                            </label>
+                        </div>
+
+                        <div class="form-check p-3 border rounded hover-bg-light">
+                            <input class="form-check-input" type="radio" name="exportRange" id="rangeAll" value="all">
+                            <label class="form-check-label fw-bold w-100" for="rangeAll" style="cursor:pointer;">
+                                All Records
+                                <div class="small text-muted fw-normal">Exports the entire history database.</div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary px-4" id="btnConfirmExport">
+                        <i class="bi bi-download me-2"></i>Export Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Assuming main.js is in a 'js' subdirectory. If not, change src="main.js" -->
+    <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/custom.js"></script>
+    <script>
+        // Simple sidebar toggle for mobile
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('show');
+            document.querySelector('.sidebar-overlay').classList.toggle('show');
+        }
+
+        // Filter tabs functionality
+        document.querySelectorAll('.cycle-tab').forEach(tab => {
+            tab.addEventListener('click', function () {
+                document.querySelectorAll('.cycle-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Date range selector functionality
+        document.querySelectorAll('.date-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+        // --- CONFIG ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCmFInEL6TMoD-9JwdPy-e9niNGGL5SjHA",
+            authDomain: "hydrolink-d3c57.firebaseapp.com",
+            databaseURL: "https://hydrolink-d3c57-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hydrolink-d3c57",
+            storageBucket: "hydrolink-d3c57.firebasestorage.app",
+            messagingSenderId: "770257381412",
+            appId: "1:770257381412:web:a894f35854cb82274950b1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
+
+        // --- GLOBAL VARIABLES ---
+        let rawHistoryData = [];
+        let currentExportData = [];
+        let activeRange = 'today';
+        let pendingExportFormat = '';
+        let exportModal = null;
+
+        // Alert Pagination
+        let allAlerts = [];
+        let alertsShownCount = 0;
+        const ALERTS_BATCH_SIZE = 10;
+
+        // Calendar
+        let calendarDate = new Date();
+
+        // Monthly Overview Constants
+        const MONTHLY_TARGET_LITERS = 500;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupDateButtons();
+            setupWeekButtons();
+            setupExportButtons();
+            setupCalendarControls();
+
+            // Setup Overview Dropdown Listener
+            const monthSelect = document.getElementById('overviewMonthSelect');
+            if (monthSelect) {
+                monthSelect.addEventListener('change', () => renderMonthlyOverview());
+            }
+
+            // Scroll Listener for Alerts
+            const alertsContainer = document.getElementById('systemAlertsContainer');
+            if (alertsContainer) {
+                alertsContainer.addEventListener('scroll', () => {
+                    if (alertsContainer.scrollTop + alertsContainer.clientHeight >= alertsContainer.scrollHeight - 50) {
+                        renderAlertBatch();
+                    }
+                });
+            }
+
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    const deviceId = localStorage.getItem(`hydrolink_device_id_${user.uid}`);
+                    if (deviceId) {
+                        startDataListeners(deviceId);
+                        loadSystemAlerts(deviceId);
+                    } else {
+                        displayNoData();
+                    }
+                } else {
+                    window.location.href = "auth.html";
+                }
+            });
+        });
+
+        // --- DATA LISTENER ---
+        function startDataListeners(deviceId) {
+            const deviceRef = ref(database, `hydrolink/devices/${deviceId}`);
+            onValue(deviceRef, (snapshot) => {
+                const val = snapshot.val();
+                if (!val) { updateTankVisual(null); return; }
+
+                const statusNode = val.status || {};
+                let currentLevel = statusNode.currentWaterLevelCm;
+                let drumHeight = statusNode.drumHeightCm;
+                if (!drumHeight && val.settings) drumHeight = val.settings.drumHeightCm;
+
+                if (currentLevel !== undefined && drumHeight !== undefined) {
+                    const pct = calculatePercentage(currentLevel, drumHeight);
+                    updateTankVisual(pct);
+                } else { updateTankVisual(null); }
+
+                if (val.refillHistory) {
+                    // Fix 1970 dates if timestamps are in seconds instead of ms
+                    rawHistoryData = Object.values(val.refillHistory).map(item => {
+                        let ts = Number(item.timestamp);
+                        if (ts < 10000000000) ts *= 1000;
+                        return { ...item, timestamp: ts };
+                    }).sort((a, b) => b.timestamp - a.timestamp);
+
+                    // Update All Sections
+                    applyKPIFilter();
+                    renderDailyBars(rawHistoryData, 'this_week');
+                    renderWeeklySummary(rawHistoryData);
+                    renderCalendar();
+                    populateOverviewDropdown();
+                    renderMonthlyOverview();
+                }
+            });
+        }
+
+        // =======================================================
+        //  UPDATED TANK VISUAL FUNCTION (Fixes the Display Mess)
+        // =======================================================
+        function updateTankVisual(percentage) {
+            const fillEl = document.getElementById('tankLevelFill');
+            // Tries to find the new ID 'tankTextValue', falls back to 'tankLevelText'
+            const textEl = document.getElementById('tankTextValue') || document.getElementById('tankLevelText');
+
+            if (percentage === null || percentage === undefined) {
+                if (textEl) textEl.innerText = "--";
+                if (fillEl) fillEl.style.height = "0%";
+                return;
+            }
+
+            let level = parseInt(percentage);
+            if (level > 100) level = 100;
+            if (level < 0) level = 0;
+
+            // 1. Update Height
+            if (fillEl) {
+                fillEl.style.height = `${level}%`;
+                // Remove the old background color logic if you are using CSS gradients/waves
+                // If you still need simple colors, uncomment below:
+                /*
+                if (level < 20) fillEl.style.backgroundColor = '#dc3545'; 
+                else if (level < 50) fillEl.style.backgroundColor = '#ffc107'; 
+                else fillEl.style.backgroundColor = '#3b7fd0';
+                */
+            }
+
+            // 2. Update Text & Contrast
+            if (textEl) {
+                textEl.innerText = level; // Just the number, fits better in the circle
+
+                // Smart Contrast: White text when water is high, Dark when low
+                if (level > 55) {
+                    textEl.style.color = "#ffffff";
+                    textEl.style.textShadow = "0 1px 2px rgba(0,0,0,0.3)";
+                } else {
+                    textEl.style.color = "#333333";
+                    textEl.style.textShadow = "none";
+                }
+            }
+        }
+
+        // =======================================================
+        // PART D: MONTHLY OVERVIEW LOGIC
+        // =======================================================
+        function populateOverviewDropdown() {
+            const select = document.getElementById('overviewMonthSelect');
+            if (!select || rawHistoryData.length === 0) return;
+
+            const uniqueMonths = new Set();
+            rawHistoryData.forEach(item => {
+                const d = new Date(item.timestamp);
+                const key = `${d.getMonth()}-${d.getFullYear()}`;
+                uniqueMonths.add(key);
+            });
+
+            const currentVal = select.value;
+            select.innerHTML = '';
+            const sortedMonths = Array.from(uniqueMonths).sort((a, b) => {
+                const [m1, y1] = a.split('-');
+                const [m2, y2] = b.split('-');
+                return new Date(y2, m2) - new Date(y1, m1);
+            });
+
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+            sortedMonths.forEach(key => {
+                const [m, y] = key.split('-');
+                const option = document.createElement('option');
+                option.value = key;
+                option.innerText = `${monthNames[m]} ${y}`;
+                select.appendChild(option);
+            });
+
+            if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
+                select.value = currentVal;
+            } else {
+                select.selectedIndex = 0;
+            }
+        }
+
+        function renderMonthlyOverview() {
+            const select = document.getElementById('overviewMonthSelect');
+            if (!select || !select.value) return;
+
+            const [selMonth, selYear] = select.value.split('-').map(Number);
+
+            const monthlyData = rawHistoryData.filter(item => {
+                const d = new Date(item.timestamp);
+                return d.getMonth() === selMonth && d.getFullYear() === selYear;
+            });
+
+            let totalVol = 0;
+            let successCount = 0;
+            let totalCycles = monthlyData.length;
+
+            monthlyData.forEach(item => {
+                if (item.status === 'Completed' || item.status === 'Interrupted') {
+                    totalVol += (parseFloat(item.amountLitersAdded) || 0);
+                    successCount++;
+                }
+            });
+
+            const now = new Date();
+            let daysDivisor = new Date(selYear, selMonth + 1, 0).getDate();
+
+            if (now.getMonth() === selMonth && now.getFullYear() === selYear) {
+                daysDivisor = now.getDate();
+            }
+            if (daysDivisor < 1) daysDivisor = 1;
+
+            const avgDaily = totalVol / daysDivisor;
+            const successRate = totalCycles > 0 ? (successCount / totalCycles) * 100 : 100;
+
+            safeSetText('overviewTotalVol', `${totalVol.toFixed(0)} L`);
+            safeSetText('overviewCycles', totalCycles);
+            safeSetText('overviewAvgDaily', `${avgDaily.toFixed(0)} L`);
+            safeSetText('overviewSuccessRate', `${successRate.toFixed(1)}%`);
+
+            setProgressBar('overviewTotalVolBar', (totalVol / (MONTHLY_TARGET_LITERS * 1.5)) * 100);
+            setProgressBar('overviewCyclesBar', (totalCycles / 50) * 100);
+            setProgressBar('overviewAvgDailyBar', (avgDaily / (MONTHLY_TARGET_LITERS / 30)) * 100);
+            setProgressBar('overviewSuccessBar', successRate);
+
+            const targetPct = Math.min(Math.round((totalVol / MONTHLY_TARGET_LITERS) * 100), 100);
+            safeSetText('overviewTargetVal', `${targetPct}%`);
+
+            const ring = document.getElementById('overviewRing');
+            if (ring) {
+                ring.style.background = `conic-gradient(var(--primary-color) ${targetPct}%, #f0f0f0 0%)`;
+            }
+        }
+
+        function setProgressBar(id, pct) {
+            const el = document.getElementById(id);
+            if (el) el.style.width = `${Math.min(pct, 100)}%`;
+        }
+
+        // =======================================================
+        // PART A: PEAK USAGE CALENDAR LOGIC
+        // =======================================================
+        function setupCalendarControls() {
+            const btnPrev = document.getElementById('btnPrevMonth');
+            const btnNext = document.getElementById('btnNextMonth');
+
+            if (btnPrev) {
+                btnPrev.addEventListener('click', () => {
+                    calendarDate.setMonth(calendarDate.getMonth() - 1);
+                    renderCalendar();
+                });
+            }
+            if (btnNext) {
+                btnNext.addEventListener('click', () => {
+                    calendarDate.setMonth(calendarDate.getMonth() + 1);
+                    renderCalendar();
+                });
+            }
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            const label = document.getElementById('calendarMonthLabel');
+            const badge = document.getElementById('calendarBadge');
+            if (!grid) return;
+
+            grid.innerHTML = '';
+
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            const displayDate = `${monthNames[calendarDate.getMonth()]} ${calendarDate.getFullYear()}`;
+
+            if (label) label.innerText = displayDate;
+            if (badge) badge.innerText = displayDate;
+
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            const daysShort = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+            daysShort.forEach(d => { grid.innerHTML += `<div class="calendar-header">${d}</div>`; });
+
+            for (let i = 0; i < firstDay; i++) { grid.innerHTML += `<div class="calendar-day empty"></div>`; }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dailyTotal = getDailyTotalForCalendar(year, month, day);
+                let colorClass = "";
+                if (dailyTotal > 150) colorClass = "very-high";
+                else if (dailyTotal > 100) colorClass = "high";
+                else if (dailyTotal > 50) colorClass = "medium";
+                else if (dailyTotal > 0) colorClass = "low";
+
+                const titleAttr = dailyTotal > 0 ? `title="${dailyTotal.toFixed(1)} Liters"` : "";
+                grid.innerHTML += `<div class="calendar-day ${colorClass}" ${titleAttr}><span>${day}</span>${dailyTotal > 0 ? `<span style="font-size:0.6rem; margin-top:-2px;">${Math.round(dailyTotal)}</span>` : ''}</div>`;
+            }
+        }
+
+        function getDailyTotalForCalendar(year, month, day) {
+            const targetStart = new Date(year, month, day, 0, 0, 0).getTime();
+            const targetEnd = new Date(year, month, day, 23, 59, 59).getTime();
+            return rawHistoryData.reduce((sum, entry) => {
+                if (entry.timestamp >= targetStart && entry.timestamp <= targetEnd) {
+                    if (entry.status === 'Completed' || entry.status === 'Interrupted') {
+                        return sum + (parseFloat(entry.amountLitersAdded) || 0);
+                    }
+                }
+                return sum;
+            }, 0);
+        }
+
+        // =======================================================
+        // PART B: ALERTS
+        // =======================================================
+        function loadSystemAlerts(deviceId) {
+            const notifRef = ref(database, `hydrolink/devices/${deviceId}/notifications`);
+            onValue(notifRef, (snapshot) => {
+                const data = snapshot.val();
+                const alertsContainer = document.getElementById('systemAlertsContainer');
+                if (!alertsContainer) return;
+
+                if (!data) {
+                    alertsContainer.innerHTML = '<div class="text-center text-muted mt-3">No alerts found.</div>';
+                    allAlerts = [];
+                    return;
+                }
+                allAlerts = Object.values(data).sort((a, b) => b.timestamp - a.timestamp);
+                alertsShownCount = 0;
+                alertsContainer.innerHTML = '';
+                renderAlertBatch();
+            });
+        }
+
+        function renderAlertBatch() {
+            if (alertsShownCount >= allAlerts.length) {
+                const oldLoader = document.getElementById('alertsLoader');
+                if (oldLoader) oldLoader.remove();
+                return;
+            }
+            const alertsContainer = document.getElementById('systemAlertsContainer');
+            const oldLoader = document.getElementById('alertsLoader');
+            if (oldLoader) oldLoader.remove();
+
+            const nextBatch = allAlerts.slice(alertsShownCount, alertsShownCount + ALERTS_BATCH_SIZE);
+            nextBatch.forEach(alert => {
+                let alertClass = 'alert-info';
+                let iconClass = 'bi-info-circle-fill';
+                const type = (alert.type || "").toLowerCase();
+                if (type === 'battery_low' || type === 'error' || type === 'failed') {
+                    alertClass = 'alert-danger'; iconClass = type === 'battery_low' ? 'bi-battery-half' : 'bi-exclamation-octagon-fill';
+                } else if (type === 'no_water' || type === 'interrupted') {
+                    alertClass = 'alert-warning'; iconClass = 'bi-exclamation-triangle-fill';
+                } else if (type === 'refill' || type === 'success' || type === 'completed') {
+                    alertClass = 'alert-success'; iconClass = 'bi-check-circle-fill';
+                }
+                const timeAgoStr = timeAgo(alert.timestamp);
+                const html = `<div class="alert-custom ${alertClass} animate-fade-in"><div class="alert-icon"><i class="bi ${iconClass}"></i></div><div class="alert-content"><h6>${alert.title}</h6><p>${alert.message}</p></div><span class="alert-time">${timeAgoStr}</span></div>`;
+                alertsContainer.insertAdjacentHTML('beforeend', html);
+            });
+
+            alertsShownCount += nextBatch.length;
+            if (alertsShownCount < allAlerts.length) {
+                alertsContainer.insertAdjacentHTML('beforeend', `<div id="alertsLoader" class="loading-indicator">Loading more alerts...</div>`);
+                if (alertsContainer.scrollHeight <= alertsContainer.clientHeight) { renderAlertBatch(); }
+            } else {
+                alertsContainer.insertAdjacentHTML('beforeend', `<div class="loading-indicator">No more alerts.</div>`);
+            }
+        }
+
+        function timeAgo(timestamp) {
+            const seconds = Math.floor((new Date() - timestamp) / 1000);
+            let interval = seconds / 31536000; if (interval > 1) return Math.floor(interval) + "y ago";
+            interval = seconds / 2592000; if (interval > 1) return Math.floor(interval) + "mo ago";
+            interval = seconds / 86400; if (interval > 1) return Math.floor(interval) + "d ago";
+            interval = seconds / 3600; if (interval > 1) return Math.floor(interval) + "h ago";
+            interval = seconds / 60; if (interval > 1) return Math.floor(interval) + "m ago";
+            return "Just now";
+        }
+
+        // --- HELPERS ---
+        function calculatePercentage(currentCm, totalCm) {
+            const c = parseFloat(currentCm); const t = parseFloat(totalCm);
+            if (isNaN(c) || isNaN(t) || t === 0) return 0;
+            return Math.round((c / t) * 100);
+        }
+
+        function setupDateButtons() {
+            const buttons = document.querySelectorAll('.date-range-selector .date-btn');
+            const customInputs = document.getElementById('customDateInputs');
+            const applyBtn = document.getElementById('applyCustomBtn');
+            if (buttons) { buttons.forEach(btn => { btn.addEventListener('click', (e) => { buttons.forEach(b => b.classList.remove('active')); e.target.classList.add('active'); const range = e.target.getAttribute('data-range'); if (range === 'custom') { if (customInputs) customInputs.style.display = 'block'; activeRange = 'custom'; } else { if (customInputs) customInputs.style.display = 'none'; activeRange = range; applyKPIFilter(); } }); }); }
+            if (applyBtn) applyBtn.addEventListener('click', () => applyKPIFilter());
+        }
+        function applyKPIFilter() {
+            if (!rawHistoryData.length) return;
+            const now = new Date();
+            const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+            let filteredData = [];
+            let labelText = "";
+            if (activeRange === 'today') { labelText = "Today"; filteredData = rawHistoryData.filter(item => item.timestamp >= startOfDay); }
+            else if (activeRange === 'week') { labelText = "This Week"; const dayOfWeek = now.getDay(); const startOfWeek = new Date(startOfDay); startOfWeek.setDate(now.getDate() - dayOfWeek); filteredData = rawHistoryData.filter(item => item.timestamp >= startOfWeek.getTime()); }
+            else if (activeRange === 'month') { labelText = "This Month"; const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime(); filteredData = rawHistoryData.filter(item => item.timestamp >= startOfMonth); }
+            else if (activeRange === 'custom') { const sDate = document.getElementById('startDateInput').value; const eDate = document.getElementById('endDateInput').value; if (sDate && eDate) { const startTs = new Date(sDate).getTime(); const endTs = new Date(eDate).getTime() + 86400000; labelText = `${sDate} to ${eDate}`; filteredData = rawHistoryData.filter(item => item.timestamp >= startTs && item.timestamp < endTs); } }
+            filteredData = filteredData.filter(item => item.status === 'Completed' || item.status === 'Interrupted');
+            const labelEl = document.getElementById('currentDateRangeLabel'); if (labelEl) labelEl.innerText = `Showing data for: ${labelText}`;
+            updateStatsCards(filteredData);
+        }
+        function updateStatsCards(data) {
+            let totalVolume = 0; let totalRefills = data.length; let totalDurationMin = 0; let validDurationCount = 0;
+            data.forEach(entry => { const vol = parseFloat(entry.amountLitersAdded) || 0; totalVolume += vol; const dur = parseFloat(entry.durationMin) || 0; if (dur > 0) { totalDurationMin += dur; validDurationCount++; } });
+            safeSetText('kpiTotalVolume', totalVolume.toFixed(1)); safeSetText('kpiTotalRefills', totalRefills);
+            if (validDurationCount > 0) { const avgMin = totalDurationMin / validDurationCount; const m = Math.floor(avgMin); const s = Math.round((avgMin - m) * 60); safeSetText('kpiAvgTime', `${m}m ${s}s`); const speed = totalDurationMin > 0 ? (totalVolume / totalDurationMin) : 0; safeSetText('kpiAvgSpeed', speed.toFixed(1)); }
+            else { safeSetText('kpiAvgTime', "0m 0s"); safeSetText('kpiAvgSpeed', "0"); }
+        }
+        function setupWeekButtons() {
+            const btnCurrent = document.getElementById('btnWeekCurrent'); const btnLast = document.getElementById('btnWeekLast'); const btnSelect = document.getElementById('btnWeekSelect'); const dropdownList = document.getElementById('weekDropdownList');
+            if (btnCurrent) { btnCurrent.addEventListener('click', () => { resetButtons(); btnCurrent.classList.add('active'); btnSelect.innerText = "Select Week"; renderDailyBars(rawHistoryData, 'this_week'); }); }
+            if (btnLast) { btnLast.addEventListener('click', () => { resetButtons(); btnLast.classList.add('active'); btnSelect.innerText = "Select Week"; renderDailyBars(rawHistoryData, 'last_week'); }); }
+            if (dropdownList) { dropdownList.innerHTML = ''; const today = new Date(); const currentDay = today.getDay(); let refDate = new Date(); refDate.setDate(today.getDate() - currentDay - 7); for (let i = 0; i < 5; i++) { let end = new Date(refDate); end.setDate(refDate.getDate() - (i * 7) - 1); let start = new Date(end); start.setDate(end.getDate() - 6); const label = `${formatShortDate(start)} - ${formatShortDate(end)}`; const li = document.createElement('li'); const a = document.createElement('a'); a.className = 'dropdown-item'; a.href = '#'; a.innerText = label; a.addEventListener('click', (e) => { e.preventDefault(); resetButtons(); btnSelect.classList.add('active'); btnSelect.innerText = label; renderDailyBars(rawHistoryData, 'custom_range', { start: start, end: end }); }); li.appendChild(a); dropdownList.appendChild(li); } }
+            function resetButtons() { [btnCurrent, btnLast, btnSelect].forEach(btn => { if (btn) btn.classList.remove('active'); }); }
+            function formatShortDate(d) { return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
+        }
+        function renderDailyBars(allEntries, rangeType, customDates = null) {
+            const container = document.getElementById('dailyVolumeContainer'); const totalLabel = document.getElementById('volTotalLabel'); const totalDisplay = document.getElementById('volTotalDisplay'); if (!container) return;
+            container.innerHTML = ''; const now = new Date(); let startDate = new Date(); let endDate = new Date(); let rangeName = ""; const day = now.getDay();
+            if (rangeType === 'this_week') { startDate.setDate(now.getDate() - day); startDate.setHours(0, 0, 0, 0); endDate.setHours(23, 59, 59, 999); rangeName = "Total This Week"; }
+            else if (rangeType === 'last_week') { startDate.setDate(now.getDate() - day - 7); startDate.setHours(0, 0, 0, 0); endDate = new Date(startDate); endDate.setDate(startDate.getDate() + 6); endDate.setHours(23, 59, 59, 999); rangeName = "Total Last Week"; }
+            else if (rangeType === 'custom_range' && customDates) { startDate = new Date(customDates.start); startDate.setHours(0, 0, 0, 0); endDate = new Date(customDates.end); endDate.setHours(23, 59, 59, 999); rangeName = `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`; }
+            const filtered = allEntries.filter(e => { const t = e.timestamp; const validStatus = (e.status === 'Completed' || e.status === 'Interrupted'); return t >= startDate.getTime() && t <= endDate.getTime() && validStatus; });
+            currentExportData = filtered;
+            const daysMap = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; const dailyTotals = { 'Sun': 0, 'Mon': 0, 'Tue': 0, 'Wed': 0, 'Thu': 0, 'Fri': 0, 'Sat': 0 }; let grandTotal = 0; let maxVal = 0;
+            filtered.forEach(e => { const d = new Date(e.timestamp); const dayName = daysMap[d.getDay()]; dailyTotals[dayName] += (parseFloat(e.amountLitersAdded) || 0); grandTotal += (parseFloat(e.amountLitersAdded) || 0); });
+            Object.values(dailyTotals).forEach(v => { if (v > maxVal) maxVal = v; }); if (maxVal === 0) maxVal = 10;
+            const order = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; order.forEach(day => { const val = dailyTotals[day]; const heightPercent = (val / maxVal) * 85; const displayVal = val > 0 ? val.toFixed(0) : ""; const html = `<div class="volume-bar-wrapper"><div class="volume-bar" style="height: ${heightPercent}%;" title="${val} Liters"><span class="volume-bar-value">${displayVal}</span></div><span class="volume-bar-label">${day}</span></div>`; container.innerHTML += html; });
+            if (totalDisplay) totalDisplay.innerText = grandTotal.toFixed(0); if (totalLabel) totalLabel.innerText = rangeName;
+        }
+        function renderWeeklySummary(allEntries) {
+            const container = document.getElementById('weeklySummaryContainer'); if (!container) return; container.innerHTML = ''; const now = new Date(); const currentMonth = now.getMonth();
+            const monthEntries = allEntries.filter(e => { const d = new Date(e.timestamp); return d.getMonth() === currentMonth && (e.status === 'Completed' || e.status === 'Interrupted'); });
+            const weekTotals = [0, 0, 0, 0, 0]; monthEntries.forEach(e => { const date = new Date(e.timestamp).getDate(); const weekIdx = Math.floor((date - 1) / 7); if (weekTotals[weekIdx] !== undefined) weekTotals[weekIdx] += (parseFloat(e.amountLitersAdded) || 0); });
+            const maxWeek = Math.max(...weekTotals) || 10; weekTotals.forEach((val, idx) => { if (val === 0 && idx > 3) return; const width = Math.round((val / maxWeek) * 100); container.innerHTML += `<div class="weekly-summary-row"><span class="weekly-day">Week ${idx + 1}</span><div class="weekly-bar"><div class="weekly-bar-fill" style="width: ${width}%;"></div></div><span class="weekly-value">${val.toFixed(0)} L</span></div>`; });
+        }
+        function setupExportButtons() {
+            const modalEl = document.getElementById('exportModal'); if (modalEl && window.bootstrap) { exportModal = new bootstrap.Modal(modalEl); }
+            const pdfBtn = document.getElementById('btnExportPDF'); const excelBtn = document.getElementById('btnExportExcel'); const confirmBtn = document.getElementById('btnConfirmExport');
+            if (pdfBtn) pdfBtn.addEventListener('click', (e) => { e.preventDefault(); openExportModal('pdf'); }); if (excelBtn) excelBtn.addEventListener('click', (e) => { e.preventDefault(); openExportModal('excel'); }); if (confirmBtn) confirmBtn.addEventListener('click', confirmExport);
+        }
+        function openExportModal(type) { pendingExportFormat = type; if (exportModal) exportModal.show(); }
+        function confirmExport() {
+            const rangeChoice = document.querySelector('input[name="exportRange"]:checked').value; let dataToExport = []; let exportTitle = "";
+            if (rangeChoice === 'current') { dataToExport = currentExportData; exportTitle = "HydroLink_Report_Custom"; } else { dataToExport = rawHistoryData; exportTitle = "HydroLink_Report_Full_History"; }
+            if (!dataToExport || dataToExport.length === 0) { alert("No data available to export."); return; }
+            if (pendingExportFormat === 'excel') { generateExcel(dataToExport, exportTitle); } else { generatePDFWithChart(dataToExport, exportTitle, rangeChoice); }
+            if (exportModal) exportModal.hide();
+        }
+        function generateExcel(data, fileName) {
+            try { const dataForSheet = data.map(e => ({ Date: new Date(e.timestamp).toLocaleDateString(), Time: new Date(e.timestamp).toLocaleTimeString(), Type: e.type || "Automatic", Before: e.initialLevel + "%", After: e.finalLevel + "%", Liters: e.amountLitersAdded, Duration_Min: e.durationMin, Status: e.status })); const ws = XLSX.utils.json_to_sheet(dataForSheet); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Data"); XLSX.writeFile(wb, `${fileName}.xlsx`); } catch (err) { console.error(err); alert("Export Failed"); }
+        }
+        async function generatePDFWithChart(data, fileName, rangeChoice) {
+            if (!window.jspdf) { alert("PDF Lib missing"); return; } const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.setFontSize(18); doc.text("HydroLink Usage Report", 14, 20); doc.setFontSize(10); doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28); let startYPosition = 40;
+            if (rangeChoice === 'current') { try { const chartElement = document.getElementById('dailyVolumeContainer'); if (chartElement) { const canvas = await html2canvas(chartElement, { scale: 2, backgroundColor: "#ffffff" }); const imgData = canvas.toDataURL('image/png'); const imgWidth = 180; const imgHeight = (canvas.height * imgWidth) / canvas.width; doc.text("Visual Summary:", 14, 38); doc.addImage(imgData, 'PNG', 15, 42, imgWidth, imgHeight); startYPosition = 42 + imgHeight + 15; } } catch (err) { console.warn("Chart capture failed", err); } }
+            const tableColumn = ["Date", "Type", "Before", "After", "Liters", "Status"]; const tableRows = data.map(e => [new Date(e.timestamp).toLocaleDateString(), e.type || "Auto", (e.initialLevel || 0) + "%", (e.finalLevel || 0) + "%", `${e.amountLitersAdded} L`, e.status]); doc.autoTable({ head: [tableColumn], body: tableRows, startY: startYPosition, theme: 'grid' }); doc.save(`${fileName}.pdf`);
+        }
+        function safeSetText(id, text) { const el = document.getElementById(id); if (el) el.innerText = text; }
+        function displayNoData() {
+            safeSetText('dailyVolumeContainer', 'No data found');
+            // Reset Tank Visuals
+            const textEl = document.getElementById('tankTextValue') || document.getElementById('tankLevelText');
+            if (textEl) textEl.innerText = "--";
+            const fillEl = document.getElementById('tankLevelFill');
+            if (fillEl) fillEl.style.height = "0%";
+        }
+    </script>
+    <script src="js/transitions.js"></script>
+</body>
+
+</html>

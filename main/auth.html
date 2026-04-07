@@ -5,561 +5,759 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HydroLink - Login & Signup</title>
     <link rel="icon" type="image/x-icon" href="/main/materials/hydrolink-logo.png">
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/auth.css">
     
+    <!-- Bootstrap and Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    
+    <!-- Google Fonts Matching Intro Page -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Premium Light Mode Theme - Overriding default auth CSS */
+        :root {
+            --bg-base: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-glass: rgba(255, 255, 255, 0.7);
+            --border-glass: rgba(0, 0, 0, 0.08);
+            --primary: #0ea5e9;
+            --primary-dark: #0284c7;
+            --accent: #22d3ee;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --font-display: 'Outfit', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            background: linear-gradient(135deg, var(--bg-base) 0%, #e2e8f0 100%);
+        }
+
+        /* typography */
+        h1, h2, h3, h4, h5, h6, .auth-title, .illustration-title, .auth-logo { font-family: var(--font-display); }
+        .text-gradient {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+
+        /* Glass Panel Container */
+        .auth-container-main {
+            width: 100%;
+            max-width: 1100px;
+            margin: 2rem;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: 32px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            display: flex;
+            min-height: 700px;
+        }
+
+        .auth-illustration-side {
+            background: radial-gradient(circle at center, rgba(14, 165, 233, 0.08) 0%, transparent 70%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 3rem; text-align: center; position: relative;
+            border-right: 1px solid var(--border-glass);
+            flex: 1;
+        }
+
+        /* 3D Drum Simulation */
+        .hero-visual { position: relative; height: 350px; display: flex; justify-content: center; align-items: center; perspective: 1000px; margin-bottom: 2rem; }
+        
+        .drum-3d {
+            position: relative; width: 220px; height: 330px;
+            transform-style: preserve-3d;
+            animation: float3d 8s ease-in-out infinite;
+        }
+
+        @keyframes float3d {
+            0% { transform: translateY(0) rotateX(10deg) rotateY(-10deg); }
+            50% { transform: translateY(-15px) rotateX(15deg) rotateY(-5deg); }
+            100% { transform: translateY(0) rotateX(10deg) rotateY(-10deg); }
+        }
+
+        .drum-glass {
+            position: absolute; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1), inset 0 0 15px rgba(255, 255, 255, 0.5);
+            overflow: hidden;
+            display: flex; flex-direction: column; justify-content: flex-end;
+            z-index: 2;
+        }
+
+        .drum-top {
+            position: absolute; top: -12px; left: 0; width: 100%; height: 24px;
+            background: #cbd5e1; border-radius: 50%;
+            border: 2px solid #e2e8f0; z-index: 3;
+            box-shadow: inset 0 -4px 8px rgba(0,0,0,0.1);
+        }
+        .drum-bottom {
+            position: absolute; bottom: -12px; left: 0; width: 100%; height: 24px;
+            background: #94a3b8; border-radius: 50%;
+            border: 2px solid #cbd5e1; z-index: 1;
+        }
+
+        .liquid-container {
+            position: relative; width: 100%; height: 100%; border-radius: 0 0 18px 18px; overflow: hidden; z-index: 2;
+        }
+
+        .liquid {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 50%;
+            background: linear-gradient(to top, var(--primary-dark), var(--primary));
+            box-shadow: 0 -10px 40px rgba(14, 165, 233, 0.6);
+            transition: height 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            animation: fillLiquid 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes fillLiquid {
+            0% { height: 20%; }
+            100% { height: 85%; }
+        }
+
+        .liquid::before {
+            content: ''; position: absolute; top: -6px; left: 0; width: 100%; height: 12px;
+            background: var(--accent); border-radius: 50%; opacity: 0.9;
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .bubble {
+            position: absolute; bottom: -10px; background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%; animation: rise 3s infinite linear;
+        }
+        @keyframes rise {
+            0% { transform: translateY(0) scale(1); opacity: 0.9; }
+            100% { transform: translateY(-250px) scale(0.5); opacity: 0; }
+        }
+
+        .sensor-panel {
+            position: absolute; right: -40px; top: 80px; width: 70px;
+            background: var(--bg-surface); border: 1px solid var(--border-glass);
+            border-radius: 10px; padding: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 4;
+            transform: translateZ(30px) rotateY(-10deg);
+        }
+        .sensor-dot {
+            width: 10px; height: 10px; background: var(--accent); border-radius: 50%;
+            margin: 0 auto 6px; box-shadow: 0 0 8px var(--accent);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse { 0% { opacity: 0.5; box-shadow: 0 0 4px var(--accent); } 50% { opacity: 1; box-shadow: 0 0 12px var(--accent); } 100% { opacity: 0.5; box-shadow: 0 0 4px var(--accent); } }
+        .sensor-text { font-size: 0.6rem; text-align: center; color: var(--primary); font-weight: bold; font-family: var(--font-display); letter-spacing: 1px; }
+
+        .illustration-content { position: relative; z-index: 5; }
+        .illustration-title { font-size: 2.5rem; font-weight: 800; color: var(--text-main); line-height: 1.2; margin-bottom: 0.5rem; }
+        .illustration-text { font-size: 1.1rem; color: var(--text-muted); }
+
+        /* Form Side */
+        .auth-form-side {
+            padding: 3rem; background: rgba(255, 255, 255, 0.8);
+            display: flex; align-items: center; justify-content: center;
+            flex: 1; min-height: 100%;
+        }
+        .auth-form-container { width: 100%; max-width: 400px; display: flex; flex-direction: column;}
+
+        .auth-logo { font-size: 1.8rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 10px; margin-bottom: 2.5rem; justify-content: center;}
+        .auth-logo svg { width: 32px; height: 32px; }
+
+        /* Toggle */
+        .auth-toggle-container {
+            display: flex; background: #f1f5f9; border-radius: 50px; position: relative;
+            height: 50px; align-items: center; margin-bottom: 2rem; padding: 4px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.03);
+            overflow: hidden; flex-shrink: 0;
+        }
+        .auth-toggle-btn {
+            flex: 1; border: none; background: transparent; font-weight: 600; font-family: var(--font-body);
+            color: var(--text-muted); z-index: 2; height: 100%; display: flex; align-items: center; justify-content: center;
+            transition: color 0.3s ease; border-radius: 40px; padding: 0; margin: 0; outline: none !important;
+        }
+        .auth-toggle-btn.active { color: #fff; }
+        .auth-toggle-indicator {
+            position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 40px; transition: left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 1; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);
+        }
+
+        /* Form Elements */
+        .auth-form { display: none; opacity: 0; transform: translateY(15px); transition: all 0.4s ease; min-height: 400px;}
+        .auth-form.active { display: block; opacity: 1; transform: translateY(0); }
+        .auth-title { font-size: 1.8rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem; text-align: center;}
+        .auth-subtitle { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; text-align: center; }
+
+        .form-floating > .form-control {
+            border-radius: 16px; border: 1px solid #e2e8f0; background: #f8fafc;
+            padding: 1rem 1.25rem; height: calc(3.8rem + 2px);
+            transition: var(--transition); font-family: var(--font-body);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+            color: var(--text-main);
+        }
+        .form-floating > .form-control:focus {
+            border-color: var(--primary); background: #fff; outline: none; box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+        }
+        .form-floating > label { padding: 1.15rem 1.25rem; color: #94a3b8; display: flex; align-items: center; }
+        .form-floating > label i { margin-right: 8px; color: var(--primary); font-size: 1.1rem;}
+
+        .password-field { position: relative; }
+        .password-toggle {
+            position: absolute; right: 1.25rem; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: #94a3b8; z-index: 5; transition: color 0.2s; font-size: 1.1rem;
+        }
+        .password-toggle:hover { color: var(--primary); }
+
+        .form-check { display: flex; align-items: center; gap: 8px; }
+        .form-check-input {
+            width: 1.1em; height: 1.1em; margin: 0; border-color: #cbd5e1; cursor: pointer; border-radius: 4px; border: 1px solid #cbd5e1;
+        }
+        .form-check-input:checked { background-color: var(--primary); border-color: var(--primary); }
+        .form-check-label { font-size: 0.9rem; color: var(--text-muted); cursor: pointer; }
+        
+        .forgot-password { color: var(--primary); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: var(--transition); }
+        .forgot-password:hover { text-decoration: underline; color: var(--primary-dark); }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none; border-radius: 50px; padding: 14px; font-weight: 600;
+            font-family: var(--font-display); font-size: 1.1rem; letter-spacing: 0.5px;
+            box-shadow: 0 10px 20px rgba(14, 165, 233, 0.2); transition: var(--transition); width: 100%; color: #fff;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px); box-shadow: 0 15px 25px rgba(14, 165, 233, 0.3); background: linear-gradient(135deg, var(--accent), var(--primary-dark)); color: #fff;
+        }
+        .btn-primary:active { transform: translateY(0); }
+
+        .divider {
+            text-align: center; margin: 1.5rem 0; position: relative;
+        }
+        .divider::before {
+            content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px;
+            background: #e2e8f0; z-index: 1;
+        }
+        .divider span {
+            position: relative; z-index: 2; background: rgba(255,255,255,1); padding: 0 15px; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 500;
+        }
+
+        .social-btn {
+            width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 50px; padding: 12px;
+            font-weight: 500; color: var(--text-main); transition: var(--transition);
+        }
+        .social-btn:hover { background: #f8fafc; border-color: #cbd5e1; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+
+        .auth-redirect { color: var(--text-muted); font-size: 0.95rem; text-align: center; margin-top: 1.5rem; }
+        .auth-redirect a { color: var(--primary); text-decoration: none; font-weight: 600; cursor: pointer; transition: color 0.2s;}
+        .auth-redirect a:hover { text-decoration: underline; color: var(--primary-dark); }
+        
+        .alert { border-radius: 12px; font-size: 0.95rem; }
+        .text-success { color: #22c55e !important; }
+
+        @media (max-width: 991.98px) {
+            .auth-container-main { flex-direction: column; margin: 1rem; border-radius: 24px; min-height: auto; }
+            .auth-illustration-side { padding: 3rem 1.5rem; border-right: none; border-bottom: 1px solid var(--border-glass); }
+            .hero-visual { height: 280px;}
+            .drum-3d { transform: scale(0.8); }
+            .auth-form-side { padding: 2.5rem 1.5rem; }
+        }
+        @media (max-width: 576px) {
+            .auth-illustration-side { display: none; }
+            .auth-form-side { padding: 2rem 1rem; }
+            .auth-container-main { margin: 0; border-radius: 0; background: transparent; border: none; box-shadow: none; }
+        }
+    </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <!-- <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand" href="index.html">
-                <i class="bi bi-droplet-fill me-2"></i>HydroLink
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">About</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav> -->
 
-    <!-- Auth Container -->
-    <div class="auth-container">
-        <div class="container">
-            <div class="row g-0 auth-wrapper">
-                <!-- Left Side - Illustration -->
-                <div class="col-lg-6 auth-illustration-wrapper">
-                    <div class="auth-illustration">
-                        <div class="illustration-content">
-                            <div class="water-drop-animation">
-                                <div class="drop"></div>
-                                <div class="waves"></div>
+    <div class="auth-container-main">
+        <!-- Illustration Side -->
+        <div class="auth-illustration-side">
+            <div class="hero-visual">
+                <!-- 3D Drum Simulation from intro page -->
+                <div class="drum-3d">
+                    <div class="drum-glass">
+                        <div class="liquid-container">
+                            <div class="liquid" id="simLiquid">
+                                <!-- Bubbles injected via JS -->
                             </div>
-                            <h2 class="illustration-title">Welcome to HydroLink</h2>
-                            <p class="illustration-text">Smart water management at your fingertips</p>
                         </div>
-                        <div class="wave-container">
-                            <div class="wave wave1"></div>
-                            <div class="wave wave2"></div>
-                            <div class="wave wave3"></div>
-                        </div>
+                    </div>
+                    <div class="drum-top"></div>
+                    <div class="drum-bottom"></div>
+                    
+                    <div class="sensor-panel">
+                        <div class="sensor-dot"></div>
+                        <div class="sensor-text">LINK ACTIVE</div>
                     </div>
                 </div>
-                
-                <!-- Right Side - Forms -->
-                <div class="col-lg-6 auth-form-wrapper">
-                    <div class="auth-form-container">
-                        <div class="auth-header">
-                            <div class="auth-logo">
-                                <i class="bi bi-droplet-fill"></i>
-                                <span>HydroLink</span>
-                            </div>
-                            <div class="auth-toggle-container">
-                                <button class="auth-toggle-btn active" data-form="login">Login</button>
-                                <button class="auth-toggle-btn" data-form="signup">Sign Up</button>
-                                <div class="auth-toggle-indicator"></div>
-                            </div>
+            </div>
+            <div class="illustration-content">
+                <h2 class="illustration-title">Welcome to <span class="text-gradient">HydroLink</span></h2>
+                <p class="illustration-text">Smart water management at your fingertips</p>
+            </div>
+        </div>
+        
+        <!-- Form Side -->
+        <div class="auth-form-side">
+            <div class="auth-form-container">
+                <div class="auth-logo">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L8.5 7C5 12 4 14 4 16C4 20.4183 7.58172 24 12 24C16.4183 24 20 20.4183 20 16C20 14 19 12 15.5 7L12 2Z" fill="url(#paint0_linear)"/>
+                        <defs>
+                            <linearGradient id="paint0_linear" x1="12" y1="2" x2="12" y2="24" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#0ea5e9"/>
+                                <stop offset="1" stop-color="#0284c7"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    HydroLink
+                </div>
+
+                <div class="auth-toggle-container">
+                    <button class="auth-toggle-btn active" data-form="login">Login</button>
+                    <button class="auth-toggle-btn" data-form="signup">Sign Up</button>
+                    <div class="auth-toggle-indicator"></div>
+                </div>
+
+                <!-- Login Form -->
+                <div class="auth-form active" id="login-form">
+                    <h3 class="auth-title">Login to Your Account</h3>
+                    <p class="auth-subtitle">Welcome back! Access your smart dashboard.</p>
+                    
+                    <form id="loginForm">
+                        <div class="form-floating mb-4">
+                            <input type="email" class="form-control" id="loginEmail" placeholder="name@example.com" required>
+                            <label for="loginEmail"><i class="bi bi-envelope"></i> Email address</label>
                         </div>
                         
-                        <!-- Login Form -->
-                        <div class="auth-form active" id="login-form">
-                            <h3 class="auth-title">Login to Your Account</h3>
-                            <p class="auth-subtitle">Welcome back! Please enter your credentials to access your dashboard.</p>
-                            
-                            <form id="loginForm">
-                                <div class="form-floating mb-4">
-                                    <input type="email" class="form-control" id="loginEmail" placeholder="name@example.com" required>
-                                    <label for="loginEmail"><i class="bi bi-envelope"></i> Email address</label>
-                                </div>
-                                
-                                <div class="form-floating mb-4 password-field">
-                                    <input type="password" class="form-control" id="loginPassword" placeholder="Password" required>
-                                    <label for="loginPassword"><i class="bi bi-lock"></i> Password</label>
-                                    <button type="button" class="password-toggle" tabindex="-1">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                </div>
-                                
-                                <div class="d-flex justify-content-between mb-4">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="rememberMe">
-                                        <label class="form-check-label" for="rememberMe">
-                                            Remember me
-                                        </label>
-                                    </div>
-                                    <a href="#" class="forgot-password">Forgot password?</a>
-                                </div>
-                                
-                                <button type="submit" class="btn btn-primary w-100 mb-4" id="loginSubmitBtn"> Login </button>
-                                
-                                <div class="divider">
-                                    <span>or continue with</span>
-                                </div>
-                                
-                                <div class="social-login">
-                                    <button type="button" class="btn btn-outline-secondary social-btn">
-                                        <i class="bi bi-google"></i>
-                                    </button>
-                                </div>
-                                
-                                <p class="auth-redirect mt-4 text-center">
-                                    Don't have an account? <a href="#" class="form-switch" data-target="signup">Sign up</a>
-                                </p>
-                            </form>
+                        <div class="form-floating mb-4 password-field">
+                            <input type="password" class="form-control" id="loginPassword" placeholder="Password" required>
+                            <label for="loginPassword"><i class="bi bi-lock"></i> Password</label>
+                            <button type="button" class="password-toggle" tabindex="-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
                         </div>
                         
-                        <!-- Signup Form -->
-                        <div class="auth-form" id="signup-form">
-                            <h3 class="auth-title">Create Your Account</h3>
-                            <p class="auth-subtitle">Join HydroLink to manage your water system efficiently.</p>
-                            
-                            <form id="signupForm">
-                                <div class="form-floating mb-4">
-                                    <input type="email" class="form-control" id="signupEmail" placeholder="name@example.com" required>
-                                    <label for="signupEmail"><i class="bi bi-envelope"></i> Email address</label>
-                                </div>
-                                
-                                <div class="form-floating mb-4 password-field">
-                                    <input type="password" class="form-control" id="signupPassword" placeholder="Password" required>
-                                    <label for="signupPassword"><i class="bi bi-lock"></i> Password</label>
-                                    <button type="button" class="password-toggle" tabindex="-1">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                </div>
-                                
-                                <div class="form-floating mb-4 password-field">
-                                    <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm Password" required>
-                                    <label for="confirmPassword"><i class="bi bi-lock-fill"></i> Confirm Password</label>
-                                    <button type="button" class="password-toggle" tabindex="-1">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                </div>
-                                
-                                <div class="form-check mb-4">
-                                    <input class="form-check-input" type="checkbox" id="termsCheck" required>
-                                    <label class="form-check-label" for="termsCheck">
-                                        I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
-                                    </label>
-                                </div>
-                                
-                                <button type="submit" class="btn btn-primary w-100 mb-4" id="signupSubmitBtn">Create Account</button>
-                                
-                                <div class="divider">
-                                    <span>or sign up with</span>
-                                </div>
-                                
-                                <div class="social-login">
-                                    <button type="button" class="btn btn-outline-secondary social-btn">
-                                        <i class="bi bi-google"></i>
-                                    </button>
-                                </div>
-                                
-                                <p class="auth-redirect mt-4 text-center">
-                                    Already have an account? <a href="#" class="form-switch" data-target="login">Login</a>
-                                </p>
-                            </form>
+                        <div class="d-flex justify-content-between mb-4 align-items-center">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="rememberMe">
+                                <label class="form-check-label" for="rememberMe">Remember me</label>
+                            </div>
+                            <a href="#" class="forgot-password">Forgot password?</a>
                         </div>
-                    </div>
+                        
+                        <button type="submit" class="btn btn-primary" id="loginSubmitBtn"> Login </button>
+                        
+                        <div class="divider">
+                            <span>or continue with</span>
+                        </div>
+                        
+                        <div class="social-login">
+                            <button type="button" class="social-btn" aria-label="Sign in with Google">
+                                <i class="bi bi-google text-danger"></i>
+                                <span>Google</span>
+                            </button>
+                        </div>
+                        
+                        <p class="auth-redirect">
+                            Don't have an account? <a class="form-switch" data-target="signup">Sign up</a>
+                        </p>
+                    </form>
+                </div>
+
+                <!-- Signup Form -->
+                <div class="auth-form" id="signup-form">
+                    <h3 class="auth-title">Create Your Account</h3>
+                    <p class="auth-subtitle">Join HydroLink to secure your water supply.</p>
+                    
+                    <form id="signupForm">
+                        <div class="form-floating mb-4">
+                            <input type="email" class="form-control" id="signupEmail" placeholder="name@example.com" required>
+                            <label for="signupEmail"><i class="bi bi-envelope"></i> Email address</label>
+                        </div>
+                        
+                        <div class="form-floating mb-4 password-field">
+                            <input type="password" class="form-control" id="signupPassword" placeholder="Password" required>
+                            <label for="signupPassword"><i class="bi bi-lock"></i> Password</label>
+                            <button type="button" class="password-toggle" tabindex="-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="form-floating mb-4 password-field">
+                            <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm Password" required>
+                            <label for="confirmPassword"><i class="bi bi-shield-lock"></i> Confirm Password</label>
+                            <button type="button" class="password-toggle" tabindex="-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="termsCheck" required>
+                            <label class="form-check-label" for="termsCheck">
+                                I agree to the <a href="#" style="color:var(--primary);text-decoration:none;">Terms</a> & <a href="#" style="color:var(--primary);text-decoration:none;">Privacy Policy</a>
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" id="signupSubmitBtn">Create Account</button>
+                        
+                        <div class="divider">
+                            <span>or sign up with</span>
+                        </div>
+                        
+                        <div class="social-login">
+                            <button type="button" class="social-btn" aria-label="Sign up with Google">
+                                <i class="bi bi-google text-danger"></i>
+                                <span>Google</span>
+                            </button>
+                        </div>
+                        
+                        <p class="auth-redirect">
+                            Already have an account? <a class="form-switch" data-target="login">Login</a>
+                        </p>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap 5 JS Bundle with Popper -->
+    <!-- Bubble injection script for drum visual -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const liquid = document.getElementById('simLiquid');
+            if (liquid) {
+                for(let i = 0; i < 15; i++) {
+                    const bubble = document.createElement('div');
+                    bubble.classList.add('bubble');
+                    bubble.style.left = `${Math.random() * 100}%`;
+                    bubble.style.width = `${Math.random() * 8 + 4}px`;
+                    bubble.style.height = bubble.style.width;
+                    bubble.style.animationDuration = `${Math.random() * 2 + 2}s`;
+                    bubble.style.animationDelay = `${Math.random() * 2}s`;
+                    liquid.appendChild(bubble);
+                }
+            }
+        });
+    </script>
+
+    <!-- Bootstrap Script -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Custom JS (now includes Firebase logic) -->
-<script type="module">
-    // Import the functions you need from the SDKs you need
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { 
-        getAuth, 
-        createUserWithEmailAndPassword, 
-        signInWithEmailAndPassword, 
-        onAuthStateChanged,
-        GoogleAuthProvider,
-        signInWithPopup,
-        sendPasswordResetEmail // <--- NEW: Import password reset function
-    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+    
+    <!-- Firebase Logic (Identical to original) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            onAuthStateChanged,
+            GoogleAuthProvider,
+            signInWithPopup,
+            sendPasswordResetEmail
+        } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+        import { 
+            getDatabase, 
+            ref, 
+            get 
+        } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
 
-    document.addEventListener('DOMContentLoaded', function() {
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCmFInEL6TMoD-9JwdPy-e9niNGGL5SjHA",
-            authDomain: "hydrolink-d3c57.firebaseapp.com",
-            databaseURL: "https://hydrolink-d3c57-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "hydrolink-d3c57",
-            storageBucket: "hydrolink-d3c57.firebasestorage.app",
-            messagingSenderId: "770257381412",
-            appId: "1:770257381412:web:a894f35854cb82274950b1"
-        };
+        document.addEventListener('DOMContentLoaded', function() {
+            const firebaseConfig = {
+                apiKey: "AIzaSyCmFInEL6TMoD-9JwdPy-e9niNGGL5SjHA",
+                authDomain: "hydrolink-d3c57.firebaseapp.com",
+                databaseURL: "https://hydrolink-d3c57-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "hydrolink-d3c57",
+                storageBucket: "hydrolink-d3c57.firebasestorage.app",
+                messagingSenderId: "770257381412",
+                appId: "1:770257381412:web:a894f35854cb82274950b1"
+            };
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        
-        // Initialize Google Auth Provider
-        const googleProvider = new GoogleAuthProvider(); 
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const database = getDatabase(app);
+            const googleProvider = new GoogleAuthProvider(); 
 
-        // UI Elements
-        const toggleButtons = document.querySelectorAll('.auth-toggle-btn');
-        const toggleIndicator = document.querySelector('.auth-toggle-indicator');
-        const loginForm = document.getElementById('login-form');
-        const signupForm = document.getElementById('signup-form');
-        const formSwitchLinks = document.querySelectorAll('.form-switch');
-        const loginEmailInput = document.getElementById('loginEmail');
-        const loginPasswordInput = document.getElementById('loginPassword');
-        const loginSubmitBtn = document.getElementById('loginSubmitBtn');
-        const signupEmailInput = document.getElementById('signupEmail');
-        const signupPasswordInput = document.getElementById('signupPassword');
-        const confirmPasswordInput = document.getElementById('confirmPassword');
-        const termsCheckInput = document.getElementById('termsCheck');
-        const signupSubmitBtn = document.getElementById('signupSubmitBtn');
-        // Select the Google button in the Signup form. 
-        const signupGoogleBtn = signupForm.querySelector('.social-login button:nth-child(1)'); 
-        // <--- NEW: Select the Forgot Password link
-        const forgotPasswordLink = document.querySelector('.forgot-password');
+            const toggleButtons = document.querySelectorAll('.auth-toggle-btn');
+            const toggleIndicator = document.querySelector('.auth-toggle-indicator');
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const formSwitchLinks = document.querySelectorAll('.form-switch');
+            
+            const loginEmailInput = document.getElementById('loginEmail');
+            const loginPasswordInput = document.getElementById('loginPassword');
+            const loginSubmitBtn = document.getElementById('loginSubmitBtn');
+            const signupEmailInput = document.getElementById('signupEmail');
+            const signupPasswordInput = document.getElementById('signupPassword');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const termsCheckInput = document.getElementById('termsCheck');
+            const signupSubmitBtn = document.getElementById('signupSubmitBtn');
+            const signupGoogleBtn = signupForm.querySelector('.social-login button:nth-child(1)'); 
+            const forgotPasswordLink = document.querySelector('.forgot-password');
 
-
-        // Set initial form heights to ensure smooth transitions
-        function setFormContainerHeight() {
-            const activeForm = document.querySelector('.auth-form.active');
-            const formContainer = document.querySelector('.auth-form-container');
-            if (activeForm && formContainer) {
-                formContainer.style.minHeight = `${activeForm.offsetHeight}px`;
+            function setFormContainerHeight() {
+                const activeForm = document.querySelector('.auth-form.active');
+                const formContainer = document.querySelector('.auth-form-container');
+                if (activeForm && formContainer) {
+                    formContainer.style.minHeight = `${activeForm.offsetHeight + 100}px`;
+                }
             }
-        }
-        
-        // Call on page load
-        setFormContainerHeight();
-        
-        // Toggle form when clicking the toggle buttons
-        toggleButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const formType = this.getAttribute('data-form');
-                switchForm(formType);
+            
+            setFormContainerHeight();
+            
+            toggleButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const formType = this.getAttribute('data-form');
+                    switchForm(formType);
+                });
             });
-        });
-        
-        // Toggle form when clicking the form switch links
-        formSwitchLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const formType = this.getAttribute('data-target');
-                switchForm(formType);
+            
+            formSwitchLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const formType = this.getAttribute('data-target');
+                    switchForm(formType);
+                });
             });
-        });
-        
-        // Function to switch between login and signup forms
-        function switchForm(formType) {
-            if (formType === 'login') {
-                loginForm.classList.add('active');
-                signupForm.classList.remove('active');
-                toggleButtons[0].classList.add('active');
-                toggleButtons[1].classList.remove('active');
-                toggleIndicator.style.transform = 'translateX(0)';
-            } else {
-                loginForm.classList.remove('active');
-                signupForm.classList.add('active');
-                toggleButtons[0].classList.remove('active');
-                toggleButtons[1].classList.add('active');
-                toggleIndicator.style.transform = 'translateX(100%)';
-            }
-            setFormContainerHeight(); // Adjust height after switching
-        }
-
-        // --- Password Visibility Toggle ---
-        const passwordToggles = document.querySelectorAll('.password-toggle');
-        passwordToggles.forEach(toggle => {
-            toggle.addEventListener('click', function() {
-                const passwordField = this.parentElement.querySelector('input[type="password"], input[type="text"]');
-                const icon = this.querySelector('i');
-                
-                if (passwordField.type === 'password') {
-                    passwordField.type = 'text';
-                    icon.classList.remove('bi-eye');
-                    icon.classList.add('bi-eye-slash');
+            
+            function switchForm(formType) {
+                if (formType === 'login') {
+                    loginForm.classList.add('active');
+                    signupForm.classList.remove('active');
+                    toggleButtons[0].classList.add('active');
+                    toggleButtons[1].classList.remove('active');
+                    toggleIndicator.style.left = '4px';
                 } else {
-                    passwordField.type = 'password';
-                    icon.classList.remove('bi-eye-slash');
-                    icon.classList.add('bi-eye');
+                    loginForm.classList.remove('active');
+                    signupForm.classList.add('active');
+                    toggleButtons[0].classList.remove('active');
+                    toggleButtons[1].classList.add('active');
+                    toggleIndicator.style.left = 'calc(50% + 4px)';
                 }
+                setTimeout(setFormContainerHeight, 50); 
+            }
+
+            const passwordToggles = document.querySelectorAll('.password-toggle');
+            passwordToggles.forEach(toggle => {
+                toggle.addEventListener('click', function() {
+                    const passwordField = this.parentElement.querySelector('input[type="password"], input[type="text"]');
+                    const icon = this.querySelector('i');
+                    
+                    if (passwordField.type === 'password') {
+                        passwordField.type = 'text';
+                        icon.classList.remove('bi-eye');
+                        icon.classList.add('bi-eye-slash');
+                    } else {
+                        passwordField.type = 'password';
+                        icon.classList.remove('bi-eye-slash');
+                        icon.classList.add('bi-eye');
+                    }
+                });
             });
-        });
 
-        // --- Firebase Authentication Logic ---
-
-        // Function to handle Google Sign-in/Sign-up
-        async function handleGoogleAuth() {
-            try {
-                // Use signInWithPopup for a new sign-in window
-                await signInWithPopup(auth, googleProvider);
-                // The onAuthStateChanged listener will handle the redirect on success
-            } catch (error) {
-                console.error("Google Auth Error:", error.code, error.message);
-                let errorMessage = "Google sign-in failed. Please try again.";
-                if (error.code === 'auth/popup-closed-by-user') {
-                    errorMessage = "Sign-in window closed. Please try again.";
-                } else if (error.code === 'auth/cancelled-popup-request') {
-                    errorMessage = "Sign-in request was cancelled.";
+            async function handleGoogleAuth() {
+                try {
+                    await signInWithPopup(auth, googleProvider);
+                } catch (error) {
+                    console.error("Google Auth Error:", error.code, error.message);
+                    let errorMessage = "Google sign-in failed. Please try again.";
+                    if (error.code === 'auth/popup-closed-by-user') {
+                        errorMessage = "Sign-in window closed. Please try again.";
+                    } else if (error.code === 'auth/cancelled-popup-request') {
+                        errorMessage = "Sign-in request was cancelled.";
+                    }
+                    displayMessage(errorMessage, "danger");
                 }
-                displayMessage(errorMessage, "danger");
-            }
-        }
-
-        // Login Form Submission
-        loginSubmitBtn.addEventListener('click', async (e) => {
-            e.preventDefault(); // Prevent default form submission
-
-            const email = loginEmailInput.value;
-            const password = loginPasswordInput.value;
-
-            if (!email || !password) {
-                // Replaced alert with custom modal or message box
-                displayMessage("Please enter both email and password.", "danger");
-                return;
             }
 
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-                // User is signed in. No device linking here.
-                showSuccessMessage('login');
-            } catch (error) {
-                console.error("Login Error:", error.code, error.message);
-                let errorMessage = "Login failed. Please check your credentials. (If you signed up with Google, use the 'Forgot password?' link to set a password)";
-                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                    errorMessage = "Invalid email or password. (If you signed up with Google, use 'Forgot password?')";
-                } else if (error.code === 'auth/invalid-email') {
-                    errorMessage = "Invalid email format.";
-                }
-                displayMessage(errorMessage, "danger");
-            }
-        });
-        
-        // Google button listener for the Login Form
-        loginForm.querySelector('.social-login button:nth-child(1)').addEventListener('click', handleGoogleAuth);
+            loginSubmitBtn.addEventListener('click', async (e) => {
+                e.preventDefault(); 
+                const email = loginEmailInput.value;
+                const password = loginPasswordInput.value;
 
-        // --- NEW: Password Reset Logic (For Forgot Password link) ---
-        if (forgotPasswordLink) {
-            forgotPasswordLink.addEventListener('click', async (e) => {
-                e.preventDefault();
-                
-                // Use the email from the Login input field
-                const email = loginEmailInput.value; 
-
-                if (!email) {
-                    displayMessage("Please enter your email in the Login Email field before clicking 'Forgot password?'.", "warning");
+                if (!email || !password) {
+                    displayMessage("Please enter both email and password.", "danger");
                     return;
                 }
 
                 try {
-                    // This sends a reset email, allowing a Google-linked user to set a password.
-                    await sendPasswordResetEmail(auth, email);
-
-                    displayMessage(`A password reset link has been sent to ${email}. Check your inbox to set a new password for manual login.`, "success");
-                    
+                    loginSubmitBtn.disabled = true;
+                    loginSubmitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Logging in...';
+                    await signInWithEmailAndPassword(auth, email, password);
                 } catch (error) {
-                    console.error("Password Reset Error:", error.code, error.message);
-                    let errorMessage = "Could not send password reset email. Please ensure the email is correct and exists.";
-                    if (error.code === 'auth/user-not-found') {
-                        errorMessage = "No account found with that email address.";
-                    } else if (error.code === 'auth/invalid-email') {
-                        errorMessage = "Invalid email format.";
+                    console.error("Login Error:", error.code, error.message);
+                    let errorMessage = "Login failed. Please check your credentials.";
+                    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                        errorMessage = "Invalid email or password.";
                     }
                     displayMessage(errorMessage, "danger");
+                    loginSubmitBtn.disabled = false;
+                    loginSubmitBtn.innerHTML = 'Login';
                 }
             });
-        }
-        // --- END: NEW Password Reset Logic ---
+            
+            loginForm.querySelector('.social-login button:nth-child(1)').addEventListener('click', handleGoogleAuth);
 
+            if (forgotPasswordLink) {
+                forgotPasswordLink.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    const email = loginEmailInput.value; 
 
-        // Signup Form Submission
-        signupSubmitBtn.addEventListener('click', async (e) => {
-            e.preventDefault(); // Prevent default form submission
+                    if (!email) {
+                        displayMessage("Please enter your email in the Login Email field before clicking 'Forgot password?'.", "warning");
+                        return;
+                    }
 
-            const email = signupEmailInput.value;
-            const password = signupPasswordInput.value;
-            const confirmPassword = confirmPasswordInput.value;
-            const termsChecked = termsCheckInput.checked;
-
-            if (!email || !password || !confirmPassword) {
-                displayMessage("Please fill in all required fields.", "danger");
-                return;
-            }
-            if (password !== confirmPassword) {
-                displayMessage("Passwords do not match.", "danger");
-                return;
-            }
-            if (password.length < 6) {
-                displayMessage("Password should be at least 6 characters.", "danger");
-                return;
-            }
-            if (!termsChecked) {
-                displayMessage("You must agree to the Terms of Service and Privacy Policy.", "danger");
-                return;
+                    try {
+                        await sendPasswordResetEmail(auth, email);
+                        displayMessage(`A password reset link has been sent to ${email}.`, "success");
+                    } catch (error) {
+                        console.error("Password Reset Error:", error.code, error.message);
+                        displayMessage("Could not send password reset email. Ensure the email is correct.", "danger");
+                    }
+                });
             }
 
-            try {
-                await createUserWithEmailAndPassword(auth, email, password);
-                // User is signed up. No device linking here.
-                showSuccessMessage('signup');
-            } catch (error) {
-                console.error("Signup Error:", error.code, error.message);
-                let errorMessage = "Account creation failed.";
-                if (error.code === 'auth/email-already-in-use') {
-                    errorMessage = "This email address is already in use.";
-                } else if (error.code === 'auth/invalid-email') {
-                    errorMessage = "Invalid email format.";
-                } else if (error.code === 'auth/weak-password') {
-                    errorMessage = "Password is too weak. Please choose a stronger one.";
+            signupSubmitBtn.addEventListener('click', async (e) => {
+                e.preventDefault(); 
+                const email = signupEmailInput.value;
+                const password = signupPasswordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+                const termsChecked = termsCheckInput.checked;
+
+                if (!email || !password || !confirmPassword) {
+                    displayMessage("Please fill in all required fields.", "danger");
+                    return;
                 }
-                displayMessage(errorMessage, "danger");
-            }
-        });
-        
-        // Google button listener for the Signup Form
-        signupGoogleBtn.addEventListener('click', handleGoogleAuth);
+                if (password !== confirmPassword) {
+                    displayMessage("Passwords do not match.", "danger");
+                    return;
+                }
+                if (password.length < 6) {
+                    displayMessage("Password should be at least 6 characters.", "danger");
+                    return;
+                }
+                if (!termsChecked) {
+                    displayMessage("You must agree to the Terms of Service and Privacy Policy.", "danger");
+                    return;
+                }
 
-        // Function to display messages (replaces alert)
-        function displayMessage(message, type) {
-            const messageContainer = document.querySelector('.auth-form.active');
-            let alertDiv = messageContainer.querySelector('.temp-alert');
-            if (!alertDiv) {
-                alertDiv = document.createElement('div');
-                alertDiv.className = 'alert mt-3 temp-alert';
-                messageContainer.prepend(alertDiv);
-            }
-            alertDiv.className = `alert alert-${type} mt-3 temp-alert`;
-            alertDiv.textContent = message;
-            // Hide after 3 seconds
-            setTimeout(() => {
-                if (alertDiv) alertDiv.remove();
-            }, 3000);
-        }
+                try {
+                    signupSubmitBtn.disabled = true;
+                    signupSubmitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
+                    await createUserWithEmailAndPassword(auth, email, password);
+                } catch (error) {
+                    console.error("Signup Error:", error.code, error.message);
+                    let errorMessage = "Account creation failed.";
+                    if (error.code === 'auth/email-already-in-use') {
+                        errorMessage = "This email address is already in use.";
+                    }
+                    displayMessage(errorMessage, "danger");
+                    signupSubmitBtn.disabled = false;
+                    signupSubmitBtn.innerHTML = 'Create Account';
+                }
+            });
+            
+            signupGoogleBtn.addEventListener('click', handleGoogleAuth);
 
-        // Show success message and redirect
-        function showSuccessMessage(type) {
-            const form = type === 'login' ? loginForm : signupForm;
-            form.innerHTML = `
-                <div class="text-center text-success mb-4">
-                    <i class="bi bi-check-circle-fill" style="font-size: 4rem;"></i>
-                </div>
-                <p class="lead text-center auth-title">${type === 'login' ? 'Redirecting you to device setup...' : 'Account created! Redirecting to device setup...'}</p>
-                <div class="mt-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
+            function displayMessage(message, type) {
+                const messageContainer = document.querySelector('.auth-form.active');
+                let alertDiv = messageContainer.querySelector('.temp-alert');
+                if (!alertDiv) {
+                    alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert mt-3 temp-alert';
+                    messageContainer.prepend(alertDiv);
+                }
+                alertDiv.className = `alert alert-${type} mt-3 temp-alert`;
+                alertDiv.textContent = message;
+                setTimeout(() => { if (alertDiv) alertDiv.remove(); }, 3000);
+            }
+
+            function showSuccessMessage(type) {
+                const form = type === 'login' ? loginForm : signupForm;
+                form.innerHTML = `
+                    <div class="text-center text-success mb-4">
+                        <i class="bi bi-check-circle-fill" style="font-size: 4rem;"></i>
                     </div>
-                </div>
-            `;
-            
-            // Update container height for the success message
-            setFormContainerHeight();
-            
-            // Redirect to setup.html after 2 seconds
-            setTimeout(() => {
-                window.location.href = 'index.html'; // Redirect to device setup page
-            }, 2000);
-        }
-        
-        // Ensure you have initialized Firebase App and Database in your auth.html script.
-        const firebase = { auth: () => auth, database: () => ({ ref: () => ({ once: () => Promise.resolve({ val: () => null }) }) }) }; // Mock for simplicity in this file
-
-        firebase.auth().onAuthStateChanged(function(user) {
-            if (user) {
-                // User is signed in. We can now check their linking/setup status.
-                const userId = user.uid;
-                console.log(`User ${userId} logged in. Checking device status...`);
-
-                // Reference the user's devices node in the Realtime Database
-                // NOTE: This assumes you are using Firebase Realtime Database and have a 'hydrolink' root node
-                const userDevicesRef = firebase.database().ref(`hydrolink/users/${userId}/devices`);
-
-                // Use once() to read the data just one time
-                userDevicesRef.once('value')
-                    .then(snapshot => {
-                        const devices = snapshot.val();
-                        let linkedDeviceId = null;
-
-                        // 1. Check if the user has any linked devices
-                        if (devices) {
-                            linkedDeviceId = Object.keys(devices)[0];
-                        }
-
-                        if (linkedDeviceId) {
-                            // A device is linked. Now check its configuration status.
-                            const deviceStatusRef = firebase.database().ref(`hydrolink/devices/${linkedDeviceId}/status/isConfigured`);
-                            
-                            return deviceStatusRef.once('value');
-
-                        } else {
-                            // 2. No device linked at all.
-                            console.log("No device linked. Redirecting to setup.html.");
-                            window.location.href = 'setup.html';
-                            
-                            // Return a resolved promise to stop the chain
-                            return Promise.resolve({val: () => false}); 
-                        }
-                    })
-                    .then(isConfiguredSnapshot => {
-                        // If the user was redirected above, this won't run.
-                        const isConfigured = isConfiguredSnapshot.val();
-
-                        if (isConfigured === true) {
-                            // 3. Device is linked AND configured. Go to the main dashboard.
-                            console.log("Device is linked and configured. Redirecting to index.html.");
-                            window.location.href = 'index.html';
-                        } else if (isConfigured === false) {
-                            // 4. Device is linked but NOT configured. Go to the setup page.
-                            console.log("Device is linked but not configured. Redirecting to setup.html.");
-                            window.location.href = 'setup.html';
-                        }
-                    })
-                    .catch(error => {
-                        console.error("Error checking device status:", error);
-                        // Handle errors gracefully
-                        window.location.href = 'setup.html';
-                    });
-
-            } else {
-                // User is signed out (or on the initial page load before login)
-                // Keep them on auth.html (the login page).
+                    <p class="lead text-center auth-title">Authenticating...</p>
+                    <div class="mt-4 text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                `;
+                setFormContainerHeight();
             }
-        });
-        
-        // Add ripple effect to buttons (from original auth.js)
-        const buttons = document.querySelectorAll('.btn');
-        
-        buttons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                const x = e.clientX - e.target.getBoundingClientRect().left;
-                const y = e.clientY - e.target.getBoundingClientRect().top;
-                
-                const ripple = document.createElement('span');
-                ripple.className = 'ripple';
-                ripple.style.left = `${x}px`;
-                ripple.style.top = `${y}px`;
-                
-                this.appendChild(ripple);
-                
-                setTimeout(() => {
-                    ripple.remove();
-                }, 600);
+
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    console.log(`User ${user.uid} logged in. Checking device status...`);
+                    showSuccessMessage('login'); 
+
+                    try {
+                        const userDevicesRef = ref(database, `hydrolink/users/${user.uid}/devices`);
+                        const devicesSnapshot = await get(userDevicesRef);
+                        const devices = devicesSnapshot.val();
+                        
+                        console.log("Devices linked to user:", devices);
+
+                        if (devices) {
+                            const linkedDeviceId = Object.keys(devices)[0]; 
+                            
+                            if (linkedDeviceId) {
+                                localStorage.setItem(`hydrolink_device_id_${user.uid}`, linkedDeviceId);
+                                console.log("Set device ID in localStorage:", linkedDeviceId);
+
+                                const deviceRef = ref(database, `hydrolink/devices/${linkedDeviceId}`);
+                                const deviceSnapshot = await get(deviceRef);
+                                const deviceData = deviceSnapshot.val();
+
+                                if (deviceData) {
+                                    const drumHeight = (deviceData.settings && deviceData.settings.drumHeightCm) || 
+                                                       (deviceData.config && deviceData.config.drumHeightCm);
+
+                                    console.log("Drum Height found in DB:", drumHeight);
+
+                                    if (drumHeight !== undefined && drumHeight !== null && parseFloat(drumHeight) > 0) {
+                                        console.log("Setup is complete! Redirecting to index.html...");
+                                        window.location.href = 'index.html';
+                                        return; 
+                                    }
+                                }
+                                
+                                console.log("Device linked, but drumHeight is missing/zero. Redirecting to setup.html.");
+                                window.location.href = 'setup.html';
+                                
+                            } else {
+                                window.location.href = 'setup.html';
+                            }
+                        } else {
+                            console.log("No devices linked to this user. Redirecting to setup.html.");
+                            window.location.href = 'setup.html';
+                        }
+                    } catch (error) {
+                        console.error("Error checking device status:", error);
+                        window.location.href = 'setup.html'; 
+                    }
+                }
             });
+            
+            window.addEventListener('resize', setFormContainerHeight);
         });
-        
-        // Handle window resize to adjust form container height
-        window.addEventListener('resize', setFormContainerHeight);
-    });
-</script>
+    </script>
 </body>
 </html>

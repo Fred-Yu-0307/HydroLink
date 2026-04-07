@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - Hydrolink</title>
+    <link rel="icon" type="image/x-icon" href="/main/materials/hydrolink-logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/transitions.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+
+<body id="notifications-page">
+    <!-- Page Transition -->
+    <div class="page-transition-overlay" id="pageTransition">
+        <div class="transition-loader"></div>
+    </div>
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top floating-nav container mt-3">
+        <div class="container-fluid px-2">
+            <a class="navbar-brand ms-2" href="#">
+                <img src="/main/materials/hydrolink-label.png" alt="HydroLink" width="160"
+                    class="d-inline-block align-text-top">
+            </a>
+            <button class="navbar-toggler border-0 shadow-none text-white" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
+                <i class="bi bi-list fs-1"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- Centered Main Links -->
+                <ul class="navbar-nav mx-auto mt-3 mt-lg-0 pb-2 pb-lg-0 align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html" data-tooltip="Home">
+                            <i class="bi bi-house-door-fill"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="data-analytics.html" data-tooltip="Dashboard">
+                            <i class="bi bi-grid-fill"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="history.html" data-tooltip="History">
+                            <i class="bi bi-clock-history"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="settings.html" data-tooltip="Settings">
+                            <i class="bi bi-gear-fill"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item position-relative">
+                        <a class="nav-link active" href="notifications.html" data-tooltip="Notifications">
+                            <i class="bi bi-bell-fill"></i>
+                            <span
+                                class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle notification-badge-nav d-none"
+                                id="navNotificationBadge">
+                                <span class="visually-hidden">New alerts</span>
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+                <!-- Right-aligned Logout -->
+                <ul class="navbar-nav mt-3 mt-lg-0 pb-2 pb-lg-0 align-items-center">
+                    <li class="nav-item ms-lg-2">
+                        <a class="nav-link bg-danger bg-opacity-10 text-white hover-logout" href="#" id="logoutBtn"
+                            data-tooltip="Logout" style="color: #fda4af !important;">
+                            <i class="bi bi-box-arrow-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4 main-content">
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <h1 class="display-6 fw-bold mb-2">Notifications <i class="bi bi-bell ms-2 text-primary"></i></h1>
+                <p class="text-muted">Stay updated with system alerts and refill history.</p>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Controls -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="btn-group">
+                        <button class="btn btn-outline-primary active" id="filterAllBtn">All</button>
+                        <button class="btn btn-outline-primary" id="filterUnreadBtn">Unread</button>
+                    </div>
+                </div>
+
+                <!-- Notification List Container -->
+                <div class="card shadow border-0 rounded-4">
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush" id="notificationsList">
+                            <div class="text-center p-5 text-muted" id="notificationsLoading">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-2 text-muted">Loading notifications...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Details Modal for Refill Updates (Matching history.html) -->
+    <div class="modal fade" id="viewDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-list-alt me-2"></i> Detailed Refill Record</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="viewDetailsBody"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Firebase Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import { getDatabase, ref, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCmFInEL6TMoD-9JwdPy-e9niNGGL5SjHA",
+            authDomain: "hydrolink-d3c57.firebaseapp.com",
+            databaseURL: "https://hydrolink-d3c57-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "hydrolink-d3c57",
+            storageBucket: "hydrolink-d3c57.firebasestorage.app",
+            messagingSenderId: "770257381412",
+            appId: "1:770257381412:web:a894f35854cb82274950b1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
+
+        let currentDeviceId = null;
+        let notifications = [];
+        let viewMode = 'all'; // 'all' or 'unread'
+        let viewModalInstance = null;
+        let navBadge = document.getElementById('navNotificationBadge');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            viewModalInstance = new bootstrap.Modal(document.getElementById('viewDetailsModal'));
+
+            // Filter button events
+            document.getElementById('filterAllBtn').addEventListener('click', (e) => {
+                setFilterMode('all', e.target);
+            });
+            document.getElementById('filterUnreadBtn').addEventListener('click', (e) => {
+                setFilterMode('unread', e.target);
+            });
+
+            // Auth tracking
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    const deviceId = localStorage.getItem(`hydrolink_device_id_${user.uid}`);
+                    if (deviceId) {
+                        currentDeviceId = deviceId;
+                        startListeningToNotifications();
+                    }
+                } else {
+                    window.location.href = "auth.html";
+                }
+            });
+
+            document.getElementById('logoutBtn')?.addEventListener('click', () => {
+                signOut(auth).then(() => window.location.href = "index.html");
+            });
+        });
+
+        function setFilterMode(mode, targetBtn) {
+            viewMode = mode;
+            document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('active'));
+            targetBtn.classList.add('active');
+            renderNotifications();
+        }
+
+        function startListeningToNotifications() {
+            if (!currentDeviceId) return;
+            const notifRef = ref(database, `hydrolink/devices/${currentDeviceId}/notifications`);
+            onValue(notifRef, (snapshot) => {
+                notifications = [];
+                let unreadCount = 0;
+                if (snapshot.exists()) {
+                    snapshot.forEach((child) => {
+                        const notif = { id: child.key, ...child.val() };
+                        notifications.push(notif);
+                        if (!notif.read) unreadCount++;
+                    });
+                }
+
+                // Sort latest to oldest
+                notifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                updateNavBadge(unreadCount);
+                renderNotifications();
+            });
+        }
+
+        function updateNavBadge(count) {
+            if (count > 0) {
+                navBadge.classList.remove('d-none');
+            } else {
+                navBadge.classList.add('d-none');
+            }
+        }
+
+        function renderNotifications() {
+            const list = document.getElementById('notificationsList');
+            list.innerHTML = '';
+
+            let filtered = notifications;
+            if (viewMode === 'unread') {
+                filtered = notifications.filter(n => !n.read);
+            }
+
+            if (filtered.length === 0) {
+                list.innerHTML = `
+                    <div class="text-center p-5">
+                        <i class="bi bi-bell-slash text-muted" style="font-size: 3rem;"></i>
+                        <h5 class="mt-3 text-muted">No notifications found</h5>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(notif => {
+                const dateObj = new Date(notif.timestamp);
+                const timeStr = isToday(dateObj) ? dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : dateObj.toLocaleDateString();
+
+                const isUnread = !notif.read;
+                const bgClass = notif.type === 'no_water' ? 'bg-danger text-white' :
+                    notif.type === 'battery_low' ? 'bg-danger text-white' :
+                        notif.type === 'battery_full' ? 'bg-success text-white' : 'bg-primary text-white';
+
+                const iconClass = notif.type === 'no_water' ? 'fa-exclamation-triangle' :
+                    notif.type === 'battery_low' ? 'fa-battery-empty' :
+                        notif.type === 'battery_full' ? 'fa-battery-full' : 'fa-info-circle';
+
+                const isRefillUpdate = notif.type === 'refill' || notif.type === 'Refill' || notif.type === 'Automatic' || notif.type === 'Manual' || (notif.title && notif.title.toLowerCase().includes('refill')) || !['battery_low', 'battery_full', 'no_water'].includes(notif.type);
+                const hasDetails = isRefillUpdate;
+                const cursorStyle = hasDetails ? 'cursor: pointer;' : 'cursor: default;';
+                const actionClass = hasDetails ? 'list-group-item-action' : '';
+                const clickHandler = hasDetails ? `onclick="handleNotificationClick('${notif.id}')"` : '';
+
+                const html = `
+                    <div class="list-group-item ${actionClass} d-flex align-items-center p-3 notification-row ${isUnread ? 'unread-notif' : ''}" style="${cursorStyle} transition: all 0.2s;">
+                        <div class="d-flex align-items-center flex-grow-1" ${clickHandler}>
+                            <div class="notification-icon rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0 ${bgClass}" style="width: 48px; height: 48px; font-size: 1.2rem;">
+                                <i class="fas ${iconClass}"></i>
+                            </div>
+                            <div class="flex-grow-1 min-width-0">
+                                <div class="d-flex justify-content-between align-items-center text-truncate pe-2">
+                                    <h6 class="mb-1 text-truncate fw-bold ${isUnread ? 'text-primary' : ''}">${notif.title} ${isUnread ? '<span class="badge bg-primary ms-1" style="font-size:0.6rem">New</span>' : ''}</h6>
+                                </div>
+                                <p class="mb-0 text-muted small text-wrap">${notif.message}</p>
+                                <small class="text-muted d-block mt-1"><i class="bi bi-clock me-1"></i>${timeStr} - ${dateObj.toLocaleDateString()}</small>
+                            </div>
+                        </div>
+                        <div class="ms-3 flex-shrink-0">
+                            <button class="btn btn-sm btn-outline-secondary mark-read-btn" data-id="${notif.id}" title="${isUnread ? 'Mark as Read' : 'Mark as Unread'}">
+                                <i class="bi ${isUnread ? 'bi-envelope-open' : 'bi-envelope'}"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger ms-1 delete-notif-btn" data-id="${notif.id}" title="Delete Notification">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                // Need to use append child to attach event listeners securely outside the HTML string
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                const rowObj = tempDiv.firstElementChild;
+
+                rowObj.querySelector('.mark-read-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleReadStatus(notif.id, isUnread);
+                });
+
+                rowObj.querySelector('.delete-notif-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteNotification(notif.id);
+                });
+
+                list.appendChild(rowObj);
+            });
+        }
+
+        window.handleNotificationClick = async function (notifId) {
+            // Mark as read immediately when clicked
+            toggleReadStatus(notifId, true, false);
+
+            if (notifId && notifId !== 'undefined' && notifId !== 'null') {
+                openHistoryModal(notifId);
+            }
+        };
+
+        function toggleReadStatus(notifId, currentIsUnread, rerender = true) {
+            if (!currentDeviceId) return;
+            const notifRef = ref(database, `hydrolink/devices/${currentDeviceId}/notifications/${notifId}`);
+            update(notifRef, {
+                read: currentIsUnread // since currentIsUnread is boolean true if not read, then toggling it to true means 'read'
+            }).catch(console.error);
+        }
+
+        function deleteNotification(notifId) {
+            if (!currentDeviceId) return;
+            if (confirm("Are you sure you want to delete this notification?")) {
+                const notifRef = ref(database, `hydrolink/devices/${currentDeviceId}/notifications/${notifId}`);
+                remove(notifRef).catch(console.error);
+            }
+        }
+
+        async function openHistoryModal(recordId) {
+            if (!currentDeviceId) return;
+
+            const reqRef = ref(database, `hydrolink/devices/${currentDeviceId}/refillHistory/${recordId}`);
+            const body = document.getElementById('viewDetailsBody');
+            body.innerHTML = `<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Fetching Refill Data...</p></div>`;
+
+            viewModalInstance.show();
+
+            try {
+                const snapshot = await get(reqRef);
+                if (snapshot.exists()) {
+                    const entry = { id: snapshot.key, ...snapshot.val() };
+                    const d = new Date(entry.timestamp);
+
+                    let liveTotalVol = "-- L";
+                    try {
+                        const volRef = ref(database, `hydrolink/devices/${currentDeviceId}/status/estimatedTotalVolume`);
+                        const volSnap = await get(volRef);
+                        if (volSnap.exists()) {
+                            liveTotalVol = parseFloat(volSnap.val()).toFixed(1) + ' L';
+                        }
+                    } catch (error) {
+                        liveTotalVol = "Error";
+                    }
+
+                    let configHtml = '<p class="text-muted small">No config data recorded.</p>';
+                    if (entry.config) {
+                        configHtml = `
+                            <div class="row small mb-2">
+                                <div class="col-4"><strong>Drum Height:</strong> ${entry.config.drumHeightCm || '--'} cm</div>
+                                <div class="col-4"><strong>Max Fill:</strong> ${entry.config.maxFillLevelPercentage || '--'}%</div>
+                                <div class="col-4"><strong>Threshold:</strong> ${entry.config.refillThresholdPercentage || '--'}%</div>
+                            </div>
+                        `;
+                    }
+
+                    let badgeClass = "bg-secondary";
+                    if (entry.status === "Completed") badgeClass = "bg-success";
+                    else if (entry.status === "Failed") badgeClass = "bg-danger";
+                    else if (entry.status === "Interrupted") badgeClass = "bg-warning text-dark";
+
+                    body.innerHTML = `
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p class="mb-1 text-muted small">Date & Time</p>
+                                <p class="fw-bold mb-0">${d.toLocaleDateString()} at ${d.toLocaleTimeString()}</p>
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <p class="mb-1 text-muted small">Status</p>
+                                <span class="badge ${badgeClass} fs-6">${entry.status}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3 bg-light p-3 rounded">
+                            <div class="col-6 col-md-3 text-center mb-2 mb-md-0">
+                                <p class="mb-1 text-muted small">Refill Type</p>
+                                <p class="fw-bold mb-0 text-primary">${entry.type || 'Automatic'}</p>
+                            </div>
+                            <div class="col-6 col-md-3 text-center border-start">
+                                <p class="mb-1 text-muted small">Added</p>
+                                <p class="fw-bold mb-0 text-success">${entry.amountLitersAdded || 0} L</p>
+                            </div>
+                            <div class="col-6 col-md-3 text-center border-start">
+                                <p class="mb-1 text-muted small">Live Total</p>
+                                <p class="fw-bold mb-0 text-secondary">${liveTotalVol}</p>
+                            </div>
+                            <div class="col-6 col-md-3 text-center border-start">
+                                <p class="mb-1 text-muted small">Duration</p>
+                                <p class="fw-bold mb-0 text-info">${entry.durationMin || '--'} min</p>
+                            </div>
+                        </div>
+
+                        <h6 class="fw-bold border-bottom pb-2 mt-4">Water Level Data</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="p-2 border rounded">
+                                    <small class="text-muted d-block text-uppercase mb-1">Starting Level</small>
+                                    <span class="fs-5 fw-bold">${entry.beforeLevelPct || 0}%</span> 
+                                    <span class="text-muted ms-2">(${entry.beforeLevelCm || 'N/A'} cm)</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-2 border rounded">
+                                    <small class="text-muted d-block text-uppercase mb-1">Ending Level</small>
+                                    <span class="fs-5 fw-bold">${entry.afterLevelPct || 0}%</span> 
+                                    <span class="text-muted ms-2">(${entry.afterLevelCm || 'N/A'} cm)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h6 class="fw-bold border-bottom pb-2 mt-4">System Configuration Snapshot</h6>
+                        ${configHtml}
+
+                        <h6 class="fw-bold border-bottom pb-2 mt-4">Action Log Details</h6>
+                        <div class="bg-dark text-light p-3 rounded" style="max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 0.85em; white-space: pre-wrap;">${entry.actionsLog || 'No action logs available for this event.'}</div>
+                    `;
+
+                } else {
+                    body.innerHTML = `<div class="text-center p-4 alert alert-warning">Refill record no longer exists or was deleted.</div>`;
+                }
+            } catch (err) {
+                console.error(err);
+                body.innerHTML = `<div class="text-center p-4 alert alert-danger">Error fetching the record data.</div>`;
+            }
+        }
+
+        function isToday(date) {
+            const today = new Date();
+            return date.getDate() === today.getDate() &&
+                date.getMonth() === today.getMonth() &&
+                date.getFullYear() === today.getFullYear();
+        }
+    </script>
+    <script src="js/transitions.js"></script>
+</body>
+
+</html>
