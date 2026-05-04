@@ -429,7 +429,7 @@ function initFormFieldAnimations() {
     });
 }
 
-// Show notification with modern styling
+// Show notification
 function showNotification(title, message, type) {
     // Create notification element
     const notification = document.createElement('div');

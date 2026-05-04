@@ -1004,7 +1004,7 @@
             setTimeout(() => { alertDiv.remove(); }, duration);
         }
 
-        // --- Authentication State Listener ---
+        //  Authentication State Listener 
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
@@ -1056,7 +1056,7 @@
             }
         });
 
-        // --- Profile Tab Functionality ---
+        //  Profile Tab Functionality 
         document.getElementById('profileForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!currentUser) return displayMessage("You must be logged in.", "danger");
@@ -1090,7 +1090,7 @@
             }
         });
 
-        // --- Security Tab Functionality ---
+        //  Security Tab Functionality 
         updatePasswordBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             if (!currentUser || !currentUser.email) return displayMessage("Cannot change password.", "danger");
@@ -1165,7 +1165,7 @@
                         configBtn.setAttribute('data-device-id', deviceId);
                     }
 
-                    // --- 1. LIVE STATUS LISTENER ---
+                    //  1. LIVE STATUS LISTENER 
                     const deviceStatusRef = ref(database, `hydrolink/devices/${deviceId}/status`);
 
                     // Variable to store the last known time from the device
@@ -1189,7 +1189,7 @@
                         }
                     });
 
-                    // --- 2. WATCHDOG TIMER (Checks every 5 seconds) ---
+                    //  2. WATCHDOG TIMER (Checks every 5 seconds) 
                     // This ensures the badge flips to "Offline" if data stops coming
                     if (deviceStatusWatchdog) clearInterval(deviceStatusWatchdog);
 
@@ -1218,7 +1218,7 @@
             });
         }
 
-        // --- NEW: Handle Wi-Fi Reset ---
+        //  NEW: Handle Wi-Fi Reset 
         async function handleWifiReset(deviceId) {
             if (!confirm("Are you sure? This will disconnect the device from its current Wi-Fi. It will return to Access Point mode (HydroLink_Setup).")) {
                 return;
@@ -1258,7 +1258,7 @@
             }
         }
 
-        // --- Modal Scan Logic ---
+        //  Modal Scan Logic 
         modalScanButton.addEventListener('click', triggerModalDrumMeasurement);
         modalRescanButton.addEventListener('click', resetModalScanSection);
         modalSaveDrumHeightButton.addEventListener('click', saveModalDrumHeight);
@@ -1331,10 +1331,8 @@
             bootstrap.Modal.getInstance(document.getElementById('configureDeviceModal')).hide();
         }
 
-        // ==========================================
-        // --- ADDRESS TAB LOGIC (NEW & INTEGRATED) ---
-        // ==========================================
-
+        //  ADDRESS TAB LOGIC (NEW & INTEGRATED)
+        
         // Init Address Modal
         const addrModalEl = document.getElementById('addressModal');
         if (addrModalEl && window.bootstrap) {
@@ -1412,7 +1410,7 @@
                         filteredData = data.filter(item => item[filterKey] === filterCode);
                     }
 
-                    // Sort A-Z for better UX
+                    // Sort A-Z
                     filteredData.sort((a, b) => {
                         let nameA = a.region_name || a.province_name || a.city_name || a.brgy_name;
                         let nameB = b.region_name || b.province_name || b.city_name || b.brgy_name;

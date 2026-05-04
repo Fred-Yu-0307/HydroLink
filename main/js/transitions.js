@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.addEventListener('pageshow', (event) => {
-    // Re-hide overlay if page is loaded from bfcache (back button)
+    // Re-hide overlay if page is loaded from back button
     if (event.persisted) {
         const overlay = document.getElementById('pageTransition');
         if (overlay) {
