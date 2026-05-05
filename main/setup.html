@@ -36,7 +36,7 @@
             color: var(--text-dark);
         }
 
-        /* --- Overriding Bootstrap for Modern Look --- */
+        /*  Overriding Bootstrap for Modern Look  */
         h1, h2, h3, h4, h5, h6 { font-weight: 700; }
         p { color: var(--text-light); }
         
@@ -66,7 +66,7 @@
 
         .card-body { padding: 2.5rem !important; }
 
-        /* --- Custom Buttons --- */
+        /*  Custom Buttons  */
         .btn { font-weight: 600; letter-spacing: 0.3px; }
         
         .btn-primary-custom {
@@ -101,7 +101,7 @@
 
         .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
 
-        /* --- Header --- */
+        /*  Header  */
         .hero-section {
             padding: 3rem 0;
             text-align: center;
@@ -115,7 +115,7 @@
             margin-bottom: 0.5rem;
         }
 
-        /* --- Stepper Navigation --- */
+        /*  Stepper Navigation  */
         .step-nav-container {
             display: flex;
             align-items: center;
@@ -194,7 +194,7 @@
             background: linear-gradient(90deg, var(--primary-blue), var(--accent-teal));
         }
 
-        /* --- Sections Specific Details --- */
+        /*  Sections Specific Details  */
         .step-header {
             margin-bottom: 2rem;
             border-bottom: 2px solid #f1f5f9;
@@ -944,7 +944,7 @@
                         scanDescription.textContent = 'A previous measurement is already saved for this device. You can proceed or measure again if you moved the sensor.';
                     }
                     
-                    // --- MAP FIREBASE DB THRESHOLDS TO UI ---
+                    //  MAP FIREBASE DB THRESHOLDS TO UI 
                     if (settings.refillThresholdPercentage !== undefined) {
                         startFillRange.value = parseInt(settings.refillThresholdPercentage);
                         updateStartFillValue();
@@ -956,7 +956,7 @@
                 }
             }
 
-            // --- REAL-TIME WATER LEVEL LISTENER ---
+            //  REAL-TIME WATER LEVEL LISTENER 
             function listenForRealTimeWaterLevel() {
                 if (!waterPercentageRef) return;
                 

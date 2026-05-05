@@ -1,11 +1,11 @@
-#include "addons/RTDBHelper.h"  // For debug helper
-#include "addons/TokenHelper.h" // For token status info
 #include <Firebase_ESP_Client.h>
 #include <Preferences.h>
 #include <U8g2lib.h>
 #include <WiFi.h>
 #include <WiFiManager.h>
 #include <Wire.h>
+#include <addons/RTDBHelper.h>
+#include <addons/TokenHelper.h>
 #include <esp_wifi.h>
 #include <time.h>
 // FOR MY WIRELESS UPLOAD
@@ -28,25 +28,25 @@ const int CONFIG_PORTAL_TIMEOUT_SECONDS = 60;
 #define ULTRASONIC_ECHO_PIN 18
 #define SOLENOID_PIN 13
 #define BATTERY_SENSE_PIN 1 // Safe Analog Input (ADC1_CH3)
-#define FLOW_SENSOR_PIN 17  // Requires 5V-to-3.3V voltage divider
+#define FLOW_SENSOR_PIN 4  // Requires 5V-to-3.3V voltage divider
 
 // Firebase configuration
 #define FIREBASE_API_KEY "AIzaSyCmFInEL6TMoD-9JwdPy-e9niNGGL5SjHA"
 #define FIREBASE_DATABASE_URL                                                  \
   "https://hydrolink-d3c57-default-rtdb.asia-southeast1.firebasedatabase.app/"
 
-//Flow sensor calibration: 150 pulses per liter (YF-S403 at 5V)
-const float CALIBRATION_FACTOR = 150.0;
+const float CALIBRATION_FACTOR = 450.0;
 
 volatile unsigned long flowPulseCount = 0; // Total pulses since boot
 unsigned long startRefillPulseCount = 0;   // Pulses at start of refill
 
 // Tracking refill
-float totalLiters = 0.0; // Total lifetime liters (since boot)
+float totalLiters = 0.0;
 float currentRefillFlowRateSum = 0.0;
 int flowRateSamples = 0;
 
-bool persistentRefillEnabled = false; // Setting from Firebase for continuous refill if interrupted
+bool persistentRefillEnabled =
+    false; // Setting from Firebase for continuous refill if interrupted
 bool isRefillPending =
     false; // Tracks if a refill was interrupted and needs to resume
 
@@ -58,7 +58,8 @@ void IRAM_ATTR flowPulseISR() {
   static unsigned long lastInterruptTime = 0;
   unsigned long now = micros();
 
-  if (now - lastInterruptTime > 2000) {
+  // Reduced debounce from 2000us to 200us.
+  if (now - lastInterruptTime > 200) {
     flowPulseCount++;
     lastInterruptTime = now;
   }
@@ -156,14 +157,13 @@ int refillRetrySeconds = 20;
 unsigned long lastNoWaterErrorTime =
     0; // Variable to track when the last error occurred
 
-// Add these global variables near the top with other flow sensor variables
 unsigned long lastFlowCalculationTime = 0;
 float currentFlowRateLPM = 0.0; // Separate from the ISR counting variable
 unsigned long lastPulseCountForFlow = 0;
 
 //  MANUAL REFILL VARIABLES
-int manualTargetLevel = 100;       // Target for manual refill
-bool isManualRefilling = false;    // Flag specifically for manual mode
+int manualTargetLevel = 100;  
+bool isManualRefilling = false;  
 unsigned long lastManualCheck = 0; // Timer to prevent spamming database
 
 int startWaterPercentage = 0;
@@ -171,7 +171,7 @@ int startWaterPercentage = 0;
 int batteryPercentage = 0;
 bool drumHeightInitialized = false;
 float drumHeightCm = 0.0;
-float systemEstimatedVolume = 50.0; // Fallback for when flow sensor reads 0
+float systemEstimatedVolume = 50.0;
 
 // Control flags
 bool isDeviceFullyConfigured = false;
@@ -229,7 +229,7 @@ void loadSettingsFromPreferences() {
     return;
   }
 
-  //  Load Firebase UID here
+  //  Load Firebase UID
   deviceFirebaseId = preferences.getString("firebase_uid", "");
   if (deviceFirebaseId.length() > 0) {
     Serial.println("Firebase UID loaded: " + deviceFirebaseId);
@@ -391,26 +391,11 @@ bool fetchDrumHeightFromFirebase() {
   return false;
 }
 
-// ==============================================================================
-// FUNCTION: readUltrasonicCm
-// PURPOSE:  Measures the distance from the ultrasonic sensor to the water
-// level. DETAILS:  Sends a 25us high pulse to the trigger pin, then measures
-// the time
-//           it takes for the echo to return using pulseInLong(). It takes 5
-//           readings and returns the median to filter out noise/turbulence.
-//           Crucially, it disables the flow sensor interrupt during this to
-//           prevent timing corruption.
-// ==============================================================================
 float readUltrasonicCm() {
-  // Take 5 readings and return the median to filter out turbulence noise
+  // Take 5 readings and return the median to filter out noise
   const int NUM_SAMPLES = 5;
   float samples[NUM_SAMPLES];
   int validCount = 0;
-
-  // CRITICAL FIX: Detach the flow sensor interrupt during ultrasonic readings.
-  // The flow sensor ISR on pin 17 fires during pulseInLong() on pin 18,
-  // corrupting the timing measurement and causing all readings to return 0.
-  detachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN));
 
   for (int i = 0; i < NUM_SAMPLES; i++) {
     digitalWrite(ULTRASONIC_TRIG_PIN, LOW);
@@ -429,9 +414,6 @@ float readUltrasonicCm() {
     }
     delay(30); // Short delay between readings
   }
-
-  // Re-attach the flow sensor interrupt after ultrasonic readings are done
-  attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN), flowPulseISR, RISING);
 
   if (validCount == 0) {
     Serial.println("WARNING: Ultrasonic sensor timeout (0 valid out of 5)");
@@ -457,14 +439,6 @@ float readUltrasonicCm() {
   return median;
 }
 
-// ==============================================================================
-// FUNCTION: calculateFlowRate
-// PURPOSE:  Calculates the current water flow rate in Liters per minute (LPM).
-// DETAILS:  Called every second. It compares the current pulse count from the
-//           ISR against the previous count to determine pulses over the last
-//           second. It uses CALIBRATION_FACTOR to convert pulses into liters,
-//           accumulates total volume, and includes logic to detect lost pulses.
-// ==============================================================================
 float calculateFlowRate() {
   unsigned long now = millis();
 
@@ -475,13 +449,12 @@ float calculateFlowRate() {
     unsigned long currentPulses = flowPulseCount;
     interrupts();
 
-    // Guard against unsigned underflow (shouldn't happen, but be safe)
+    // Guard against unsigned underflow
     unsigned long pulseDiff = (currentPulses >= lastPulseCountForFlow)
                                   ? (currentPulses - lastPulseCountForFlow)
                                   : 0;
 
-    // Accumulate lifetime liters (was in getFlowRate before, now centralised
-    // here)
+    // Accumulate lifetime liters (was in getFlowRate before, now centralised heree
     totalLiters += (float)pulseDiff / CALIBRATION_FACTOR;
 
     // DETECT PULSE LOSS
@@ -539,14 +512,6 @@ float calculateFlowRate() {
   return currentFlowRateLPM;
 }
 
-// ==============================================================================
-// FUNCTION: calculateWaterPercentage
-// PURPOSE:  Converts the raw ultrasonic distance into a water fill percentage.
-// DETAILS:  Subtracts the measured distance from the total drum height to find
-//           the actual water depth. Includes a deadzone (treats < 1.5cm as
-//           empty) and constrains the value between 0% and 100%. Updates the
-//           boolean flag 'waterAvailable' based on the refill threshold.
-// ==============================================================================
 void calculateWaterPercentage() {
   if (drumHeightCm <= 0) {
     waterPercentage = 0;
@@ -580,22 +545,14 @@ void calculateWaterPercentage() {
                 drumHeightCm);
 }
 
-// ==============================================================================
-// FUNCTION: logRefillHistory
-// PURPOSE:  Pushes a summary of a completed or failed refill event to Firebase.
-// DETAILS:  Constructs a JSON object containing start/end levels, volume added,
-//           duration, and configuration snapshot. It handles normal history
-//           logs as well as nested logic for tracking repeated failed attempts.
-// ==============================================================================
 void logRefillHistory() {
-  // Only log if Firebase is ready, device is identified, and a refill event
-  // actually occurred (duration > 0)
+  // Only log if Firebase is ready, device is identified, and a refill event actually occurred (duration > 0)
   if (!Firebase.ready() || deviceFirebaseId.length() == 0 ||
       lastRefillDurationMs == 0) {
     return;
   }
 
-  //  1. Calculate Starting and Ending Levels (cm and %)
+  // Calculate Starting and Ending Levels (cm and %)
 
   // Calculate BEFORE level in cm
   float waterLevelCmStart = drumHeightCm - startWaterDistanceCm;
@@ -605,9 +562,7 @@ void logRefillHistory() {
   float waterLevelCmEnd = drumHeightCm - stopWaterLevelCm;
   waterLevelCmEnd = constrain(waterLevelCmEnd, 0, drumHeightCm);
 
-  // Use the same formula as calculateWaterPercentage() — no
-  // maxFillLevelPercentage scaling Also use the captured startWaterPercentage
-  // directly for accuracy
+  // Use the same formula as calculateWaterPercentage() — no maxFillLevelPercentage scaling Also use the captured startWaterPercentage directly for accuracy
   int startWaterPercentageCalc =
       startWaterPercentage; // Captured at valve open time
   startWaterPercentageCalc = constrain(startWaterPercentageCalc, 0, 100);
@@ -618,14 +573,11 @@ void logRefillHistory() {
   FirebaseJson historyJson;
 
   // Refill Details
-  // historyJson.set("timestamp/.sv", "timestamp"); // Moved to conditional
-  // logic below
   historyJson.set("type", refillEventType);
   historyJson.set("beforeLevelPct", startWaterPercentageCalc);
   historyJson.set("afterLevelPct", waterPercentage);
 
-  // amountLitersAdded is strictly based on flow sensor pulse delta
-  // (startRefillPulseCount → flowPulseCount), calculated in closeSolenoid()
+  // amountLitersAdded is strictly based on flow sensor pulse delta (startRefillPulseCount → flowPulseCount), calculated in closeSolenoid()
   float litersToLog = lastRefillLiters;
 
   historyJson.set("amountLitersAdded", String(litersToLog, 2));
@@ -646,7 +598,7 @@ void logRefillHistory() {
 
   historyJson.set("config", configJson);
 
-  //  3. PUSH or UPDATE the log entry to Firebase
+  // PUSH or UPDATE the log entry to Firebase
   if (refillStatus == "Failed") {
     if (!inFailedRefillState) {
       inFailedRefillState = true;
@@ -707,14 +659,6 @@ void logRefillHistory() {
   }
 }
 
-// ==============================================================================
-// FUNCTION: openSolenoid
-// PURPOSE:  Opens the water valve to begin a refill cycle.
-// DETAILS:  Sets the solenoid pin HIGH. Initializes variables tracking the
-// refill
-//           duration and volume, captures the starting pulse count, and logs
-//           the event type (Manual vs Automatic) for later history recording.
-// ==============================================================================
 void openSolenoid() {
   esp_wifi_set_ps(WIFI_PS_MAX_MODEM);
   digitalWrite(SOLENOID_PIN, HIGH);
@@ -737,9 +681,6 @@ void openSolenoid() {
   Serial.printf("Refill started - Initial pulse count: %lu\n",
                 startRefillPulseCount);
 
-  // CRITICAL FIX: Reset flow detection state for this new refill attempt
-  // Without this, the no-water detection uses stale values from the previous
-  // refill and can get stuck in the wrong detection branch.
   lastFlowDetectedTime = 0;
   noWaterWarningActive = false;
 
@@ -751,24 +692,15 @@ void openSolenoid() {
   if (isManualRefilling) {
     refillEventType = "Manual";
     actionLogDetails = "Manual Command";
-    Serial.println("💧 Solenoid OPEN (Manual) - Refilling...");
+    Serial.println("Solenoid OPEN (Manual) - Refilling...");
   } else {
     refillEventType = "Automatic";
     actionLogDetails = "NC Solenoid Open via Auto-Threshold";
-    Serial.println("💧 Solenoid OPEN (Automatic) - Refilling...");
+    Serial.println("Solenoid OPEN (Automatic) - Refilling...");
   }
 }
 
-// ==============================================================================
-// FUNCTION: closeSolenoid
-// PURPOSE:  Closes the water valve and finalizes refill calculations.
-// DETAILS:  Sets the solenoid pin LOW. Calculates the total duration and volume
-//           (liters) dispensed during the refill. It optionally updates the
-//           estimated total drum volume if the refill was substantial enough,
-//           and then triggers logRefillHistory() to save the event.
-// ==============================================================================
 void closeSolenoid(String stopReason) {
-  // Solenoid CLOSED
   digitalWrite(SOLENOID_PIN, LOW);
   solenoidState = false;
   esp_wifi_set_ps(WIFI_PS_NONE);
@@ -896,7 +828,6 @@ void updateFirebaseData() {
   json.set("lastRefillAvgFlowRateLPM", String(lastRefillAvgFlowRateLPM, 2));
   json.set("stopWaterDistanceCm", String(stopWaterLevelCm, 1));
 
-  // Uses 'fbdo' because that is what your global variable is named
   if (Firebase.RTDB.updateNode(&fbdo, basePath, &json)) {
     Serial.println("Firebase data updated successfully");
     saveSettingsToPreferences();
@@ -1029,8 +960,7 @@ void measureDrumHeight() {
   if (validReadings > 0) {
     float avgHeight = totalHeight / validReadings;
 
-    // Apply Offset if necessary (Sensor to Drum Top distance)
-    // avgHeight += 2.0;
+    // Apply Offset if necessary (Sensor to Drum Top distance) avgHeight += 2.0;
 
     drumHeightCm = avgHeight;
     drumHeightInitialized = true;
@@ -1087,8 +1017,6 @@ int readBatteryPercentage() {
     float voltageAtPin = (adcValue / 4095.0) * 3.3;
 
     // Calculate Actual Battery Voltage
-    // Formula: V_battery = V_pin * ((Rtop + Rbot) / Rbot)
-    // For 20k/10k, this multiplier is exactly 3.0
     float currentSampleVoltage = voltageAtPin * ((Rtop + Rbot) / Rbot);
 
     totalVoltageSum += currentSampleVoltage;
@@ -1109,7 +1037,7 @@ int readBatteryPercentage() {
   lastStableBatteryLevel = percentage;
 
   // 6. Debug Print
-  Serial.print("🔋 Battery Voltage: ");
+  Serial.print("Battery Voltage: ");
   Serial.print(avgVoltage, 2);
   Serial.print(" V | ");
   Serial.print(percentage);
@@ -1217,7 +1145,7 @@ void logStatusToSerial() {
   float actualWaterLevelCm = drumHeightCm - waterDistanceCm;
   actualWaterLevelCm = constrain(actualWaterLevelCm, 0, drumHeightCm);
 
-  //  1. Print Water Level and Status (COMBINED LINE)
+  // Print Water Level and Status (COMBINED LINE)
   Serial.printf("Water: %d%% (%.1fcm / %.1fcm) | Water Status: ",
                 waterPercentage, actualWaterLevelCm, drumHeightCm);
   // Print the availability and end the line
@@ -1227,8 +1155,8 @@ void logStatusToSerial() {
     Serial.println("Unavailable");
   }
 
-  //  2. Print Battery Status
-  Serial.printf("🔋 Battery Voltage: %.2f V  |  %d%%\n", 0.00,
+  // Print Battery Status
+  Serial.printf("Battery Voltage: %.2f V  |  %d%%\n", 0.00,
                 batteryPercentage);
 }
 
@@ -1305,24 +1233,22 @@ void setupOTA() {
 
   ArduinoOTA
       .onStart([]() {
-        // 1. CRITICAL: Stop the solenoid immediately
+        // Stop the solenoid immediately
         digitalWrite(SOLENOID_PIN, LOW);
         isRefilling = false;
         isManualRefilling = false;
 
-        // 2. Clear Serial buffer
+        // Clear Serial buffer
         Serial.println("OTA Update Starting...");
 
-        // 3. Prepare Display
-        // We do this once and then stop calling display functions to save RAM
+        // Prepare Display
         u8g2.clearBuffer();
         u8g2.setFont(u8g2_font_ncenB08_tr);
         u8g2.drawStr(15, 30, "SYSTEM UPDATE");
         u8g2.drawStr(10, 45, "Starting Transfer...");
         u8g2.sendBuffer();
 
-        // 4. Note: Firebase is NOT stopped manually, but we stop
-        // calling it in the loop via a flag if needed.
+        // Firebase is NOT stopped manually, but we stop calling it in the loop via a flag if needed.
       })
       .onEnd([]() {
         u8g2.clearBuffer();
@@ -1331,10 +1257,9 @@ void setupOTA() {
         delay(1000);
       })
       .onProgress([](unsigned int progress, unsigned int total) {
-        // We calculate percentage
         int p = (progress / (total / 100));
 
-        // Optimization: Only update screen every 5% to prevent i2c crashes
+        // Only update screen every 5% to prevent i2c crashes
         if (p % 5 == 0) {
           u8g2.clearBuffer();
           u8g2.setFont(u8g2_font_ncenB08_tr);
@@ -1355,14 +1280,6 @@ void setupOTA() {
   ArduinoOTA.begin();
 }
 
-// ==============================================================================
-// FUNCTION: setup
-// PURPOSE:  Initializes the ESP32 hardware and software services on boot.
-// DETAILS:  Configures pin modes, attaches interrupts, starts the OLED display
-//           with a soft-start animation to charge capacitors, loads settings
-//           from preferences, connects to WiFi via WiFiManager, synchronizes
-//           NTP time, and finally initializes Firebase and OTA updates.
-// ==============================================================================
 void setup() {
   //  1. SERIAL & PINS (Low Power Initialization)
   Serial.begin(115200);
@@ -1376,23 +1293,27 @@ void setup() {
   pinMode(ULTRASONIC_TRIG_PIN, OUTPUT);
   pinMode(ULTRASONIC_ECHO_PIN, INPUT);
 
-  //  the flow sensor setuop
-  pinMode(FLOW_SENSOR_PIN, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN), flowPulseISR, RISING);
-  Serial.println("Flow sensor initialized.");
+  pinMode(FLOW_SENSOR_PIN, INPUT);
 
-  //  2. the display for the capacitor to charge up yet so that the it will
-  //  stabilize
+  attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN), flowPulseISR,
+                  FALLING);
+
+  // verify flow sensor pin state at boot
+  Serial.printf("Flow sensor initialized on GPIO %d (state: %s)\n",
+                FLOW_SENSOR_PIN, digitalRead(FLOW_SENSOR_PIN) ? "HIGH" : "LOW");
+  Serial.printf("Pulse count at boot: %lu\n", flowPulseCount);
+
+  //  The display for the capacitor to charge up yet so that the it will stabilize
   Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
   u8g2.begin();
 
   // Charge capacitors while showing animation
   playSoftStartSequence();
 
-  //  3. SETTINGS
+  // SETTINGS
   loadSettingsFromPreferences();
 
-  //  4. WIFI
+  //WIFI
   wm.setAPCallback(configModeCallback);
   wm.setSaveConfigCallback(saveConfigCallback);
   wm.setConfigPortalTimeout(CONFIG_PORTAL_TIMEOUT_SECONDS);
@@ -1408,12 +1329,12 @@ void setup() {
   Serial.println("Connecting to WiFi...");
   wifiConnected = wm.autoConnect(AP_SSID, AP_PASSWORD);
 
-  //  5. NETWORK SERVICES
+  //NETWORK SERVICES
   if (wifiConnected) {
     Serial.println("WiFi connected! IP: " + WiFi.localIP().toString());
     deviceMacAddress = WiFi.macAddress();
 
-    //  STEP A: ACTIVATE MDNS (Fixes Wireless Port disappearance)
+    // ACTIVATE MDNS (Fixes Wireless Port disappearance)
     if (MDNS.begin("HydroLink-Device")) {
       MDNS.addService("arduino", "tcp", 3232);
       Serial.println("mDNS responder started: HydroLink-Device.local");
@@ -1425,7 +1346,7 @@ void setup() {
     Serial.print("Waiting for PH Time Sync");
     time_t now = time(nullptr);
     int retry = 0;
-    while (now < 1000000 && retry < 40) { // Increased wait time to 20 seconds
+    while (now < 1000000 && retry < 40) {
       delay(500);
       Serial.print(".");
       now = time(nullptr);
@@ -1500,7 +1421,7 @@ void setup() {
   Serial.println("=== Setup Complete! ===");
 }
 
-//  NEW FUNCTION 1: CHECK FIREBASE COMMAND
+// CHECK FIREBASE COMMAND
 void checkManualRefillCommand() {
   // Check every 2 seconds
   if (millis() - lastManualCheck > 2000) {
@@ -1524,23 +1445,20 @@ void checkManualRefillCommand() {
         bool cmd = result.boolValue;
 
         if (cmd) {
-          //  START COMMAND
 
-          // 1. Get Target Level first
+          // Get Target Level first
           FirebaseJsonData targetResult;
           json.get(targetResult, "targetLevel");
           if (targetResult.success)
             manualTargetLevel = targetResult.intValue;
 
-          // 2. Trigger Start (only if not already running)
+          // Trigger Start (only if not already running)
           if (!isManualRefilling) {
             Serial.println("Manual Refill: START");
             isManualRefilling = true;
             isRefilling = true;
 
             //  Call openSolenoid() to handle setup
-            // This sets refillStartTime, startPulseCount, and
-            // refillEventType="Manual"
             openSolenoid();
           }
         } else {
@@ -1548,7 +1466,7 @@ void checkManualRefillCommand() {
           if (isManualRefilling) {
             Serial.println("Manual Refill: STOP");
 
-            //  CRITICAL FIX: Use closeSolenoid()
+            //Use closeSolenoid()
             // This function calculates liters used and saves to History
             closeSolenoid("User Stopped");
 
@@ -1561,13 +1479,12 @@ void checkManualRefillCommand() {
   }
 }
 
-//  HELPER: Send Notification
+//Send Notification
 void sendFirebaseNotification(String title, String message, String type) {
   if (deviceFirebaseId == "")
     return;
 
-  // Prevent spamming "Failed" notifications if we've already sent one in this
-  // sequence
+  // Prevent spamming "Failed" notifications if we've already sent one in this sequence
   if (type == "error" || title.indexOf("Failed") != -1 ||
       message.indexOf("No Source Water") != -1) {
     if (hasSentFailedNotification) {
@@ -1577,8 +1494,7 @@ void sendFirebaseNotification(String title, String message, String type) {
     hasSentFailedNotification = true;
   } else if (type == "success" || title.indexOf("Completed") != -1 ||
              message.indexOf("Target Reached") != -1 || type == "info") {
-    // Reset the notification flag only when a successful or standard info
-    // notification is processed
+    // Reset the notification flag only when a successful or standard info notification is processed
     hasSentFailedNotification = false;
   }
 
@@ -1598,23 +1514,13 @@ void sendFirebaseNotification(String title, String message, String type) {
   Firebase.RTDB.pushJSON(&fbdo, path, &json);
 }
 
-//  REFILL LOGIC (Corrected Variable Name)
-// Updated runRefillLogic function
-// ==============================================================================
-// FUNCTION: runRefillLogic
-// PURPOSE:  The core state machine managing water refilling and safety checks.
-// DETAILS:  If refilling is active: Monitors water flow and level. Implements
-//           safety timeouts (e.g., closing the valve if no water flows for 15s
-//           or if open for >5mins). Stops refill when target is reached.
-//           If idle: Checks if water is below the refill threshold and triggers
-//           auto-refill if conditions (and timeouts) are met.
-// ==============================================================================
+//  REFILL LOGIC
 void runRefillLogic() {
 
   // Calculate current flow rate
   float currentFlow = calculateFlowRate();
 
-  // 1. REFILL PROCESS (Active)
+  // REFILL PROCESS (Active)
   if (isRefilling) {
     digitalWrite(SOLENOID_PIN, HIGH); // Open Valve
 
@@ -1656,24 +1562,13 @@ void runRefillLogic() {
                     litersSoFar, currentFlowRateLPM, waterPercentage);
     }
 
-    //  Flow-based no-water detection (more reliable than pulse comparison)
-    //  NOTE: lastFlowDetectedTime is now a global variable, reset in
-    //  openSolenoid()
-
-    //  FIX: Use minimum threshold (0.3 L/min) to filter sensor noise.
-    // The YF-S403 can produce tiny spurious pulses from electrical noise,
-    // which kept resetting the no-water timer and preventing solenoid close.
-    if (currentFlowRateLPM > 0.3) {
+    if (currentFlowRateLPM > 0.05) {
       // Real water flow detected - reset the no-water timer
       lastFlowDetectedTime = millis();
       noWaterWarningActive = false;
     }
 
     if (flowCheckDuration < 3000) {
-      // Grace period: wait 3 seconds for flow to start before checking
-      // Do NOT set lastFlowDetectedTime here — that was the bug!
-      // Setting it during grace period made the code think flow had been
-      // detected, which skipped the "no flow ever" branch entirely.
       noWaterWarningActive = false;
     } else if (lastFlowDetectedTime == 0) {
       // Flow NEVER detected since solenoid opened — no water at source
@@ -1709,10 +1604,6 @@ void runRefillLogic() {
         noWaterWarningActive = true;
         Serial.println(" Flow stopped - warning active");
       }
-
-      // FIX: Removed the "litersSoFar > 0.01" guard. That condition
-      // prevented the solenoid from ever closing when no water flowed,
-      // because litersSoFar stayed at 0.
       if (timeSinceFlow > 15000) {
         Serial.println(" Water stopped flowing for 15s - closing solenoid");
 
@@ -1739,8 +1630,7 @@ void runRefillLogic() {
       }
     }
 
-    //  ABSOLUTE SAFETY TIMEOUT: Force-close solenoid after 5 minutes
-    // regardless of sensor state to prevent flooding if all detection fails
+    // Force-close solenoid after 5 minutes regardless of sensor state to prevent flooding if all detection fails
     if (flowCheckDuration > 300000) {
       Serial.println(" SAFETY: Solenoid open for 5 min — force closing!");
 
@@ -1802,7 +1692,7 @@ void runRefillLogic() {
     digitalWrite(SOLENOID_PIN, LOW);
   }
 
-  // 2. AUTO-START (Only if NOT manual)
+  //AUTO-START (Only if NOT manual)
   //  DETERMINE IF WE SHOULD REFILL
   bool shouldRefill = false;
 
@@ -1815,8 +1705,7 @@ void runRefillLogic() {
     }
   } else if (persistentRefillEnabled && isRefillPending &&
              waterPercentage < maxFillLevelPercentage) {
-    // If water isn't below threshold, BUT a refill was pending and we haven't
-    // reached max level -> Resume
+    // If water isn't below threshold, BUT a refill was pending and we haven't reached max level,   Resume
     shouldRefill = true;
   }
 
@@ -1835,31 +1724,21 @@ void runRefillLogic() {
 
     if (isRefillPending && waterPercentage >= refillThresholdPercentage) {
       Serial.println(
-          "🔄 Persistent Auto-Refill Resumed (Recovering from interruption)");
+          "Persistent Auto-Refill Resumed (Recovering from interruption)");
     } else {
-      Serial.println("🔄 Auto-Refill Started");
+      Serial.println("Auto-Refill Started");
     }
   }
 }
 
-// ==============================================================================
-// FUNCTION: loop
-// PURPOSE:  The main execution loop that runs continuously.
-// DETAILS:  Designed to be non-blocking. It handles OTA updates, WiFi
-// reconnection,
-//           and device linking checks. Using 'millis()' timers, it periodically
-//           reads sensors, updates Firebase data, calculates flow, runs the
-//           refill state machine, and refreshes the OLED display without using
-//           delay().
-// ==============================================================================
 void loop() {
-  // 1. ALWAYS Handle OTA & WiFi First
+  // ALWAYS Handle OTA & WiFi First
   ArduinoOTA.handle();
   handleWiFiReconnection();
 
   unsigned long currentTime = millis();
 
-  // 2. Block if critical connection is missing
+  // Block if critical connection is missing
   static unsigned long stuckStartTime = 0;
   if (WiFi.status() != WL_CONNECTED || !Firebase.ready()) {
     u8g2.clearBuffer();
@@ -1916,22 +1795,20 @@ void loop() {
     lastSensorRead = currentTime;
   }
 
-  // 5. Calculate Flow Rate (call this every loop iteration, not just at sensor
-  // interval) This ensures flow rate is updated frequently for the no-water
-  // detection
+  // Calculate Flow Rate (call this every loop iteration, not just at sensor interval) This ensures flow rate is updated frequently for the no-water detection
   calculateFlowRate();
 
-  // 6. REFILL LOGIC (Run FAST, not inside the slow sensor timer)
+  // REFILL LOGIC (Run FAST, not inside the slow sensor timer)
   checkManualRefillCommand(); // Check for start/stop commands
   runRefillLogic();           // Check if we need to close valve NOW
 
-  // 7. Firebase Sync (Timed)
+  // Firebase Sync (Timed)
   if (currentTime - lastFirebaseUpdate >= FIREBASE_INTERVAL) {
     updateFirebaseData();
     lastFirebaseUpdate = currentTime;
   }
 
-  // 8. Settings Sync (Timed)
+  //Settings Sync (Timed)
   if (currentTime - lastSettingsCheck >= SETTINGS_INTERVAL) {
     if (isLinkedToUser) {
       //  ADDED: Check if user clicked 'Scan Water Drum Now'
@@ -1942,7 +1819,7 @@ void loop() {
     lastSettingsCheck = currentTime;
   }
 
-  // 9. Update Display
+  //Update Display
   displayHomeScreen();
 
   // Small delay to keep OTA responsive
@@ -1955,26 +1832,26 @@ void displayHydroLinkAnimation() {
   const String appName = "HydroLink";
 
   // Animation Constants
-  const int waterSurfaceY = SCREEN_HEIGHT - 10; // Water level at bottom
-  const int dropEndX = SCREEN_WIDTH / 2;        // Center of screen
-  const int dropStartY = -15;                   // Start above screen
-  const int dropEndY = waterSurfaceY;           // End at water surface
+  const int waterSurfaceY = SCREEN_HEIGHT - 10;
+  const int dropEndX = SCREEN_WIDTH / 2;
+  const int dropStartY = -15;
+  const int dropEndY = waterSurfaceY;
 
   unsigned long startTime = millis();
-  unsigned long totalDuration = 3000; // 3 Seconds Total
-  unsigned long dropDuration = 1000;  // 1 Second to fall
+  unsigned long totalDuration = 3000;
+  unsigned long dropDuration = 1000
 
   while (millis() - startTime < totalDuration) {
     unsigned long elapsed = millis() - startTime;
     u8g2.clearBuffer();
 
-    //  1. Draw Water Surface (Bottom of screen)
+    // Draw Water Surface (Bottom of screen)
     // A filled box representing the water pool
     u8g2.drawBox(0, waterSurfaceY, SCREEN_WIDTH, SCREEN_HEIGHT - waterSurfaceY);
 
-    //  2. Animation Logic
+    //Animation Logic
     if (elapsed < dropDuration) {
-      // === PHASE 1: The Drop Falling ===
+      //PHASE 1: The Drop Falling
       // Use quadratic easing for gravity effect (starts slow, speeds up)
       float progress = (float)elapsed / dropDuration;
       int currentY =
@@ -1987,7 +1864,7 @@ void displayHydroLinkAnimation() {
                         dropEndX, currentY - r * 2.5);
 
     } else {
-      // === PHASE 2: Splash, Ripple & Text ===
+      //PHASE 2: Splash, Ripple & Text
       unsigned long rippleTime = elapsed - dropDuration;
 
       // Draw Ripples (Expanding Ellipses)

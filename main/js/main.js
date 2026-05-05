@@ -14,10 +14,7 @@ import {
     endBefore
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
 
-
-// =======================================================
 // CUSTOM ALERT MODAL FUNCTION (Replaces native alert())
-// =======================================================
 /**
  * Shows a custom, centered modal notification with a message and an animated icon.
  * @param {string} message - The message to display in the modal.
@@ -65,10 +62,8 @@ window.showCustomAlert = function (message, type = 'info') {
     customAlertModal.show();
 };
 
+//VISUALIZATION FUNCTION
 
-// =======================================================
-// VISUALIZATION FUNCTION
-// =======================================================
 /**
  * Updates the modern 2D drum visualization based on a water percentage value.
  * @param {number|string} percentageValue - The current water percentage (e.g., 54 or "54").
@@ -94,7 +89,7 @@ function updateWaterLevelVisualization(percentageValue) {
         drumWaterLevel.style.height = `${boundedPercent}%`;
     }
 }
-// =======================================================
+
 /**
  * Generates the HTML string for a single notification item.
  * @param {string} iconClass - e.g., 'bi bi-droplet-fill'
@@ -121,19 +116,12 @@ function createNotificationHtml(iconClass, bgClass, title, content, timeText, is
     `;
 }
 
-// =======================================================
 // FIREBASE REALTIME DATABASE LISTENERS FOR STATS (FINAL ROBUST LOGIC)
-// =======================================================
-/**
- * Sets up listeners to populate the Water Usage Statistics card.
- */
+//Sets up listeners to populate the Water Usage Statistics card.
 function listenForWaterStats() {
     // DEVICE_ID and database are expected to be available from the scope below
     if (!DEVICE_ID || !database) return;
-
-    // ------------------------------------------
     // 1. Sensor Data Listener (Liters Used & Water Available)
-    // ------------------------------------------
     const sensorDataRef = ref(database, `hydrolink/devices/${DEVICE_ID}/sensorData`);
     onValue(sensorDataRef, (snapshot) => {
         const data = snapshot.val();
@@ -155,9 +143,7 @@ function listenForWaterStats() {
         }
     });
 
-    // ------------------------------------------
     // 2. Refill History Listener (Count & Last Refill Date)
-    // ------------------------------------------
     const refillHistoryRef = ref(database, `hydrolink/devices/${DEVICE_ID}/refillHistory`);
     onValue(refillHistoryRef, (snapshot) => {
 
@@ -197,10 +183,10 @@ function listenForWaterStats() {
                 if (timestampValue > latestTimestamp) {
                     latestTimestamp = timestampValue;
 
-                    // --- CHANGED FORMAT HERE ---
+                    // CHANGED FORMAT
                     // Options for "Feb 18, 2026"
                     const options = { month: 'short', day: 'numeric', year: 'numeric' };
-                    // We replace the comma to get exactly "Feb 18 2026"
+                    // replace the comma to get exactly "Feb 18 2026"
                     latestDateString = entryDate.toLocaleDateString('en-US', options).replace(',', '');
                 }
             }
@@ -224,7 +210,7 @@ function listenForWaterStats() {
 
     });
 }
-// =======================================================
+
 
 let notificationsLoaded = 0;
 const PAGE_SIZE = 10;
@@ -353,8 +339,7 @@ async function loadNotifications(initial = false) {
         notifications.push({ key: child.key, ...child.val() });
     });
 
-    // --- UPDATED SORTING LOGIC ---
-    // This ensures that we compare the actual numeric timestamp, newest first.
+    //UPDATED SORTING LOGIC
     notifications.sort((a, b) => {
         const timeA = a.timestamp || 0;
         const timeB = b.timestamp || 0;
@@ -391,7 +376,7 @@ function renderNotificationItem(notif, container) {
         case "no_water": icon = "bi bi-exclamation-triangle-fill"; theme = "bg-warning"; break;
     }
 
-    // We add a 'd-flex' and 'justify-content-between' to align the button to the right
+    // add a 'd-flex' and 'justify-content-between' to align the button to the right
     container.innerHTML += `
         <li class="notification-item ${unreadClass} d-flex align-items-center justify-content-between p-3 border-bottom" id="notif-${notif.key}">
             <div class="d-flex align-items-center" style="min-width: 0; flex: 1;">
@@ -415,7 +400,6 @@ function renderNotificationItem(notif, container) {
 
 // 1. This function is called when the trash icon is clicked
 window.deleteNotification = function (key) {
-    // We store the key we want to delete in a temporary global variable or data attribute
     window.pendingDeleteKey = key;
 
     // Update the Custom Alert Modal to act as a confirmation dialog
@@ -425,15 +409,9 @@ window.deleteNotification = function (key) {
     messageElement.innerText = "Are you sure you want to delete this notification?";
     iconContainer.innerHTML = '<div class="error-x-mark"><span class="lines"><span class="line left"></span><span class="line right"></span></span></div>';
 
-    // Change the "OK" button to "Delete" and add a "Cancel" button if needed
-    // Or simply use your existing modal and trigger the deletion on the primary action
     const modal = new bootstrap.Modal(document.getElementById('customAlertModal'));
-
-    // We can temporarily repurpose the "OK" button listener or just use a confirm logic
-    // For simplicity, let's stick to your showCustomAlert style but use a standard centered modal
     modal.show();
 
-    // Re-bind the click event for the "OK" button to perform the deletion
     const okBtn = document.querySelector('#customAlertModal .btn-primary');
     const originalText = okBtn.innerText;
     okBtn.innerText = "Delete";
@@ -485,9 +463,6 @@ function updateBatteryDisplay(batteryPercentage) {
     }
 }
 
-
-
-
 async function updateBadgeCount() {
     const snapshot = await get(ref(database, `hydrolink/devices/${DEVICE_ID}/notifications`));
 
@@ -517,9 +492,6 @@ notificationsListEl.addEventListener("scroll", () => {
     }
 });
 
-
-
-
 document.addEventListener('DOMContentLoaded', function () {
     // Your web app's Firebase configuration
     const firebaseConfig = {
@@ -538,12 +510,12 @@ document.addEventListener('DOMContentLoaded', function () {
     window.database = getDatabase(app);
     const auth = getAuth(app);
 
-    // --- IMPORTANT: Device ID ---
+    // IMPORTANT: Device ID
     let DEVICE_ID = null;
     let currentUserId = null;
     window.DEVICE_ID = DEVICE_ID; // Expose to global scope for listenForWaterStats
 
-    // --- UI Elements (Made globally accessible within this scope) ---
+    //UI Elements (Made globally accessible within this scope)
     const systemStatusDot = document.getElementById('systemStatusDot');
     const systemStatusText = document.getElementById('systemStatusText');
     const waterLevelFill = document.getElementById('waterLevelFill');
@@ -560,12 +532,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const maxFillLevelInput = document.getElementById('maxFillLevel');
     const maxFillValueSpan = document.getElementById('maxFillValue');
 
-    // --- STATS UI Elements (Made globally accessible within this scope for listenForWaterStats) ---
+    //STATS UI Elements (Made globally accessible within this scope for listenForWaterStats)
     window.totalWaterUsed = document.getElementById('totalWaterUsed');
     window.refillCount = document.getElementById('refillCount');
     window.lastRefillDate = document.getElementById('lastRefillDate');
     window.totalrefillhours = document.getElementById('totalrefillhours');
-    // ----------------------------
 
     // Firebase references - will be initialized once DEVICE_ID is known
     let deviceStatusRef;
@@ -573,7 +544,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let manualRefillTargetRef;
 
 
-    // --- Authentication State Listener ---
+    // Authentication State Listener
     onAuthStateChanged(auth, (user) => {
         if (user) {
             currentUserId = user.uid;
@@ -602,7 +573,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // --- Handle Logout ---
+    //Handle Logout 
     function handleLogout(e) {
         e.preventDefault();
         signOut(auth).then(() => {
@@ -663,7 +634,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }, { onlyOnce: true });
     }
 
-    // --- Initialize Firebase Realtime Database Listeners once DEVICE_ID is known ---
+    //Initialize Firebase Realtime Database Listeners once DEVICE_ID is known
     function initializeDeviceDataListeners() {
         if (!DEVICE_ID) {
             console.error("DEVICE_ID is not set. Cannot initialize Firebase listeners.");
@@ -740,9 +711,7 @@ document.addEventListener('DOMContentLoaded', function () {
         onValue(deviceStatusRef, (snapshot) => {
             const data = snapshot.val();
             if (data) {
-                // ---------------------------------------------------------
                 // LOGIC: Update Device Current State (Refilling / No Water / Normal)
-                // ---------------------------------------------------------
                 const stateDisplay = document.getElementById('deviceCurrentState');
                 const refillStatus = data.refillStatus || "UNKNOWN";
                 const isOnline = data.systemStatus === "online";
@@ -769,7 +738,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         stateDisplay.className = "text-light"; // Green
                     }
                 }
-                // ---------------------------------------------------------
 
                 console.log("Received device status:", data);
 
@@ -846,7 +814,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 
-    // --- Customize Modal Logic ---
+    //Customize Modal Logic
     function initializeCustomizeModal() {
         if (autoRefillThresholdInput) {
             autoRefillThresholdInput.addEventListener('input', () => {
